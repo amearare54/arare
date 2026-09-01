@@ -1,5 +1,5 @@
 config SHIELD_ARARE_L
-    def_bool $(shields_list_contains,arare_L)
+	def_bool $(shields_list_contains,arare_L)
 
 config SHIELD_ARARE_R
-    def_bool $(shields_list_contains,arare_R)
+	def_bool $(shields_list_contains,arare_R)

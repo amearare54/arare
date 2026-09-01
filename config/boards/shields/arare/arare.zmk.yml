@@ -2,9 +2,13 @@ file_format: "1"
 id: arare
 name: arare
 type: shield
-url: https://github.com/yu-muto/zmk-config-arare
-requires:
-  - nice_nano_v2
+url: https://github.com/amearare54/zmk-config-arare
+requires: [seeeduino_xiao_ble]
 features:
   - keys
   - encoder
+  - pointer
+  - studio
+siblings:
+  - arare_L
+  - arare_R

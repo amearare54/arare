@@ -1,65 +1,75 @@
+/* arare 右手（central・トラックボール側）
+ * M0..M5=D0..D5 / CKW12=D6,D7 / PAW3222: SCLK=D8(P1.13) SDIO=D9(P1.14) NCS=D10(P1.15) MOTION=P0.09
+ * （実基板 arare_R.kicad_pcb の XIAO パッド→ネットと機械照合済み 2026-08-31）
+ */
+
 #include "arare.dtsi"
 
 &default_transform {
     col-offset = <6>;
 };
 
-&kscan0 {
-    row-gpios
-        = <&gpio0 2 GPIO_ACTIVE_HIGH>    /* RROW0 = P0.02 (NFC pin) */
-        , <&gpio0 3 GPIO_ACTIVE_HIGH>    /* RROW1 = P0.03 (NFC pin) */
-        , <&gpio0 4 GPIO_ACTIVE_HIGH>    /* RROW2 = P0.04 */
-        , <&gpio0 5 GPIO_ACTIVE_HIGH>    /* RROW3 = P0.05 */
+&kscan_matrix {
+    gpios
+        = <&xiao_d 0 GPIO_ACTIVE_HIGH>   /* M0 */
+        , <&xiao_d 1 GPIO_ACTIVE_HIGH>   /* M1 */
+        , <&xiao_d 2 GPIO_ACTIVE_HIGH>   /* M2 */
+        , <&xiao_d 3 GPIO_ACTIVE_HIGH>   /* M3 */
+        , <&xiao_d 4 GPIO_ACTIVE_HIGH>   /* M4 */
+        , <&xiao_d 5 GPIO_ACTIVE_HIGH>   /* M5 */
         ;
-    col-gpios
-        = <&gpio0 28 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>    /* RCOL0 = P0.28 */
-        , <&gpio0 29 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>    /* RCOL1 = P0.29 */
-        , <&gpio0 30 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>    /* RCOL2 = P0.30 */
-        , <&gpio0 31 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>    /* RCOL3 = P0.31 */
-        , <&gpio1 0  (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>    /* RCOL4 = P1.00 */
-        ;
+};
+
+&right_encoder {
+    status = "okay";
+};
+
+/* MOTION=P0.09 は NFCT ピンのため GPIO 化（UICRに書き込まれる。初回書込のみ） */
+&uicr {
+    nfct-pins-as-gpios;
+};
+
+/* PAW3222: 3線SDIOなので MOSI/MISO を同一ピン(P1.14)に割当（torabo-tsuki実績方式）
+ * spi1 を使用（torabo-tsukiブランチのSDIO省電力処理は spi0/spi1 のみ対応。
+ * spi0はi2c0とID共有のため spi1 を選択） */
+&pinctrl {
+    spi1_default: spi1_default {
+        group1 {
+            psels = <NRF_PSEL(SPIM_SCK, 1, 13)>,
+                <NRF_PSEL(SPIM_MOSI, 1, 14)>,
+                <NRF_PSEL(SPIM_MISO, 1, 14)>;
+        };
+    };
+
+    spi1_sleep: spi1_sleep {
+        group1 {
+            psels = <NRF_PSEL(SPIM_SCK, 1, 13)>,
+                <NRF_PSEL(SPIM_MOSI, 1, 14)>,
+                <NRF_PSEL(SPIM_MISO, 1, 14)>;
+            low-power-enable;
+        };
+    };
+};
+
+&spi1 {
+    status = "okay";
+    compatible = "nordic,nrf-spim";
+    pinctrl-0 = <&spi1_default>;
+    pinctrl-1 = <&spi1_sleep>;
+    pinctrl-names = "default", "sleep";
+    cs-gpios = <&gpio1 15 GPIO_ACTIVE_LOW>;   /* NCS = D10 */
+
+    trackball: trackball@0 {
+        compatible = "pixart,paw3222";
+        reg = <0>;
+        spi-max-frequency = <2000000>;
+        irq-gpios = <&gpio0 9 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;   /* MOTION */
+    };
 };
 
 / {
     trackball_listener {
         compatible = "zmk,input-listener";
         device = <&trackball>;
-    };
-};
-
-&pinctrl {
-    spi0_default: spi0_default {
-        group1 {
-            psels = <NRF_PSEL(SPIM_SCK,  0, 24)>,    /* TB_SCLK = P0.24 */
-                    <NRF_PSEL(SPIM_MOSI, 0, 20)>,    /* TB_SDIO = P0.20 */
-                    <NRF_PSEL(SPIM_MISO, 0, 20)>;    /* TB_SDIO = P0.20 (half-duplex) */
-        };
-    };
-    spi0_sleep: spi0_sleep {
-        group1 {
-            psels = <NRF_PSEL(SPIM_SCK,  0, 24)>,
-                    <NRF_PSEL(SPIM_MOSI, 0, 20)>,
-                    <NRF_PSEL(SPIM_MISO, 0, 20)>;
-            low-power-enable;
-        };
-    };
-};
-
-&spi0 {
-    status = "okay";
-    compatible = "nordic,nrf-spim";
-    pinctrl-0 = <&spi0_default>;
-    pinctrl-1 = <&spi0_sleep>;
-    pinctrl-names = "default", "sleep";
-    cs-gpios = <&gpio0 17 GPIO_ACTIVE_LOW>;    /* TB_NCS = P0.17 */
-
-    trackball: trackball@0 {
-        status = "okay";
-        compatible = "pixart,pmw3610";
-        reg = <0>;
-        spi-max-frequency = <2000000>;
-        irq-gpios = <&gpio0 16 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;    /* TB_MOTION = P0.16 */
-        automouse-layer = <5>;
-        scroll-layers = <6>;
     };
 };

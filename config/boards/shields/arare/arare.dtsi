@@ -1,44 +1,141 @@
+/*
+ * arare — 左右分割・完全無線・charlieplex 6線/片手
+ * 生成元データ: ~/arare/design-assets/arare_matrix.json（正データ）
+ *              ~/arare/kicad/arare_{L,R}.kicad_pcb の実座標（物理レイアウト）
+ *
+ * ポジション順（47キー・キーマップと物理レイアウトはこの順で対応）:
+ *  Row1:  Q  W  E  R  T   |  Y  U  I  O  P
+ *  Row2:  A  S  D  F  G  [ENC1] [ENC2]  H  J  K  L  -
+ *  Row3:  Z  X  C  V  B  [fn2]  [右クリック]  N  M  ,  .  @
+ *  Row4:  英数 Ctrl ⌘ fn1 SPACE [JOY押込] | ENTER BSPC かな
+ *  Tact:  L(reset unlock) | R(unlock reset)
+ */
+
 #include <dt-bindings/zmk/matrix_transform.h>
+#include <physical_layouts.dtsi>
 
 / {
     chosen {
         zmk,kscan = &kscan0;
-        zmk,matrix_transform = &default_transform;
+        zmk,physical-layout = &arare_layout;
     };
 
+    arare_layout: arare_layout {
+        compatible = "zmk,physical-layout";
+        display-name = "arare";
+        transform = <&default_transform>;
+        kscan = <&kscan0>;
+        keys  //                      w   h    x    y     rot    rx    ry
+            = <&key_physical_attrs 100 100   11   68       0     0     0>  /* SW5  Q */
+            , <&key_physical_attrs 100 100  111   43       0     0     0>  /* SW3  W */
+            , <&key_physical_attrs 100 100  211   18       0     0     0>  /* SW1  E */
+            , <&key_physical_attrs 100 100  311   36       0     0     0>  /* SW2  R */
+            , <&key_physical_attrs 100 100  411   43       0     0     0>  /* SW4  T */
+            , <&key_physical_attrs 100 100  803   43       0     0     0>  /* SW24 Y */
+            , <&key_physical_attrs 100 100  903   36       0     0     0>  /* SW23 U */
+            , <&key_physical_attrs 100 100 1003   18       0     0     0>  /* SW22 I */
+            , <&key_physical_attrs 100 100 1103   43       0     0     0>  /* SW25 O */
+            , <&key_physical_attrs 100 100 1203   68       0     0     0>  /* SW26 P */
+            , <&key_physical_attrs 100 100   11  168       0     0     0>  /* SW10 A */
+            , <&key_physical_attrs 100 100  111  143       0     0     0>  /* SW8  S */
+            , <&key_physical_attrs 100 100  211  118       0     0     0>  /* SW6  D */
+            , <&key_physical_attrs 100 100  311  136       0     0     0>  /* SW7  F */
+            , <&key_physical_attrs 100 100  411  143       0     0     0>  /* SW9  G */
+            , <&key_physical_attrs 100 100  511  170       0     0     0>  /* ENC1 push */
+            , <&key_physical_attrs 100 100  703  170       0     0     0>  /* ENC2 push */
+            , <&key_physical_attrs 100 100  803  143       0     0     0>  /* SW29 H */
+            , <&key_physical_attrs 100 100  903  136       0     0     0>  /* SW28 J */
+            , <&key_physical_attrs 100 100 1003  118       0     0     0>  /* SW27 K */
+            , <&key_physical_attrs 100 100 1103  143       0     0     0>  /* SW30 L */
+            , <&key_physical_attrs 100 100 1203  168       0     0     0>  /* SW31 - */
+            , <&key_physical_attrs 100 100   11  268       0     0     0>  /* SW15 Z */
+            , <&key_physical_attrs 100 100  111  243       0     0     0>  /* SW13 X */
+            , <&key_physical_attrs 100 100  211  218       0     0     0>  /* SW11 C */
+            , <&key_physical_attrs 100 100  311  236       0     0     0>  /* SW12 V */
+            , <&key_physical_attrs 100 100  411  243       0     0     0>  /* SW14 B */
+            , <&key_physical_attrs 100 100  511  268       0     0     0>  /* SW16 fn2 */
+            , <&key_physical_attrs 100 100  703  268       0     0     0>  /* SW36 右クリック */
+            , <&key_physical_attrs 100 100  803  243       0     0     0>  /* SW34 N */
+            , <&key_physical_attrs 100 100  903  236       0     0     0>  /* SW33 M */
+            , <&key_physical_attrs 100 100 1003  218       0     0     0>  /* SW32 , */
+            , <&key_physical_attrs 100 100 1103  243       0     0     0>  /* SW35 . */
+            , <&key_physical_attrs 100 100 1203  268       0     0     0>  /* SW37 @ */
+            , <&key_physical_attrs 100 100   11  368       0     0     0>  /* SW19 英数 */
+            , <&key_physical_attrs 100 100  111  343       0     0     0>  /* SW18 Ctrl/opt */
+            , <&key_physical_attrs 100 100  211  318       0     0     0>  /* SW17 ⌘ */
+            , <&key_physical_attrs 100 100  311  365       0     0     0>  /* SW20 fn1 */
+            , <&key_physical_attrs 100 100  427  370     821   477   420>  /* SW21 SPACE */
+            , <&key_physical_attrs 100 100  540  393    1807   590   443>  /* SW46 JOY押込 */
+            , <&key_physical_attrs 100 100  675  393 (-1807)   725   443>  /* SW39 ENTER */
+            , <&key_physical_attrs 100 100  788  370  (-821)   838   420>  /* SW40 BSPC */
+            , <&key_physical_attrs 100 100 1203  368       0     0     0>  /* SW38 かな */
+            , <&key_physical_attrs  60  60    0    0       0     0     0>  /* SW41 L-reset */
+            , <&key_physical_attrs  60  60   53    0       0     0     0>  /* SW42 L-unlock */
+            , <&key_physical_attrs  60  60 1202    0       0     0     0>  /* SW43 R-unlock */
+            , <&key_physical_attrs  60  60 1255    0       0     0     0>  /* SW44 R-reset */
+            ;
+    };
+
+    /*
+     * charlieplex RC(i,j): i = driveするM線のindex / j = 読むM線のindex
+     * 左=col 0-5, 右=col 6-11（右overlayで col-offset=<6>）
+     * JOY押込は直結GPIO（compositeで row 6）
+     */
     default_transform: keymap_transform_0 {
         compatible = "zmk,matrix-transform";
-        columns = <11>;
-        rows = <4>;
-        /*
-         * Left:  6 cols × 4 rows, row3 uses only COL0-2 (21 keys total)
-         * Right: 5 cols × 4 rows, all 20 positions used (col-offset=6)
-         */
+        columns = <12>;
+        rows = <7>;
         map = <
-            RC(0,0) RC(0,1) RC(0,2) RC(0,3) RC(0,4) RC(0,5)    RC(0,6) RC(0,7) RC(0,8) RC(0,9) RC(0,10)
-            RC(1,0) RC(1,1) RC(1,2) RC(1,3) RC(1,4) RC(1,5)    RC(1,6) RC(1,7) RC(1,8) RC(1,9) RC(1,10)
-            RC(2,0) RC(2,1) RC(2,2) RC(2,3) RC(2,4) RC(2,5)    RC(2,6) RC(2,7) RC(2,8) RC(2,9) RC(2,10)
-            RC(3,0) RC(3,1) RC(3,2)                             RC(3,6) RC(3,7) RC(3,8) RC(3,9) RC(3,10)
+RC(0,5) RC(0,3) RC(0,1) RC(0,2) RC(0,4)                 RC(0,9) RC(0,8) RC(0,7) RC(0,10) RC(0,11)
+RC(1,5) RC(1,3) RC(1,0) RC(1,2) RC(1,4) RC(4,1) RC(3,11) RC(1,9) RC(1,8) RC(1,6) RC(1,10) RC(1,11)
+RC(2,5) RC(2,3) RC(2,0) RC(2,1) RC(2,4) RC(3,0) RC(2,11) RC(2,9) RC(2,7) RC(2,6) RC(2,10) RC(3,6)
+RC(3,4) RC(3,2) RC(3,1) RC(3,5) RC(4,0) RC(6,0)         RC(3,8) RC(3,10) RC(3,7)
+RC(4,3) RC(4,2)                                         RC(4,6) RC(4,7)
         >;
     };
 
-    kscan0: kscan {
-        compatible = "zmk,kscan-gpio-matrix";
-        wakeup-source;
-        diode-direction = "row2col";
+    kscan0: kscan_composite {
+        compatible = "zmk,kscan-composite";
+        rows = <7>;
+        columns = <6>;
+
+        matrix {
+            kscan = <&kscan_matrix>;
+        };
     };
 
+    kscan_matrix: kscan_matrix {
+        compatible = "zmk,kscan-gpio-charlieplex";
+        /* 割込線なし＝常時ポーリング。1ms(default)は電池に厳しいので5msに */
+        poll-period-ms = <5>;
+        /* gpios は左右overlayで M0..M5 の順に定義 */
+    };
+
+    /* 左=EC12(垂直) D2/D3, 右=CKW12(水平) D6/D7。steps/triggersは実機で要調整 */
     left_encoder: encoder_left {
         compatible = "alps,ec11";
-        a-gpios = <&gpio0 9  (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
-        b-gpios = <&gpio0 10 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
-        steps = <24>;
+        a-gpios = <&xiao_d 2 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+        b-gpios = <&xiao_d 3 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+        steps = <12>;
+        status = "disabled";
+    };
+
+    right_encoder: encoder_right {
+        compatible = "alps,ec11";
+        a-gpios = <&xiao_d 6 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+        b-gpios = <&xiao_d 7 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+        steps = <12>;
         status = "disabled";
     };
 
     sensors: sensors {
         compatible = "zmk,keymap-sensors";
-        sensors = <&left_encoder>;
+        sensors = <&left_encoder &right_encoder>;
         triggers-per-rotation = <10>;
     };
+};
+
+/* uart0はD6/D7を掴む（左=M2/M3, 右=ENC_A/B と衝突）ため両側で無効化 */
+&xiao_serial {
+    status = "disabled";
 };

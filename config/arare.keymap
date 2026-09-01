@@ -1,115 +1,52 @@
+/*
+ * arare keymap — 初期版（2026-08-31 ユーザー指定のレイアウト画像より）
+ *
+ * ポジション順は arare.dtsi のコメント参照（47キー）。
+ * ENC1(垂直)押込 = Shift+Cmd+V / ENC2(水平)押込 = 左クリック / SW36 = 右クリック
+ * 記号・数字レイヤーはUS配列読み。ZMK Studioで随時調整可能。
+ */
+
 #include <behaviors.dtsi>
 #include <dt-bindings/zmk/keys.h>
 #include <dt-bindings/zmk/bt.h>
-#include <dt-bindings/zmk/mouse.h>
-
-#define DEFAULT 0
-#define LOWER   1
-#define RAISE   2
-#define ADJUST  3
-#define BT_SEL  4
-#define MOUSE   5
-#define SCROLL  6
+#include <dt-bindings/zmk/pointing.h>
 
 / {
     keymap {
         compatible = "zmk,keymap";
 
-        /* Layer 0 - Default (QWERTY)
-         * ,----------------------------------.    ,----------------------------------.
-         * | TAB  | Q  | W  | E  | R  | T  |    | Y  | U  | I  | O  | P  |
-         * | LCTL | A  | S  | D  | F  | G  |    | H  | J  | K  | L  | ;  |
-         * | LSFT | Z  | X  | C  | V  | B  |    | N  | M  | ,  | .  | /  |
-         * | LGUI |LALT|SPC |              | '  |ENT |RALT|RCTL|RSFT|
-         * `----------------------------------'    `----------------------------------'
-         */
-        default_layer {
-            display-name = "Default";
+        base_layer {
+            display-name = "Base";
             bindings = <
-                &kp TAB   &kp Q &kp W &kp E &kp R &kp T    &kp Y &kp U &kp I     &kp O   &kp P
-                &kp LCTRL &kp A &kp S &kp D &kp F &kp G    &kp H &kp J &kp K     &kp L   &kp SEMI
-                &kp LSHFT &kp Z &kp X &kp C &kp V &kp B    &kp N &kp M &kp COMMA &kp DOT &kp FSLH
-                &kp LGUI  &kp LALT &lt LOWER SPC            &kp SQT &lt RAISE RET &kp RALT &kp RCTRL &kp RSHFT
+&kp Q        &kp W          &kp E     &kp R   &kp T                              &kp Y     &kp U     &kp I      &kp O    &kp P
+&kp A        &kp S          &kp D     &kp F   &kp G   &kp LS(LG(V))  &mkp LCLK  &kp H     &kp J     &kp K      &kp L    &kp MINUS
+&mt LSHFT Z  &kp X          &kp C     &kp V   &kp B   &mo 2          &mkp RCLK  &kp N     &kp M     &kp COMMA  &kp DOT  &kp AT
+&kp LANG2    &mt LALT LCTRL &kp LGUI  &mo 1   &kp SPACE  &mkp LCLK              &kp ENTER &kp BSPC  &kp LANG1
+&sys_reset   &studio_unlock                                                     &studio_unlock      &sys_reset
             >;
-            sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
+            sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>, <&inc_dec_kp PG_UP PG_DN>;
         };
 
-        /* Layer 1 - Lower (Numbers & Symbols)
-         */
-        lower_layer {
-            display-name = "Lower";
+        sym_layer {
+            display-name = "Sym";
             bindings = <
-                &kp ESC   &kp N1 &kp N2 &kp N3 &kp N4 &kp N5    &kp N6   &kp N7   &kp N8   &kp N9  &kp N0
-                &kp LCTRL &trans &trans &trans &trans &trans       &kp LEFT &kp DOWN &kp UP   &kp RIGHT &kp BSPC
-                &kp LSHFT &trans &trans &trans &trans &trans       &kp HOME &kp PGDN &kp PGUP &kp END &kp DEL
-                &kp LGUI  &kp LALT &trans                         &trans &lt ADJUST RET &kp RALT &kp RCTRL &kp RSHFT
+&kp ESC   &trans  &trans  &trans  &trans                        &kp LPAR  &kp RPAR   &kp EXCL  &kp QMARK  &kp EQUAL
+&kp TAB   &trans  &trans  &trans  &trans  &trans  &trans        &kp LBKT  &kp RBKT   &kp HASH  &kp PRCNT  &kp FSLH
+&trans    &trans  &trans  &trans  &trans  &trans  &kp DQT       &kp SEMI  &kp COLON  &kp AMPS  &kp SQT    &kp UNDER
+&kp CAPS  &trans  &trans  &trans  &trans  &trans                &kp GLOBE &kp DEL    &kp ASTRK
+&trans    &trans                                                &trans               &trans
             >;
-            sensor-bindings = <&inc_dec_kp C_BRI_UP C_BRI_DN>;
         };
 
-        /* Layer 2 - Raise (Symbols & Function keys)
-         */
-        raise_layer {
-            display-name = "Raise";
+        num_layer {
+            display-name = "Num";
             bindings = <
-                &kp GRAVE &kp EXCL &kp AT &kp HASH &kp DLLR &kp PRCNT    &kp CARET &kp AMPS &kp STAR &kp LPAR &kp RPAR
-                &kp LCTRL &kp F1   &kp F2 &kp F3   &kp F4   &kp F5       &kp F6    &kp F7   &kp F8   &kp F9   &kp F10
-                &kp LSHFT &kp F11  &kp F12 &kp LBKT &kp RBKT &kp BSLH    &kp MINUS &kp PLUS &kp LBRC &kp RBRC &kp PIPE
-                &kp LGUI  &kp LALT &lt ADJUST SPC                         &trans &trans &kp RALT &kp RCTRL &kp RSHFT
+&trans  &trans  &trans  &trans  &trans                          &trans    &trans     &kp N7  &kp N8  &kp N9
+&trans  &trans  &trans  &trans  &trans  &trans  &trans          &kp UP    &trans     &kp N4  &kp N5  &kp N6
+&trans  &trans  &trans  &trans  &trans  &trans  &kp LEFT        &kp DOWN  &kp RIGHT  &kp N1  &kp N2  &kp N3
+&trans  &trans  &trans  &trans  &trans  &trans                  &trans    &trans     &kp N0
+&trans  &trans                                                  &trans              &trans
             >;
-            sensor-bindings = <&inc_dec_kp PG_UP PG_DN>;
-        };
-
-        /* Layer 3 - Adjust
-         */
-        adjust_layer {
-            display-name = "Adjust";
-            bindings = <
-                &bootloader &trans &trans &trans &trans &trans    &trans &trans &trans &trans &bootloader
-                &sys_reset  &trans &trans &trans &trans &trans    &trans &trans &trans &trans &sys_reset
-                &trans      &trans &trans &trans &trans &trans    &trans &trans &trans &trans &trans
-                &trans      &trans &trans                         &trans &trans &trans &trans &trans
-            >;
-            sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
-        };
-
-        /* Layer 4 - BT Select
-         */
-        bt_layer {
-            display-name = "BT";
-            bindings = <
-                &trans &bt BT_SEL 0 &bt BT_SEL 1 &bt BT_SEL 2 &bt BT_SEL 3 &bt BT_SEL 4    &trans &trans &trans &trans &bt BT_CLR
-                &trans &trans       &trans        &trans        &trans        &trans           &trans &trans &trans &trans &trans
-                &trans &trans       &trans        &trans        &trans        &trans           &trans &trans &trans &trans &trans
-                &trans &trans       &trans                                                     &trans &trans &trans &trans &trans
-            >;
-            sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
-        };
-
-        /* Layer 5 - Mouse (activated by trackball movement via automouse-layer)
-         */
-        mouse_layer {
-            display-name = "Mouse";
-            bindings = <
-                &trans &trans &trans &trans &trans &trans    &trans    &trans    &trans    &trans    &trans
-                &trans &trans &trans &trans &trans &trans    &mkp MB4  &mkp LCLK &mkp MCLK &mkp RCLK &mkp MB5
-                &trans &trans &trans &trans &trans &trans    &mo SCROLL &trans   &trans    &trans    &trans
-                &trans &trans &trans                         &trans &trans &trans &trans &trans
-            >;
-            sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
-        };
-
-        /* Layer 6 - Scroll (trackball acts as scroll wheel)
-         */
-        scroll_layer {
-            display-name = "Scroll";
-            bindings = <
-                &trans &trans &trans &trans &trans &trans    &trans &trans &trans &trans &trans
-                &trans &trans &trans &trans &trans &trans    &trans &trans &trans &trans &trans
-                &trans &trans &trans &trans &trans &trans    &trans &trans &trans &trans &trans
-                &trans &trans &trans                         &trans &trans &trans &trans &trans
-            >;
-            sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
         };
     };
 };

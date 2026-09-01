@@ -1,16 +1,20 @@
-if SHIELD_ARARE_L || SHIELD_ARARE_R
-
-config ZMK_KEYBOARD_NAME
-    default "arare"
-
-config ZMK_SPLIT
-    default y
-
+# central = RIGHT hand (trackball side)
 if SHIELD_ARARE_R
 
+config ZMK_KEYBOARD_NAME
+	default "arare"
+
 config ZMK_SPLIT_ROLE_CENTRAL
-    default y
+	default y
 
-endif # SHIELD_ARARE_R
+endif
 
-endif # SHIELD_ARARE_L || SHIELD_ARARE_R
+if SHIELD_ARARE_L || SHIELD_ARARE_R
+
+config ZMK_SPLIT
+	default y
+
+config ZMK_POINTING
+	default y
+
+endif
