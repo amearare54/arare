@@ -18,6 +18,17 @@
 | horizontal rotary encoder 1 | 右手・水平エンコーダ（CKW12）用なぞりホイール |
 | parts 1〜4 | 小物（タクトSWキャップ・押し棒・電源SWツマミ等） |
 
+## ロゴ（logo/）
+
+「arare＝霰」に掛けて、文字ごとに和の気象モチーフ（霞・雨・波紋・しずく）が入っています。
+
+| ファイル | 内容 |
+|---|---|
+| arare_logo.svg | ★マスター。ベクター・無次元（`fill="currentColor"`） |
+| arare_logo_黒 / 白.png | ラスタ版（6788×1928px・背景透過） |
+| arare_logo_{R 13.324mm / L 16.179mm}.svg / .dxf | 基板実寸のベクター（DXFはCAD用・y上向き） |
+| arare_logo_{R/L}_*_emboss0.6mm.stl | 3Dプリント用エンボス（厚0.6mm・watertight） |
+
 ## 印刷設定の目安（Bambu Lab A1 mini / eSUN PLA+ で実績）
 
 - **ケース・プレート類（このフォルダの大物）: 0.4mmノズル**、壁4ライン、Arachne有効

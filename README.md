@@ -13,6 +13,7 @@ arare（霰）は左右分割・完全無線（BLE/ZMK）・ロープロファ�
 |---|---|
 | ファームウェア（ZMK設定） | このリポジトリ（`config/`） |
 | ケース・プレート等の3Dプリントデータ | [`model/case/`](model/case/)（**個人使用のみ** → [model/README.md](model/README.md)） |
+| ロゴ（SVG/PNG/DXF/STL） | [`model/logo/`](model/logo/)（**個人使用のみ**） |
 | 基板データ（KiCad/ガーバー） | **非公開** |
 | キーキャップ3Dデータ | **非公開** |
 
