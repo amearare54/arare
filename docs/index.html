@@ -1,4 +1,4 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>arare Studio</title>
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><title>arare Studio</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800;900&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&family=Shippori+Mincho:wght@600;800&display=swap">
 <style>
   :root{
@@ -97,6 +97,7 @@
   .key:hover rect.cap{stroke:var(--ink); fill:#f1f1f4}
   .key.sel rect.cap{fill:var(--accent); stroke:var(--accent)}
   .key.edited rect.cap{stroke:var(--accent2); stroke-dasharray:none; stroke-width:2.2}
+  .key.combo-pick rect.cap{stroke:var(--accent); stroke-dasharray:5 3; stroke-width:2.4; fill:var(--accent-soft)}
   .key text{font-family:var(--jp); font-weight:700; fill:var(--ink); pointer-events:none}
   .key.sel text{fill:#fff}
   .key text.mini{font-family:var(--mono); font-weight:500; fill:var(--faint)}
@@ -339,6 +340,8 @@
     <div class="panel dev" id="dev-enc"></div>
     <div class="panel dev" id="dev-joy"></div>
     <div class="panel dev" id="dev-mt"></div>
+    <div class="panel dev" id="dev-devices"></div>
+    <div class="panel dev" id="dev-combo"></div>
   </div>
 </div>
 
@@ -428,8 +431,22 @@ const DEV_DEFAULT={
      autoOn:false,autoLayer:1,autoMs:800,autoIdle:300,snipeOn:false,snipeLayer:2,snipeDiv:3,awake:false},
  enc:{trig:10,steps1:12,steps2:12},
  joy:{mode:"mouse",speed:5,dead:10,invy:false},
- mt:{term:200,ltTerm:200}
+ mt:{term:200,ltTerm:200},
+ accel:{on:false,preset:"mid",sens:1200,maxf:3000,thr:500,smax:3500,exp:2}
 };
+const GROUPS=["tb","enc","joy","mt","accel"];
+const ACCEL_PRESETS={weak:{sens:1000,maxf:2000,thr:600,smax:3500,exp:2},mid:{sens:1200,maxf:3000,thr:500,smax:3500,exp:2},strong:{sens:1300,maxf:4000,thr:400,smax:3000,exp:3}};
+const DEVS_DEFAULT=[0,1,2,3,4].map(()=>({name:"",layer:0,jis:false}));
+/* US→JIS 記号変換（QMK公式 keymap_japanese.h 互換） */
+const JIS_MAP={AT:"LBKT",CARET:"EQUAL",AMPS:"LS(N6)",ASTRK:"LS(SQT)",LPAR:"LS(N8)",RPAR:"LS(N9)",
+ UNDER:"LS(INT1)",PLUS:"LS(SEMI)",EQUAL:"LS(MINUS)",LBKT:"RBKT",RBKT:"NUHS",LBRC:"LS(RBKT)",RBRC:"LS(NUHS)",
+ BSLH:"INT1",PIPE:"LS(INT3)",COLON:"SQT",SQT:"LS(N7)",DQT:"LS(N2)",GRAVE:"LS(LBKT)",TILDE:"LS(EQUAL)"};
+function jisKey(n){return JIS_MAP[n]||n;}
+function jisTranslate(b){let m;
+ if((m=b.match(/^&kp (.+)$/)))return "&kp "+jisKey(m[1]);
+ if((m=b.match(/^&mt (\S+) (.+)$/)))return `&mt ${m[1]} ${jisKey(m[2])}`;
+ if((m=b.match(/^&lt (\d+) (.+)$/)))return `&lt ${m[1]} ${jisKey(m[2])}`;
+ return b;}
 const JOY_PUSH=[["左クリック","&mkp LCLK"],["右クリック","&mkp RCLK"],["中クリック","&mkp MCLK"],["Enter","&kp ENTER"],["Space","&kp SPACE"],["Esc","&kp ESC"]];
 const TB_PRESETS=[
  ["標準","バランスの取れた既定値",{spd:3,cpi:800,scrollOn:false,snipeOn:false,autoOn:false}],
@@ -447,6 +464,7 @@ const GLYPH={MINUS:"-",EQUAL:"=",COMMA:",",DOT:".",AT:"@",FSLH:"/",BSLH:"\\",SEM
  UP:"↑",DOWN:"↓",LEFT:"←",RIGHT:"→",HOME:"HOME",END:"END",PG_UP:"P↑",PG_DN:"P↓",
  LSHFT:"⇧",RSHFT:"⇧",LCTRL:"⌃",RCTRL:"⌃",LALT:"⌥",RALT:"⌥",LGUI:"⌘",RGUI:"⌘",
  N0:"0",N1:"1",N2:"2",N3:"3",N4:"4",N5:"5",N6:"6",N7:"7",N8:"8",N9:"9",
+ INT1:"ろ",INT2:"かな",INT3:"¥",INT4:"変換",INT5:"無変換",NUHS:"]",
  C_VOL_UP:"VOL+",C_VOL_DN:"VOL−",C_MUTE:"MUTE",C_PP:"⏯",C_NEXT:"⏭",C_PREV:"⏮",C_BRI_UP:"BRI+",C_BRI_DN:"BRI−"};
 const MODG={LS:"⇧",LC:"⌃",LA:"⌥",LG:"⌘",RS:"⇧",RC:"⌃",RA:"⌥",RG:"⌘"};
 const layName=n=>"L"+n;
@@ -466,6 +484,7 @@ function legend(b){
   if((m=b.match(/^&bt BT_SEL (\d)$/)))return"BT"+(+m[1]+1);
   if(b==="&bt BT_NXT")return"BT→";
   if(b==="&bt BT_PRV")return"BT←";
+  if((m=b.match(/^&bt_dev(\d)$/)))return"▸"+((devs&&devs[+m[1]]&&devs[+m[1]].name)||("DEV"+(+m[1]+1)));
   if((m=b.match(/^&kp (.+)$/)))return keyGlyph(m[1]);
   if((m=b.match(/^&mt (\S+) (.+)$/)))return keyGlyph(m[1])+"/"+keyGlyph(m[2]);
   if((m=b.match(/^&lt (\d+) (.+)$/)))return layName(+m[1])+"/"+keyGlyph(m[2]);
@@ -476,19 +495,50 @@ function legend(b){
 }
 
 /* ================= state ================= */
-let km, enc, encL, dev, mode="basic", layer=0, sel=-1;
+let km, enc, encL, dev, devs, combos, mode="basic", layer=0, sel=-1;
 function load(){
   km=JSON.parse(JSON.stringify(SHIPPED.layers)); enc=[...SHIPPED.sensors];
   dev=JSON.parse(JSON.stringify(DEV_DEFAULT)); encL={};
+  devs=JSON.parse(JSON.stringify(DEVS_DEFAULT)); combos=[];
   try{
     const d=JSON.parse(localStorage.getItem("arare-studio-draft"));
     if(d && d.km && d.km.length>=1 && d.km.length<=10 && d.km.every(l=>l.length===47)){
       km=d.km; enc=d.enc||enc; encL=d.encL||{}; mode=d.mode||"basic";
-      if(d.dev)for(const g of ["tb","enc","joy","mt"])if(d.dev[g])Object.assign(dev[g],d.dev[g]);
+      if(d.dev)for(const g of GROUPS)if(d.dev[g])Object.assign(dev[g],d.dev[g]);
+      if(d.devs&&d.devs.length===5)devs=d.devs;
+      if(Array.isArray(d.combos))combos=d.combos;
     }
   }catch(e){}
 }
-function save(){ try{localStorage.setItem("arare-studio-draft",JSON.stringify({km,enc,encL,dev,mode}));}catch(e){} }
+function save(){ try{localStorage.setItem("arare-studio-draft",JSON.stringify({km,enc,encL,dev,devs,combos,mode}));}catch(e){} }
+/* ===== Undo / Redo ===== */
+let hist=[], redoStack=[];
+function snapState(){return JSON.stringify({km,enc,encL,dev,devs,combos});}
+function pushHist(){hist.push(snapState()); if(hist.length>80)hist.shift(); redoStack.length=0;}
+function applyState(s){
+  const d=JSON.parse(s);
+  km=d.km; enc=d.enc; encL=d.encL||{}; combos=d.combos||[];
+  devs=(d.devs&&d.devs.length===5)?d.devs:JSON.parse(JSON.stringify(DEVS_DEFAULT));
+  dev=JSON.parse(JSON.stringify(DEV_DEFAULT));
+  for(const g of GROUPS)if(d.dev&&d.dev[g])Object.assign(dev[g],d.dev[g]);
+  if(layer>=km.length)layer=km.length-1; if(sel>=47)sel=-1;
+  save(); renderLayerbar(); renderDeck(); renderInsp(); refreshKeys();
+}
+function undo(){
+  if(LIVE.on){ if(window.liveUndo)window.liveUndo(); return; }
+  if(!hist.length){toast("戻せる操作がありません");return;}
+  redoStack.push(snapState()); applyState(hist.pop()); toast("1つ戻しました ↶");
+}
+function redo(){
+  if(LIVE.on)return;
+  if(!redoStack.length){toast("やり直せる操作がありません");return;}
+  hist.push(snapState()); applyState(redoStack.pop()); toast("やり直しました ↷");
+}
+window.addEventListener("keydown",e=>{
+  const tag=(e.target.tagName||"").toLowerCase();
+  if(tag==="input"||tag==="textarea"||tag==="select")return;
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="z"){e.preventDefault(); e.shiftKey?redo():undo();}
+});
 /* LIVE接続状態（エンジンは末尾のmoduleスクリプト） */
 const LIVE={on:false,layers:[],names:[],layerIds:[],dirty:new Set(),unsaved:false,device:"",transport:"",locked:true};
 function curKm(){return LIVE.on?LIVE.layers:km;}
@@ -502,6 +552,8 @@ function editCount(){
   for(let s=0;s<2;s++)if(enc[s]!==SHIPPED.sensors[s])n++;
   n+=Object.keys(encL).length;
   for(const g in DEV_DEFAULT)for(const k in DEV_DEFAULT[g])if(dev[g][k]!==DEV_DEFAULT[g][k])n++;
+  n+=combos.length;
+  n+=devs.filter(d=>d.name||d.layer!==0||d.jis).length;
   return n;
 }
 load();
@@ -555,6 +607,7 @@ function refreshKeys(){
     const long=t.textContent.length;
     t.setAttribute("font-size",(KEYS[i][3]||100)<80?11:(long>4?11:long>2?13:16));
     g.classList.toggle("sel",i===sel);
+    g.classList.toggle("combo-pick",!!(comboCapture&&comboCapture.keys.includes(i)));
     if(LIVE.on){ g.classList.toggle("edited",LIVE.dirty.has(layer+":"+i)); }
     else{
       const ref=layer<SHIPPED.layers.length?SHIPPED.layers[layer][i]:"&trans";
@@ -578,8 +631,19 @@ const PICK={
  "ナビ":["UP","DOWN","LEFT","RIGHT","HOME","END","PG_UP","PG_DN"].map(c=>[GLYPH[c],c]),
  "Fキー":Array.from({length:12},(_,i)=>["F"+(i+1),"F"+(i+1)]),
  "モッド":["LSHFT","LCTRL","LALT","LGUI"].map(c=>[GLYPH[c]+" "+c,c]),
- "メディア":["C_VOL_UP","C_VOL_DN","C_MUTE","C_PP","C_NEXT","C_PREV","C_BRI_UP","C_BRI_DN"].map(c=>[GLYPH[c],c])
+ "メディア":["C_VOL_UP","C_VOL_DN","C_MUTE","C_PP","C_NEXT","C_PREV","C_BRI_UP","C_BRI_DN"].map(c=>[GLYPH[c],c]),
+ "JIS":["INT4","INT5","INT2","INT1","INT3","NUHS"].map(c=>[GLYPH[c],c])
 };
+function deviceSpecials(){const a=[];devs.forEach((d,n)=>{if(d.name)a.push(["▸"+d.name,"&bt_dev"+n]);});return a;}
+function tactReco(){
+  const a=[];
+  devs.forEach((d,n)=>{if(d.name)a.push(["▸ "+d.name+"に切替","&bt_dev"+n]);});
+  if(!a.length)a.push(["BT接続先1","&bt BT_SEL 0"],["BT接続先2","&bt BT_SEL 1"],["BT接続先3","&bt BT_SEL 2"]);
+  a.push(["BT次へ","&bt BT_NXT"],["BTペア解除","&bt BT_CLR"],
+    ["アプリ用 F13","&kp F13"],["アプリ用 F14","&kp F14"],["アプリ用 F15","&kp F15"],
+    ["RESET","&sys_reset"],["UNLOCK","&studio_unlock"]);
+  return a;
+}
 const SPECIAL=[["▽ 透過","&trans"],["✕ 無効","&none"],["CLK·L","&mkp LCLK"],["CLK·R","&mkp RCLK"],["CLK·M","&mkp MCLK"],
  ["BT接続先1","&bt BT_SEL 0"],["BT接続先2","&bt BT_SEL 1"],["BT接続先3","&bt BT_SEL 2"],["BT次へ","&bt BT_NXT"],
  ["RESET","&sys_reset"],["BOOT","&bootloader"],["UNLOCK","&studio_unlock"],["BT消去","&bt BT_CLR"]];
@@ -592,10 +656,18 @@ function layerSpecials(){
 }
 let pickTab="文字", modState={LS:false,LC:false,LA:false,LG:false}, holdSel="none";
 
-function select(i){ sel=i; renderInsp(); refreshKeys(); }
+let comboCapture=null;
+function select(i){
+  if(comboCapture){
+    const k=comboCapture.keys.indexOf(i);
+    k>=0?comboCapture.keys.splice(k,1):comboCapture.keys.push(i);
+    refreshKeys(); renderDeck(); return;
+  }
+  sel=i; renderInsp(); refreshKeys();
+}
 function setBinding(b){
   if(LIVE.on){ if(window.liveSetBinding)window.liveSetBinding(layer,sel,b); return; }
-  km[layer][sel]=b; save(); renderInsp(); refreshKeys();
+  pushHist(); km[layer][sel]=b; save(); renderInsp(); refreshKeys();
 }
 function applyKp(code){
   let c=code;
@@ -612,7 +684,7 @@ function renderInsp(){
     <h2>KEY EDIT <span class="pos">${k[0]} · POS ${String(sel).padStart(2,"0")} · ${LIVE.on?(LIVE.names[layer]||layName(layer))+" ●LIVE":layName(layer)}</span></h2>
     <div class="bind-now" id="bindnow"></div>
     ${sel>=43?`<div class="sec">タクトSW おすすめ割当</div>
-    <div class="kb-grid">${TACT_RECO.map(([l,b])=>`<button class="kb-key" data-b="${b}" style="grid-column:span 2">${l}</button>`).join("")}</div>
+    <div class="kb-grid">${tactReco().map(([l,b])=>`<button class="kb-key" data-b="${b}" style="grid-column:span 2">${l}</button>`).join("")}</div>
     <div class="desc" style="margin:6px 0 0;font-size:10.5px;color:var(--mute);line-height:1.55">BT＝接続先の切替（スマホ/PC等を登録順に）。アプリ起動は F13〜F15 を割当て、Mac側のショートカット設定やRaycastでそのキーにアプリを紐づけるのが定石です。<b>UNLOCKはどこかに1つ残すのがおすすめ</b>（ZMK Studioのロック解除に必要）。</div>`:""}
     <div class="sec">同時修飾（タップに付与）</div>
     <div class="modrow" id="modrow">
@@ -631,7 +703,7 @@ function renderInsp(){
     <div class="kb-tabs" id="kbtabs">${Object.keys(PICK).map(t=>`<button class="kb-tab${t===pickTab?" on":""}" data-t="${t}">${t}</button>`).join("")}</div>
     <div class="kb-grid" id="kbgrid"></div>
     <div class="sec">特殊割当（そのままセット）</div>
-    <div class="kb-grid">${[...SPECIAL,...layerSpecials()].map(([l,b])=>`<button class="kb-key" data-b="${b}" style="grid-column:span 2">${l}</button>`).join("")}</div>
+    <div class="kb-grid">${[...deviceSpecials(),...SPECIAL,...layerSpecials()].map(([l,b])=>`<button class="kb-key" data-b="${b}" style="grid-column:span 2">${l}</button>`).join("")}</div>
     <div class="sec">RAW（ZMK記法を直接入力）</div>
     <input type="text" id="rawin" spellcheck="false" placeholder="&kp LS(LG(V)) など">`;
   box.querySelector("#bindnow").textContent=(curKm()[layer][sel]||"&trans")+"   →  "+legend(curKm()[layer][sel]||"&trans");
@@ -664,18 +736,36 @@ function renderLayerbar(){
   bar.innerHTML=km.map((_,n)=>`<button class="chip${n===layer?" on":""}" data-l="${n}">${layName(n)}</button>`).join("")
     +(km.length<10?'<button class="chip util" id="addlayer" title="レイヤーを追加">＋</button>':"")
     +(km.length>1?'<button class="chip util" id="dellayer" title="最後のレイヤーを削除">－</button>':"")
+    +(km.length<10?'<button class="chip util" id="duplayer" title="表示中のレイヤーを複製">⧉</button>':"")
+    +(km.length<10?'<button class="chip util" id="jislayer" title="表示中のレイヤーをJIS配列用に変換して複製">JIS⧉</button>':"")
+    +'<button class="chip util" id="undobtn" title="元に戻す（⌘Z）">↶</button>'
+    +'<button class="chip util" id="redobtn" title="やり直す（⇧⌘Z）">↷</button>'
     +'<span class="hint" id="edithint"></span>';
+  const dup=bar.querySelector("#duplayer");
+  if(dup)dup.addEventListener("click",()=>{
+    pushHist(); km.push(km[layer].slice()); const src=layer; layer=km.length-1; save();
+    renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
+    toast(layName(src)+" を複製して "+layName(layer)+" を作りました");
+  });
+  const jis=bar.querySelector("#jislayer");
+  if(jis)jis.addEventListener("click",()=>{
+    pushHist(); km.push(km[layer].map(jisTranslate)); const src=layer; layer=km.length-1; save();
+    renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
+    toast(layName(src)+" をJIS配列用に変換して "+layName(layer)+" を作りました（記号キーを変換）");
+  });
+  bar.querySelector("#undobtn").addEventListener("click",undo);
+  bar.querySelector("#redobtn").addEventListener("click",redo);
   bar.querySelectorAll(".chip[data-l]").forEach(c=>c.addEventListener("click",()=>{
     layer=+c.dataset.l; renderLayerbar(); renderInsp(); refreshKeys();
   }));
   const add=bar.querySelector("#addlayer");
   if(add)add.addEventListener("click",()=>{
-    km.push(Array(47).fill("&trans")); layer=km.length-1; save();
+    pushHist(); km.push(Array(47).fill("&trans")); layer=km.length-1; save();
     renderLayerbar(); renderInsp(); renderDeck(); refreshKeys(); toast(layName(layer)+" を追加しました（全キー ▽透過）");
   });
   const del=bar.querySelector("#dellayer");
   if(del)del.addEventListener("click",()=>{
-    km.pop(); if(layer>=km.length)layer=km.length-1;
+    pushHist(); km.pop(); if(layer>=km.length)layer=km.length-1;
     for(const k of Object.keys(encL))if(+k>=km.length)delete encL[k];
     ["scrollLayer","autoLayer","snipeLayer"].forEach(f=>{if(dev.tb[f]>=km.length)dev.tb[f]=Math.max(1,km.length-1);});
     save();
@@ -709,10 +799,18 @@ function renderDeck(){
     <div class="desc">カーソルの速さ・向き・スクロールのしかた。まずはプリセットからどうぞ。</div>
     <div class="presets basiconly">${TB_PRESETS.map((p,i)=>`<button class="preset" data-pre="${i}"><b>${p[0]}</b><span>${p[1]}</span></button>`).join("")}</div>
     ${rowH("ポインタ速度","カーソルが動く速さ",rgH("tb.spd",0,SPD.length-1,1,FMT_SPD))}
+    ${rowH("加速度","速く回すほどカーソルが遠くへ飛ぶ",swH("accel.on"))}
+    ${dev.accel.on?rowH("　┗ 強さ","",segH("accel.preset",[["weak","弱"],["mid","中"],["strong","強"]])):""}
+    ${dev.accel.on?rowH("　┗ 基本感度","1000=1.0×",rgH("accel.sens",1000,2000,50,FMT_RAW),"adv"):""}
+    ${dev.accel.on?rowH("　┗ 最大倍率","加速の上限（1000=1.0×）",rgH("accel.maxf",1500,5000,100,FMT_RAW),"adv"):""}
+    ${dev.accel.on?rowH("　┗ 加速開始速度","counts/sec",rgH("accel.thr",100,1500,50,FMT_RAW),"adv"):""}
+    ${dev.accel.on?rowH("　┗ 最大到達速度","counts/sec",rgH("accel.smax",1500,6000,100,FMT_RAW),"adv"):""}
+    ${dev.accel.on?rowH("　┗ カーブ指数","1=直線 〜 5=急峻",rgH("accel.exp",1,5,1,FMT_RAW),"adv"):""}
     ${rowH("スクロールモード","選んだレイヤーの間はボールがホイールになる",swH("tb.scrollOn"))}
     ${t.scrollOn?rowH("　┗ スクロールレイヤー","",layerSelH("tb.scrollLayer")):""}
     ${t.scrollOn?rowH("　┗ スクロール速度","",segH("tb.scrollDiv",[[4,"速"],[8,"中"],[12,"遅"]])):""}
     ${t.scrollOn?rowH("　┗ ナチュラル方向","Macのトラックパッドと同じ向き",swH("tb.natural")):""}
+    ${t.scrollOn?`<div class="desc" style="margin:4px 0 0">慣性スクロール（なめらかに滑り続ける）はPC側アプリの領分です。Macなら <a href="https://github.com/noah-nuebling/mac-mouse-fix" target="_blank" rel="noopener">Mac Mouse Fix</a> 併用が定石。</div>`:""}
     ${rowH("CPI（解像度）","センサーの読み取り解像度",rgH("tb.cpi",400,1600,100,FMT_RAW),"adv")}
     ${rowH("取付向き補正","90°単位。組立後に実機で合わせる",segH("tb.rot",[[0,"0°"],[90,"90°"],[180,"180°"],[270,"270°"]]),"adv")}
     ${rowH("X反転 / Y反転","",swH("tb.invx")+swH("tb.invy"),"adv")}
@@ -762,20 +860,70 @@ function renderDeck(){
     <div class="desc">「タップで文字・長押しで修飾キー」の切替時間。誤爆するなら長め、もたつくなら短めに。</div>
     ${rowH("Mod-Tap 判定時間","この時間より長く押すと⇧⌃⌥⌘側になる",rgH("mt.term",120,350,10,FMT_MS))}
     ${rowH("Layer-Tap 判定時間","ホールドでレイヤー系の判定時間",rgH("mt.ltTerm",120,350,10,FMT_MS),"adv")}`;
+  /* --- DEVICES（BTプロファイル別キーマップ） --- */
+  const layOpts=(cur)=>km.map((_,n)=>`<option value="${n}"${n===cur?" selected":""}>${layName(n)}</option>`).join("");
+  document.getElementById("dev-devices").innerHTML=`
+    <h3>DEVICES <small>接続先ごとのキーマップ</small></h3>
+    <div class="desc">接続先（BTプロファイル）に名前とキーマップを割当てると「▸切替キー」が作られ、<b>1キーで接続先とキーマップが同時に切替わります</b>（Mac⇄Windows等）。切替キーはタクトSWのおすすめ割当・特殊割当から。</div>
+    <table class="encmat"><tr><th>#</th><th>名前</th><th>キーマップ</th><th>JIS</th></tr>
+    ${devs.map((d,n)=>`<tr>
+      <td style="font-family:var(--mono)">BT${n+1}</td>
+      <td><input type="text" data-devname="${n}" value="${d.name.replace(/"/g,"&quot;")}" placeholder="例: MacBook" style="padding:5px 7px;font-size:11px"></td>
+      <td><select data-devlayer="${n}">${layOpts(d.layer)}</select></td>
+      <td><input type="checkbox" data-devjis="${n}"${d.jis?" checked":""}></td>
+    </tr>`).join("")}
+    </table>
+    <div class="desc" style="margin:6px 0 0">JISにチェックした接続先には、レイヤーバーの「JIS⧉」で作ったJIS変換レイヤーを割当ててください（記号のズレを吸収）。</div>`;
+  /* --- COMBO（同時押し） --- */
+  const comboRows=combos.map((c,i)=>`<div class="row">
+      <div class="lab">${c.keys.map(k=>legend((km[0]||[])[k]||"&trans")).join(" + ")}<small>POS ${c.keys.join(",")}</small></div>
+      <div class="ctl">
+        <input type="text" data-combobind="${i}" value="${c.binding.replace(/"/g,"&quot;")}" style="width:130px;padding:5px 7px;font-size:10.5px;font-family:var(--mono)">
+        <select data-combotime="${i}" class="adv"><option value="30"${c.timeout===30?" selected":""}>30ms</option><option value="50"${(!c.timeout||c.timeout===50)?" selected":""}>50ms</option><option value="80"${c.timeout===80?" selected":""}>80ms</option></select>
+        <button class="kb-key" data-combodel="${i}">×</button>
+      </div>
+    </div>`).join("");
+  document.getElementById("dev-combo").innerHTML=`
+    <h3>COMBO <small>同時押し</small></h3>
+    <div class="desc">2キー以上の同時押しに動作を割当（例: I+O → ESC）。動作欄はZMK記法で編集できます。</div>
+    ${comboRows||'<div class="desc">まだコンボはありません。</div>'}
+    ${comboCapture
+      ?`<div class="row"><div class="lab">キーを選択中… <b>${comboCapture.keys.length}個</b><small>上のボードでキーをクリック（もう一度で解除）</small></div>
+         <div class="ctl"><button class="btn primary mini" id="combodone">確定</button><button class="btn plain mini" id="combocancel">キャンセル</button></div></div>`
+      :'<button class="btn ghost mini" id="comboadd" style="margin-top:8px">＋ ボードでキーを選んで追加</button>'}`;
+  const ca=document.getElementById("comboadd");
+  if(ca)ca.addEventListener("click",()=>{comboCapture={keys:[]}; renderDeck(); refreshKeys(); toast("ボード上でコンボにするキーをクリックしてください");});
+  const cd=document.getElementById("combodone");
+  if(cd)cd.addEventListener("click",()=>{
+    if(comboCapture.keys.length<2){toast("2キー以上選んでください");return;}
+    pushHist(); combos.push({keys:[...comboCapture.keys].sort((a,b)=>a-b),binding:"&kp ESC",timeout:50});
+    comboCapture=null; save(); renderDeck(); refreshKeys(); renderOut();
+    toast("コンボを追加しました。動作（&kp ESC）を編集してください");
+  });
+  const cc=document.getElementById("combocancel");
+  if(cc)cc.addEventListener("click",()=>{comboCapture=null; renderDeck(); refreshKeys();});
+  document.querySelectorAll("[data-combodel]").forEach(b=>b.addEventListener("click",()=>{
+    pushHist(); combos.splice(+b.dataset.combodel,1); save(); renderDeck(); refreshKeys(); renderOut();
+  }));
   renderProfiles();
 }
 
 /* デッキのイベント（委譲） */
 document.getElementById("deck").addEventListener("click",e=>{
   const sw=e.target.closest(".sw[data-tg]");
-  if(sw){sp(sw.dataset.tg,!gp(sw.dataset.tg)); save(); renderDeck(); renderOut(); return;}
+  if(sw){pushHist(); sp(sw.dataset.tg,!gp(sw.dataset.tg)); save(); renderDeck(); renderOut(); return;}
   const sg=e.target.closest("[data-sg]");
-  if(sg){const raw=sg.dataset.v; sp(sg.dataset.sg,isNaN(+raw)?raw:+raw); save(); renderDeck(); renderOut(); return;}
+  if(sg){
+    pushHist(); const raw=sg.dataset.v; sp(sg.dataset.sg,isNaN(+raw)?raw:+raw);
+    if(sg.dataset.sg==="accel.preset")Object.assign(dev.accel,ACCEL_PRESETS[raw]||{});
+    save(); renderDeck(); renderOut(); return;
+  }
   const pre=e.target.closest("[data-pre]");
-  if(pre){Object.assign(dev.tb,TB_PRESETS[+pre.dataset.pre][2]); save(); renderDeck(); renderOut(); toast("プリセット「"+TB_PRESETS[+pre.dataset.pre][0]+"」を適用しました"); return;}
+  if(pre){pushHist(); Object.assign(dev.tb,TB_PRESETS[+pre.dataset.pre][2]); save(); renderDeck(); renderOut(); toast("プリセット「"+TB_PRESETS[+pre.dataset.pre][0]+"」を適用しました"); return;}
 });
 document.getElementById("deck").addEventListener("input",e=>{
   const rg=e.target.closest("[data-rg]"); if(!rg)return;
+  if(!rg._histed){pushHist(); rg._histed=true;}
   const p=rg.dataset.rg; let v=+rg.value;
   if(p==="tb.spd"){sp(p,v);}
   else if(p==="enc.trig"){dev.enc.trig=TRIG[v];}
@@ -784,15 +932,21 @@ document.getElementById("deck").addEventListener("input",e=>{
   if(vf){const f={"tb.spd":FMT_SPD,"tb.autoMs":FMT_MS,"tb.autoIdle":FMT_MS,"mt.term":FMT_MS,"mt.ltTerm":FMT_MS,"joy.dead":FMT_PCT,"enc.trig":()=>dev.enc.trig+"/回転"}[p]||FMT_RAW; vf.textContent=f(v);}
 });
 document.getElementById("deck").addEventListener("change",e=>{
-  if(e.target.matches("[data-rg]")){save(); renderOut(); return;}
-  if(e.target.matches("[data-sl]")){sp(e.target.dataset.sl,+e.target.value); save(); renderOut(); return;}
-  if(e.target.matches("[data-e0]")){enc[0]=e.target.value; save(); renderOut(); return;}
-  if(e.target.matches("[data-e1]")){enc[1]=e.target.value; save(); renderOut(); return;}
-  if(e.target.matches("[data-joypush]")){km[0][39]=e.target.value; save(); refreshKeys(); renderDeck(); return;}
+  if(e.target.matches("[data-rg]")){e.target._histed=false; save(); renderOut(); return;}
+  if(e.target.matches("[data-sl]")){pushHist(); sp(e.target.dataset.sl,+e.target.value); save(); renderOut(); return;}
+  if(e.target.matches("[data-e0]")){pushHist(); enc[0]=e.target.value; save(); renderOut(); return;}
+  if(e.target.matches("[data-e1]")){pushHist(); enc[1]=e.target.value; save(); renderOut(); return;}
+  if(e.target.matches("[data-joypush]")){pushHist(); km[0][39]=e.target.value; save(); refreshKeys(); renderDeck(); return;}
+  if(e.target.matches("[data-devname]")){pushHist(); devs[+e.target.dataset.devname].name=e.target.value.trim(); save(); renderDeck(); renderOut(); return;}
+  if(e.target.matches("[data-devlayer]")){pushHist(); devs[+e.target.dataset.devlayer].layer=+e.target.value; save(); renderOut(); return;}
+  if(e.target.matches("[data-devjis]")){pushHist(); devs[+e.target.dataset.devjis].jis=e.target.checked; save(); renderOut(); return;}
+  if(e.target.matches("[data-combobind]")){const v=e.target.value.trim(); if(!v.startsWith("&")){toast("ZMKの割当は & で始まります");return;} pushHist(); combos[+e.target.dataset.combobind].binding=v; save(); renderOut(); return;}
+  if(e.target.matches("[data-combotime]")){pushHist(); combos[+e.target.dataset.combotime].timeout=+e.target.value; save(); renderOut(); return;}
   const em=e.target.closest("[data-em]");
   if(em){
     const [n,s]=em.dataset.em.split(":").map(Number);
     const v=e.target.value;
+    pushHist();
     if(v===""){delete encL[n];}
     else{if(!encL[n])encL[n]=[enc[0],enc[1]]; encL[n][s]=v;}
     save(); renderDeck(); renderOut(); return;
@@ -814,7 +968,7 @@ function renderProfiles(){
   document.getElementById("profsave").addEventListener("click",()=>{
     const name=document.getElementById("profname").value.trim()||document.getElementById("profsel").value;
     if(!name){toast("プロファイル名を入力してください");return;}
-    const ps=getProfiles(); ps[name]={km,enc,encL,dev};
+    const ps=getProfiles(); ps[name]={km,enc,encL,dev,devs,combos};
     try{localStorage.setItem("arare-profiles",JSON.stringify(ps));}catch(e){}
     renderProfiles(); document.getElementById("profsel").value=name;
     toast("プロファイル「"+name+"」を保存しました（このブラウザ内）");
@@ -827,9 +981,12 @@ function renderProfiles(){
   });
   document.getElementById("profsel").addEventListener("change",e=>{
     const p=getProfiles()[e.target.value]; if(!p)return;
+    pushHist();
     km=JSON.parse(JSON.stringify(p.km)); enc=[...p.enc]; encL=JSON.parse(JSON.stringify(p.encL||{}));
+    devs=(p.devs&&p.devs.length===5)?JSON.parse(JSON.stringify(p.devs)):JSON.parse(JSON.stringify(DEVS_DEFAULT));
+    combos=Array.isArray(p.combos)?JSON.parse(JSON.stringify(p.combos)):[];
     dev=JSON.parse(JSON.stringify(DEV_DEFAULT));
-    for(const g of ["tb","enc","joy","mt"])if(p.dev&&p.dev[g])Object.assign(dev[g],p.dev[g]);
+    for(const g of GROUPS)if(p.dev&&p.dev[g])Object.assign(dev[g],p.dev[g]);
     if(layer>=km.length)layer=km.length-1; sel=-1; save();
     renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
     toast("プロファイル「"+e.target.value+"」を読み込みました");
@@ -867,12 +1024,43 @@ ${fmtLayer(i)}
 ${dev.mt.term!==200?`&mt { tapping-term-ms = <${dev.mt.term}>; };
 `:""}${dev.mt.ltTerm!==200?`&lt { tapping-term-ms = <${dev.mt.ltTerm}>; };
 `:""}/ {
-    keymap {
+${genMacrosNode()}${genCombosNode()}    keymap {
         compatible = "zmk,keymap";
 
 ${blocks}
     };
 };
+`;
+}
+/* デバイス切替マクロ（BT切替＋ベースレイヤー切替を1キーで） */
+function genMacrosNode(){
+  const used=[0,1,2,3,4].filter(n=>devs[n].name||km.some(l=>l.some(b=>b===("&bt_dev"+n))));
+  if(!used.length)return "";
+  const m=used.map(n=>`        bt_dev${n}: bt_dev${n} {${devs[n].name?`  /* ${devs[n].name}${devs[n].jis?" (JIS)":""} */`:""}
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <100>;
+            tap-ms = <5>;
+            bindings = <&bt BT_SEL ${n} &to ${devs[n].layer}>;
+        };`).join("\n");
+  return `    macros {
+${m}
+    };
+
+`;
+}
+function genCombosNode(){
+  if(!combos.length)return "";
+  const c=combos.map((cb,i)=>`        combo_${i+1} {
+            timeout-ms = <${cb.timeout||50}>;
+            key-positions = <${cb.keys.join(" ")}>;
+            bindings = <${cb.binding}>;
+        };`).join("\n");
+  return `    combos {
+        compatible = "zmk,combos";
+${c}
+    };
+
 `;
 }
 /* トラックボール＋右エンコーダ設定 → arare_tuning_R.dtsi */
@@ -897,6 +1085,8 @@ function genTuningR(){
     kids.push(`    scroller {\n        layers = <${t.scrollLayer}>;\n        input-processors = ${p.join(", ")};\n    };`);
   }
   if(t.snipeOn)kids.push(`    sniper {\n        layers = <${t.snipeLayer}>;\n        input-processors = <&zip_xy_scaler 1 ${t.snipeDiv}>;\n    };`);
+  const a=dev.accel;
+  if(a.on)base.unshift("<&pointer_accel>");
   const listener=(base.length||kids.length)
     ?`\n&trackball_listener {\n${base.length?`    input-processors = ${base.join(", ")};\n`:""}${kids.length?kids.join("\n\n")+"\n":""}};\n`
     :"";
@@ -904,7 +1094,7 @@ function genTuningR(){
 
 #include <input/processors.dtsi>
 #include <dt-bindings/zmk/input_transform.h>
-
+${a.on?"#include <behaviors/input_gestures_accel.dtsi>\n":""}
 &trackball {
     res-cpi = <${t.cpi}>;${t.awake?"\n    force-awake;":""}
 };
@@ -916,7 +1106,19 @@ function genTuningR(){
         require-prior-idle-ms = <${t.autoIdle}>;
     };
 };
-${listener}
+${listener}${a.on?`
+&pointer_accel {
+    input-type = <INPUT_EV_REL>;
+    codes = <INPUT_REL_X INPUT_REL_Y>;
+    sensitivity = <${a.sens}>;
+    max-factor = <${a.maxf}>;
+    speed-threshold = <${a.thr}>;
+    speed-max = <${a.smax}>;
+    acceleration-exponent = <${a.exp}>;
+    min-factor = <1000>;
+    sensor-dpi = <800>;
+};
+`:""}
 &right_encoder {
     steps = <${e.steps2}>;
 };
@@ -982,8 +1184,10 @@ document.getElementById("openedit").addEventListener("click",()=>{
   window.open("https://github.com/amearare54/zmk-config-arare/edit/main/"+f.path,"_blank","noopener");
 });
 document.getElementById("resetbtn").addEventListener("click",()=>{
+  pushHist();
   km=JSON.parse(JSON.stringify(SHIPPED.layers)); enc=[...SHIPPED.sensors]; layer=0;
   dev=JSON.parse(JSON.stringify(DEV_DEFAULT)); encL={};
+  devs=JSON.parse(JSON.stringify(DEVS_DEFAULT)); combos=[]; comboCapture=null;
   try{localStorage.removeItem("arare-studio-draft");}catch(e){}
   renderLayerbar(); renderInsp(); renderDeck(); refreshKeys(); toast("出荷時の設定に戻しました（プロファイルは残ります）");
 });
@@ -1219,12 +1423,27 @@ window.liveSetBinding=async(layer,pos,s)=>{
     const r=await rpc({keymap:{setLayerBinding:{layerId:LIVE.layerIds[layer],keyPosition:pos,binding:b}}});
     const code=r.keymap?.setLayerBinding;
     if(code===0){
+      liveHist.push({layer,pos,old:LIVE.layers[layer][pos]}); if(liveHist.length>80)liveHist.shift();
       LIVE.layers[layer][pos]=s; LIVE.dirty.add(layer+":"+pos); LIVE.unsaved=true;
       A.renderInsp(); A.refreshKeys(); A.renderLink();
     }else{
       A.toast("キーボードが割当を拒否しました (code "+code+")");
     }
   }catch(e){A.toast("送信エラー: "+(e&&e.message||e));}
+};
+const liveHist=[];
+window.liveUndo=async()=>{
+  const h=liveHist.pop();
+  if(!h){A.toast("戻せるLIVE操作がありません");return;}
+  const b=encodeBinding(h.old);
+  if(!b){A.toast("この割当はLIVEで戻せません: "+h.old);return;}
+  try{
+    const r=await rpc({keymap:{setLayerBinding:{layerId:LIVE.layerIds[h.layer],keyPosition:h.pos,binding:b}}});
+    if(r.keymap?.setLayerBinding===0){
+      LIVE.layers[h.layer][h.pos]=h.old; LIVE.dirty.delete(h.layer+":"+h.pos);
+      A.renderInsp(); A.refreshKeys(); A.renderLink(); A.toast("1つ戻しました ↶（キーボードに送信済み）");
+    }
+  }catch(e){A.toast("undo送信エラー: "+(e&&e.message||e));}
 };
 window.liveSave=async()=>{
   try{await rpc({keymap:{saveChanges:true}}); LIVE.unsaved=false; LIVE.dirty.clear();
