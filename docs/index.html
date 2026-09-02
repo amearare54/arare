@@ -267,6 +267,15 @@
   .boot-tag b{color:var(--ink); font-weight:600}
   .boot-skip{position:absolute; right:28px; bottom:26px; font-family:var(--mono); font-size:9px; letter-spacing:.24em; color:var(--faint)}
   @media(prefers-reduced-motion:reduce){ #boot{display:none} }
+
+  /* ---------- 確認モーダル ---------- */
+  .modal-bg{position:fixed; inset:0; background:rgba(23,24,29,.32); z-index:70;
+    display:flex; align-items:center; justify-content:center; padding:20px}
+  .modal{background:var(--card); border:1px solid var(--line); border-radius:18px;
+    padding:22px 24px 18px; max-width:360px; width:100%; box-shadow:0 18px 50px rgba(23,24,29,.22)}
+  .modal h4{margin:0 0 6px; font-family:var(--disp); font-weight:800; font-size:15px; letter-spacing:.04em}
+  .modal p{margin:0 0 16px; font-size:12px; color:var(--mute); line-height:1.7}
+  .modal .btnrow{justify-content:flex-end}
 </style>
 
 <canvas id="hail"></canvas>
@@ -770,7 +779,7 @@ function renderLayerbar(){
     renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
     toast(layName(src)+" をJIS配列用に変換して "+layName(layer)+" を作りました（記号キーを変換）");
   });
-  bar.querySelector("#resetinit").addEventListener("click",resetAll);
+  bar.querySelector("#resetinit").addEventListener("click",confirmReset);
   bar.querySelector("#undobtn").addEventListener("click",undo);
   bar.querySelector("#redobtn").addEventListener("click",redo);
   bar.querySelectorAll(".chip[data-l]").forEach(c=>c.addEventListener("click",()=>{
@@ -1210,7 +1219,26 @@ function resetAll(){
   renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
   toast("初期配置に戻しました（⌘Zで取り消せます・プロファイルは残ります）");
 }
-document.getElementById("resetbtn").addEventListener("click",resetAll);
+function confirmReset(){
+  const bg=document.createElement("div"); bg.className="modal-bg";
+  bg.innerHTML=`<div class="modal" role="dialog" aria-modal="true">
+    <h4>初期配置に戻しますか？</h4>
+    <p>キーマップ・レイヤー・デバイス設定・コンボが、最初に設定した初期配置で上書きされます。<br>
+    直後なら ⌘Z で取り消せます。保存済みプロファイルは消えません。</p>
+    <div class="btnrow">
+      <button class="btn plain" id="mCancel">キャンセル</button>
+      <button class="btn primary" id="mOk">初期配置に戻す</button>
+    </div></div>`;
+  document.body.append(bg);
+  const close=()=>{bg.remove(); removeEventListener("keydown",esc);};
+  const esc=e=>{if(e.key==="Escape")close();};
+  addEventListener("keydown",esc);
+  bg.addEventListener("click",e=>{if(e.target===bg)close();});
+  bg.querySelector("#mCancel").addEventListener("click",close);
+  bg.querySelector("#mOk").addEventListener("click",()=>{close(); resetAll();});
+  bg.querySelector("#mOk").focus();
+}
+document.getElementById("resetbtn").addEventListener("click",confirmReset);
 
 /* ================= LIVE接続バー ================= */
 const PAGES_URL="https://amearare54.github.io/zmk-config-arare/";
