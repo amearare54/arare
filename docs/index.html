@@ -371,7 +371,7 @@
     <div class="btnrow">
       <button class="btn primary" id="copybtn">keymap をコピー</button>
       <button class="btn ghost" id="openedit">GitHubで貼り付け先を開く ↗</button>
-      <button class="btn plain" id="resetbtn">出荷時に戻す</button>
+      <button class="btn plain" id="resetbtn">初期配置に戻す</button>
     </div>
   </div>
   <div class="ftabs" id="ftabs"></div>
@@ -757,6 +757,7 @@ function renderLayerbar(){
     +(km.length>1?'<button class="chip util" id="dellayer" title="最後のレイヤーを削除">－</button>':"")
     +(km.length<10?'<button class="chip util" id="duplayer" title="表示中のレイヤーを複製">⧉</button>':"")
     +(km.length<10?'<button class="chip util" id="jislayer" title="表示中のレイヤーをJIS配列用に変換して複製">JIS⧉</button>':"")
+    +'<button class="chip util" id="resetinit" title="初期配置に戻す（⌘Zで取消可）">⟲</button>'
     +'<button class="chip util" id="undobtn" title="元に戻す（⌘Z）">↶</button>'
     +'<button class="chip util" id="redobtn" title="やり直す（⇧⌘Z）">↷</button>'
     +'<span class="hint" id="edithint"></span>';
@@ -772,6 +773,7 @@ function renderLayerbar(){
     renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
     toast(layName(src)+" をJIS配列用に変換して "+layName(layer)+" を作りました（記号キーを変換）");
   });
+  bar.querySelector("#resetinit").addEventListener("click",resetAll);
   bar.querySelector("#undobtn").addEventListener("click",undo);
   bar.querySelector("#redobtn").addEventListener("click",redo);
   bar.querySelectorAll(".chip[data-l]").forEach(c=>c.addEventListener("click",()=>{
@@ -1202,14 +1204,16 @@ document.getElementById("openedit").addEventListener("click",()=>{
   const f=FILES.find(f=>f.id===activeFile)||FILES[0];
   window.open("https://github.com/amearare54/zmk-config-arare/edit/main/"+f.path,"_blank","noopener");
 });
-document.getElementById("resetbtn").addEventListener("click",()=>{
+function resetAll(){
   pushHist();
   km=JSON.parse(JSON.stringify(SHIPPED.layers)); enc=[...SHIPPED.sensors]; layer=0;
   dev=JSON.parse(JSON.stringify(DEV_DEFAULT)); encL={};
   devs=JSON.parse(JSON.stringify(DEVS_DEFAULT)); combos=[]; comboCapture=null;
   try{localStorage.removeItem("arare-studio-draft");}catch(e){}
-  renderLayerbar(); renderInsp(); renderDeck(); refreshKeys(); toast("出荷時の設定に戻しました（プロファイルは残ります）");
-});
+  renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
+  toast("初期配置に戻しました（⌘Zで取り消せます・プロファイルは残ります）");
+}
+document.getElementById("resetbtn").addEventListener("click",resetAll);
 
 /* ================= LIVE接続バー ================= */
 const PAGES_URL="https://amearare54.github.io/zmk-config-arare/";
