@@ -4,6 +4,8 @@ manifest:
       url-base: https://github.com/zmkfirmware
     - name: sekigon-gonnoc
       url-base: https://github.com/sekigon-gonnoc
+    - name: nuovotaka
+      url-base: https://github.com/nuovotaka
   projects:
     - name: zmk
       remote: zmkfirmware
@@ -16,5 +18,10 @@ manifest:
       remote: sekigon-gonnoc
       revision: torabo-tsuki
       path: modules/zmk-driver-paw3222
+    # ポインタ加速 input processor（PAW3222で実機テスト済み・ZMK v0.3.0対応）
+    - name: zmk-pointing-acceleration-alpha
+      remote: nuovotaka
+      revision: 780dfcd6b796063367893ff41e233773e12fb07c
+      path: modules/zmk-pointing-acceleration
   self:
     path: config
