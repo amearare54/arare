@@ -279,29 +279,33 @@
 
   /* ========== Liquid Glass 質感（色トークンは不変） ========== */
   body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:none; background:
-    radial-gradient(560px 420px at 12% 6%, rgba(86,70,214,.07), transparent 60%),
-    radial-gradient(660px 500px at 88% 92%, rgba(114,99,232,.06), transparent 65%),
-    radial-gradient(520px 420px at 82% 10%, rgba(23,24,29,.045), transparent 60%)}
-  .panel{background:rgba(255,255,255,.6); -webkit-backdrop-filter:blur(22px) saturate(1.15); backdrop-filter:blur(22px) saturate(1.15);
-    border:1px solid rgba(255,255,255,.8); border-radius:24px;
-    box-shadow:0 18px 44px rgba(28,30,46,.10), 0 2px 6px rgba(28,30,46,.05), inset 0 1px 0 rgba(255,255,255,.9)}
+    radial-gradient(600px 460px at 12% 6%, rgba(86,70,214,.10), transparent 60%),
+    radial-gradient(700px 540px at 88% 92%, rgba(114,99,232,.09), transparent 65%),
+    radial-gradient(560px 440px at 82% 10%, rgba(23,24,29,.06), transparent 60%)}
+  .panel{background:rgba(255,255,255,.42); -webkit-backdrop-filter:blur(28px) saturate(1.3); backdrop-filter:blur(28px) saturate(1.3);
+    border:1px solid rgba(255,255,255,.85); border-radius:28px;
+    box-shadow:0 26px 60px rgba(28,30,46,.13), 0 3px 8px rgba(28,30,46,.05),
+      inset 0 1.5px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.35)}
   .board-panel{background:
     radial-gradient(circle at 1px 1px, var(--grid) 1px, transparent 1.4px) 0 0/16px 16px,
-    rgba(255,255,255,.72)}
+    rgba(255,255,255,.5)}
   .btn.primary{background:linear-gradient(180deg,#7b6cf0,#5646d6);
     box-shadow:0 10px 24px rgba(86,70,214,.4), inset 0 1.5px 0 rgba(255,255,255,.45)}
   .btn.primary:hover{background:linear-gradient(180deg,#8677f2,#6152e0)}
-  .btn.ghost,.btn.plain{background:rgba(255,255,255,.78); border:1px solid rgba(255,255,255,.8); color:var(--ink);
-    box-shadow:0 4px 14px rgba(28,30,46,.08), inset 0 1px 0 #fff}
+  .btn.ghost,.btn.plain{background:rgba(255,255,255,.55); border:1px solid rgba(255,255,255,.9); color:var(--ink);
+    -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
+    box-shadow:0 8px 20px rgba(28,30,46,.10), inset 0 1.5px 0 #fff, inset 0 -1px 0 rgba(255,255,255,.4)}
   .btn.save{background:linear-gradient(180deg,#3cc08d,#2ea376);
     box-shadow:0 10px 22px rgba(46,163,118,.35), inset 0 1.5px 0 rgba(255,255,255,.4)}
-  .chip{background:rgba(255,255,255,.78); border:1px solid rgba(255,255,255,.85);
-    box-shadow:0 4px 12px rgba(28,30,46,.07), inset 0 1px 0 #fff}
+  .chip{background:rgba(255,255,255,.5); border:1px solid rgba(255,255,255,.9);
+    -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
+    box-shadow:0 8px 18px rgba(28,30,46,.09), inset 0 1.5px 0 #fff, inset 0 -1px 0 rgba(255,255,255,.4)}
   .chip.on{background:linear-gradient(180deg,#2c2d36,#17181d); border-color:#17181d; color:#fff;
     box-shadow:0 8px 20px rgba(23,24,29,.3), inset 0 1px 0 rgba(255,255,255,.14)}
-  select,input[type=text]{background:rgba(255,255,255,.8); border-radius:12px}
-  .kb-key,.kb-tab,.mod,.preset{background:rgba(255,255,255,.75); box-shadow:0 2px 8px rgba(28,30,46,.05), inset 0 1px 0 #fff}
-  .key rect.cap{filter:drop-shadow(0 2.5px 2px rgba(23,24,29,.10))}
+  select,input[type=text]{background:rgba(255,255,255,.6); border-radius:13px;
+    box-shadow:inset 0 1px 2px rgba(28,30,46,.06)}
+  .kb-key,.kb-tab,.mod,.preset{background:rgba(255,255,255,.55); box-shadow:0 4px 10px rgba(28,30,46,.07), inset 0 1px 0 #fff}
+  .key rect.cap{filter:drop-shadow(0 3.5px 3px rgba(23,24,29,.13))}
   .key.sel rect.cap{filter:drop-shadow(0 5px 10px rgba(86,70,214,.45))}
   .bind-now{background:rgba(255,255,255,.7)}
   .sw{box-shadow:inset 0 1px 2px rgba(23,24,29,.18)}
@@ -314,12 +318,12 @@
   /* ========== 左サイドのレイヤーレール（選択中が手前へ膨らむ弧） ========== */
   .layerbar .chip.util{font-size:11px}
   @media(min-width:981px){
-    .app{padding-left:120px}
-    .layerbar{position:fixed; left:14px; top:50%; transform:translateY(-50%); z-index:6;
-      display:flex; flex-direction:column; align-items:flex-start; gap:7px; margin:0; width:100px}
-    .rail-item{transition:transform .35s cubic-bezier(.3,.9,.3,1), opacity .3s, box-shadow .3s; padding:9px 18px; letter-spacing:.1em}
-    .rail-item.on{background:rgba(255,255,255,.92); color:var(--ink); border:2px solid var(--accent);
-      box-shadow:0 10px 26px rgba(86,70,214,.25), inset 0 1px 0 #fff}
+    .app{padding-left:160px}
+    .layerbar{position:fixed; left:16px; top:50%; transform:translateY(-50%); z-index:6;
+      display:flex; flex-direction:column; align-items:flex-start; gap:13px; margin:0; width:130px}
+    .rail-item{transition:transform .4s cubic-bezier(.3,.9,.3,1), opacity .35s, box-shadow .3s; padding:10px 20px; letter-spacing:.1em}
+    .rail-item.on{background:rgba(255,255,255,.9); color:var(--ink); border:2px solid var(--accent); padding:12px 24px; font-size:13px;
+      box-shadow:0 14px 32px rgba(86,70,214,.3), inset 0 1.5px 0 #fff}
     .rail-util{display:flex; flex-wrap:wrap; gap:6px; width:86px; margin-top:12px}
     .layerbar .chip.util{padding:0; width:34px; height:34px; display:flex; align-items:center; justify-content:center}
     .layerbar .hint{order:99; margin-top:10px; width:104px; line-height:1.6; font-size:8.5px; margin-left:0}
@@ -658,7 +662,7 @@ function drawKeys(){
     const [sw,x,y,w=100,h=100,rot=0,rx,ry]=k;
     const g=el("g",{class:"key","data-i":i,tabindex:0,role:"button"});
     if(rot)g.setAttribute("transform",`rotate(${rot} ${rx} ${ry})`);
-    const r=el("rect",{class:"cap",x:x+3,y:y+3,width:w-6,height:h-6,rx:w<80?8:10});
+    const r=el("rect",{class:"cap",x:x+3,y:y+3,width:w-6,height:h-6,rx:w<80?10:13});
     g.append(r);
     const t=el("text",{x:x+w/2,y:y+h/2+5,"text-anchor":"middle","font-size":w<80?13:16});
     g.append(t);
@@ -803,10 +807,10 @@ function applyRailCurve(bar){
   const wide=innerWidth>980;
   items.forEach((el,n)=>{
     if(!wide){el.style.transform="";el.style.opacity="";return;}
-    const d=Math.abs(n-layer), N=4;
-    const f=d>=N?0:Math.sqrt(1-(d/N)*(d/N));
-    el.style.transform=`translateX(${(f*34).toFixed(1)}px) scale(${(0.92+f*0.1).toFixed(3)})`;
-    el.style.opacity=(0.5+f*0.5).toFixed(2);
+    const d=Math.abs(n-layer);
+    const f=Math.max(0,Math.cos(Math.min(d*0.55,1.5708)));
+    el.style.transform=`translateX(${(f*64).toFixed(1)}px) scale(${(0.84+f*0.18).toFixed(3)})`;
+    el.style.opacity=(0.35+f*0.65).toFixed(2);
   });
 }
 addEventListener("resize",()=>{const b=document.getElementById("layerbar"); if(b)applyRailCurve(b);});
