@@ -34,3 +34,7 @@
 &left_encoder {
     status = "okay";
 };
+
+/* 左エンコーダ・ジョイスティックの詳細設定は別ファイルに分離。
+ * arare Studio の生成テキストで差し替える */
+#include "arare_tuning_L.dtsi"

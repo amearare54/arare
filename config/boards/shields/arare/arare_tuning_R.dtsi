@@ -1,0 +1,56 @@
+/* arare チューニング（右手）: トラックボール＋右エンコーダ（受け口）
+ *
+ * このファイルは arare Studio の「トラックボール設定」パネルが生成するテキストで
+ * まるごと差し替える運用（手で編集してもよい）。
+ * 既定値 = 現状維持（CPI 800・向き補正なし・スクロール/オートマウス/スナイプ無効）。
+ *
+ * 実機での微調整は DYA Studio（cormoranフォーク）でも可能だが、
+ * ここに書いた値がファームウェア本体の既定値になる。
+ */
+
+#include <input/processors.dtsi>
+#include <dt-bindings/zmk/input_transform.h>
+
+&trackball {
+    res-cpi = <800>;
+};
+
+/ {
+    /* オートマウス（一時レイヤー）用プロセッサ。使用時のみ参照される */
+    zip_tb_auto_layer: zip_tb_auto_layer {
+        compatible = "zmk,input-processor-temp-layer";
+        #input-processor-cells = <2>;
+        require-prior-idle-ms = <300>;
+    };
+};
+
+/* ---- arare Studio が生成するブロックの例 ----
+&trackball_listener {
+    input-processors
+        = <&zip_xy_transform (INPUT_TRANSFORM_XY_SWAP | INPUT_TRANSFORM_X_INVERT)>
+        , <&zip_xy_scaler 3 2>
+        , <&zip_tb_auto_layer 2 800>;
+
+    scroller {
+        layers = <1>;
+        input-processors
+            = <&zip_xy_to_scroll_mapper>
+            , <&zip_scroll_scaler 1 8>
+            , <&zip_scroll_transform INPUT_TRANSFORM_Y_INVERT>;
+    };
+
+    sniper {
+        layers = <2>;
+        input-processors = <&zip_xy_scaler 1 3>;
+    };
+};
+------------------------------------------------ */
+
+/* 右エンコーダ（CKW12・水平）の分解能と感度 */
+&right_encoder {
+    steps = <12>;
+};
+
+&sensors {
+    triggers-per-rotation = <10>;
+};

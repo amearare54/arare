@@ -68,8 +68,12 @@
 };
 
 / {
-    trackball_listener {
+    trackball_listener: trackball_listener {
         compatible = "zmk,input-listener";
         device = <&trackball>;
     };
 };
+
+/* トラックボール・右エンコーダの詳細設定は別ファイルに分離。
+ * arare Studio の生成テキストで差し替える */
+#include "arare_tuning_R.dtsi"
