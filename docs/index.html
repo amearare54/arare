@@ -282,36 +282,36 @@
     radial-gradient(600px 460px at 12% 6%, rgba(86,70,214,.10), transparent 60%),
     radial-gradient(700px 540px at 88% 92%, rgba(114,99,232,.09), transparent 65%),
     radial-gradient(560px 440px at 82% 10%, rgba(23,24,29,.06), transparent 60%)}
-  .panel{background:rgba(255,255,255,.42); -webkit-backdrop-filter:blur(28px) saturate(1.3); backdrop-filter:blur(28px) saturate(1.3);
+  .panel{background:rgba(255,255,255,.32); -webkit-backdrop-filter:blur(30px) saturate(1.35); backdrop-filter:blur(30px) saturate(1.35);
     border:1px solid rgba(255,255,255,.85); border-radius:28px;
     box-shadow:0 26px 60px rgba(28,30,46,.13), 0 3px 8px rgba(28,30,46,.05),
       inset 0 1.5px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.35)}
   .board-panel{background:
     radial-gradient(circle at 1px 1px, var(--grid) 1px, transparent 1.4px) 0 0/16px 16px,
-    rgba(255,255,255,.5)}
+    rgba(255,255,255,.4)}
   .btn.primary{background:linear-gradient(180deg,#7b6cf0,#5646d6);
     box-shadow:0 10px 24px rgba(86,70,214,.4), inset 0 1.5px 0 rgba(255,255,255,.45)}
   .btn.primary:hover{background:linear-gradient(180deg,#8677f2,#6152e0)}
-  .btn.ghost,.btn.plain{background:rgba(255,255,255,.55); border:1px solid rgba(255,255,255,.9); color:var(--ink);
+  .btn.ghost,.btn.plain{background:rgba(255,255,255,.42); border:1px solid rgba(255,255,255,.9); color:var(--ink);
     -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
     box-shadow:0 8px 20px rgba(28,30,46,.10), inset 0 1.5px 0 #fff, inset 0 -1px 0 rgba(255,255,255,.4)}
   .btn.save{background:linear-gradient(180deg,#3cc08d,#2ea376);
     box-shadow:0 10px 22px rgba(46,163,118,.35), inset 0 1.5px 0 rgba(255,255,255,.4)}
-  .chip{background:rgba(255,255,255,.5); border:1px solid rgba(255,255,255,.9);
+  .chip{background:rgba(255,255,255,.4); border:1px solid rgba(255,255,255,.9);
     -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
     box-shadow:0 8px 18px rgba(28,30,46,.09), inset 0 1.5px 0 #fff, inset 0 -1px 0 rgba(255,255,255,.4)}
   .chip.on{background:linear-gradient(180deg,#2c2d36,#17181d); border-color:#17181d; color:#fff;
     box-shadow:0 8px 20px rgba(23,24,29,.3), inset 0 1px 0 rgba(255,255,255,.14)}
-  select,input[type=text]{background:rgba(255,255,255,.6); border-radius:13px;
+  select,input[type=text]{background:rgba(255,255,255,.5); border-radius:13px;
     box-shadow:inset 0 1px 2px rgba(28,30,46,.06)}
-  .kb-key,.kb-tab,.mod,.preset{background:rgba(255,255,255,.55); box-shadow:0 4px 10px rgba(28,30,46,.07), inset 0 1px 0 #fff}
+  .kb-key,.kb-tab,.mod,.preset{background:rgba(255,255,255,.45); box-shadow:0 4px 10px rgba(28,30,46,.07), inset 0 1px 0 #fff}
   .key rect.cap{filter:drop-shadow(0 3.5px 3px rgba(23,24,29,.13))}
   .key.sel rect.cap{filter:drop-shadow(0 5px 10px rgba(86,70,214,.45))}
   .bind-now{background:rgba(255,255,255,.7)}
   .sw{box-shadow:inset 0 1px 2px rgba(23,24,29,.18)}
   .sw.on{background:linear-gradient(180deg,#7263e8,#5646d6)}
   pre.out{border-radius:18px}
-  .modal{background:rgba(255,255,255,.82); -webkit-backdrop-filter:blur(26px) saturate(1.2); backdrop-filter:blur(26px) saturate(1.2)}
+  .modal{background:rgba(255,255,255,.68); -webkit-backdrop-filter:blur(26px) saturate(1.2); backdrop-filter:blur(26px) saturate(1.2)}
   .mode-tg{background:rgba(255,255,255,.78); box-shadow:0 4px 12px rgba(28,30,46,.06), inset 0 1px 0 #fff}
   .mode-tg button.on{background:linear-gradient(180deg,#2c2d36,#17181d)}
 
@@ -1353,17 +1353,23 @@ renderLink();
   function rs(){W=c.width=innerWidth*devicePixelRatio;H=c.height=innerHeight*devicePixelRatio;
     c.style.width=innerWidth+"px";c.style.height=innerHeight+"px";}
   rs(); addEventListener("resize",rs);
-  const N=Math.min(70,Math.floor(innerWidth/18));
-  for(let i=0;i<N;i++)P.push({x:Math.random(),y:Math.random(),s:.6+Math.random()*1.6,v:.35+Math.random()*.9,d:(Math.random()-.5)*.15});
+  /* 静かな雨: 細い糸筋がごくゆっくり落ちる（霰ロゴの雨モチーフ） */
+  const N=Math.min(46,Math.floor(innerWidth/30));
+  for(let i=0;i<N;i++)P.push({x:Math.random(),y:Math.random(),
+    len:(9+Math.random()*13),v:.55+Math.random()*.85,drift:.04+Math.random()*.05,
+    a:.09+Math.random()*.10,acc:Math.random()<.12});
   (function tick(){
     x.clearRect(0,0,W,H);
+    x.lineCap="round";
     for(const p of P){
-      p.y+=p.v/900; p.x+=p.d/900;
-      if(p.y>1.02){p.y=-.02;p.x=Math.random();}
+      p.y+=p.v/1400; p.x+=p.drift/1400;
+      if(p.y>1.03){p.y=-.03;p.x=Math.random();}
+      const px=p.x*W, py=p.y*H, L=p.len*devicePixelRatio, dx=L*.12;
       x.beginPath();
-      x.arc(p.x*W,p.y*H,p.s*devicePixelRatio,0,7);
-      x.fillStyle=p.s>1.7?"rgba(114,99,232,.30)":"rgba(138,143,168,.22)";
-      x.fill();
+      x.moveTo(px,py); x.lineTo(px+dx,py+L);
+      x.strokeStyle=p.acc?`rgba(114,99,232,${p.a+.06})`:`rgba(138,143,168,${p.a})`;
+      x.lineWidth=1*devicePixelRatio;
+      x.stroke();
     }
     requestAnimationFrame(tick);
   })();
