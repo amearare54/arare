@@ -267,9 +267,6 @@
   .boot-tag b{color:var(--ink); font-weight:600}
   .boot-skip{position:absolute; right:28px; bottom:26px; font-family:var(--mono); font-size:9px; letter-spacing:.24em; color:var(--faint)}
   @media(prefers-reduced-motion:reduce){ #boot{display:none} }
-  .landed .app{animation:landing .55s cubic-bezier(.2,.75,.25,1)}
-  @keyframes landing{from{transform:scale(1.04);opacity:.35}to{transform:scale(1);opacity:1}}
-  @media(prefers-reduced-motion:reduce){ .landed .app{animation:none} }
 </style>
 
 <canvas id="hail"></canvas>
@@ -1278,7 +1275,7 @@ renderLink();
 renderDeck();
 refreshKeys();
 
-/* ================= 起動シーケンス（オーラリー校正 → LINK START ダイブ） ================= */
+/* ================= 起動シーケンス（オーラリー校正 → リンク・ダイブ） ================= */
 (function(){
   const bootEl=document.getElementById("boot");
   if(!bootEl)return;
@@ -1290,136 +1287,91 @@ refreshKeys();
   rs(); addEventListener("resize",rs);
   const INK="#17181d",MUTE="#83858f",FAINT="#b6b8c2",GRID="#dcdde3",ACC="#5646d6",GROUND="#f6f6f7";
   let seed=20260902; const rnd=()=>((seed=(seed*16807)%2147483647)/2147483647);
-  /* 奥行きつきオーラリー（decayが大きいほど手前＝ダイブで速く迫る） */
+  /* オーラリーの構成（決定論的に生成） */
   const RINGS=[];
   for(let i=0;i<9;i++)RINGS.push({r:.16+i*.115+rnd()*.03, w:i%3===2?2.2:1.1, c:i%2?GRID:FAINT,
-    dash:rnd()<.3?[1.5,5]:null, a0:rnd()*7, span:rnd()<.35?1.2+rnd()*2:Math.PI*2, sp:(rnd()-.5)*.6,
-    depth:.5+rnd()*1.9});
-  const ACCARC={r:.62,a0:1.1,span:1.4,w:2.6,depth:1.2};
+    dash:rnd()<.3?[1.5,5]:null, a0:rnd()*7, span:rnd()<.35?1.2+rnd()*2:Math.PI*2, sp:(rnd()-.5)*.6});
+  const ACCARC={r:.62,a0:1.1,span:1.4,w:2.6};
   const ARMS=[];
   for(let i=0;i<14;i++){const len=.3+rnd()*.75;
     ARMS.push({ang:rnd()*Math.PI*2, len, w:rnd()<.25?1.8:1, no:String(i+1).padStart(2,"0"),
-      dots:[len*.35+rnd()*.2, len].concat(rnd()<.5?[len*.6]:[]), big:rnd()<.3, depth:.4+len*1.6});}
+      dots:[len*.35+rnd()*.2, len].concat(rnd()<.5?[len*.6]:[]), big:rnd()<.3});}
   const DISCS=[];
-  for(let i=0;i<22;i++)DISCS.push({ang:rnd()*Math.PI*2, rr:.1+rnd()*.55, rad:4+rnd()*22, a:.05+rnd()*.14, depth:.4+rnd()*2});
+  for(let i=0;i<22;i++)DISCS.push({ang:rnd()*Math.PI*2, rr:.1+rnd()*.55, rad:4+rnd()*22, a:.05+rnd()*.14});
   const LINES=[["PHYSICAL LAYOUT","1:1 FROM PCB"],["KEYS","47"],["BLE SPLIT","READY"],["TRACKBALL","PAW3222"],["FORGE","OK"],["SESSION LINK","▸ DIVE"]];
-  const T_DRAW=1500, T_HOLD=2300, T_END=3450;
-  /* 速度線: 2波・遠近つき */
-  const P=Array.from({length:260},(_,i)=>({ang:rnd()*Math.PI*2, r:rnd()*.5, sp:.8+rnd()*2.6,
-    wave:i<150?0:.14, w:rnd()<.15?2.6:1.2+rnd()*.8, col:rnd()<.14?ACC:(rnd()<.5?MUTE:FAINT)}));
+  const T_DRAW=1500, T_HOLD=2300, T_END=3200;
+  const P=Array.from({length:150},()=>({ang:rnd()*Math.PI*2, r:rnd()*.5, sp:.9+rnd()*2.4,
+    w:rnd()<.15?2.4:1.2, col:rnd()<.14?ACC:(rnd()<.5?MUTE:FAINT)}));
   const ease=a=>a<0?0:a>1?1:a*a*(3-2*a);
   let t0=null, last=0, skipped=false;
   bootEl.addEventListener("click",()=>{skipped=true;});
-  /* マウス視差 */
-  let mx=0,my=0,pmx=0,pmy=0;
-  addEventListener("pointermove",e=>{mx=(e.clientX/W-.5); my=(e.clientY/H-.5);},{passive:true});
   function frame(now){
     if(t0===null)t0=now;
     if(last&&now-last>400)t0+=now-last;  /* タブ非表示等の空白時間は演出を進めない */
     last=now;
     let t=now-t0;
     if(skipped&&t<T_HOLD){t0=now-T_HOLD;t=T_HOLD;skipped=false;}
-    pmx+=(mx-pmx)*.06; pmy+=(my-pmy)*.06;
     const cx=W/2, cy=H*.5, R=Math.min(W,H)*.44;
     const pd=ease(t/T_DRAW), rot=t*.00013;
     const dive=t<=T_HOLD?0:ease((t-T_HOLD)/(T_END-T_HOLD));
-    const d2=dive*dive;
-    /* 直前の引き（アンティシペーション）→ 突入 */
-    const pre=ease((t-(T_HOLD-260))/260);
-    const baseScale=(t<T_HOLD?1-.05*pre:0.95+d2*4.2);
-    /* 微振動（突入直後にランブル、減衰） */
-    const amp=dive>0?8*Math.exp(-dive*4.2):0;
-    const shX=Math.sin(t*.11)*amp, shY=Math.cos(t*.13)*amp*.7;
+    const scale=1+dive*dive*9;
     x.clearRect(0,0,W,H);
     x.fillStyle=GROUND; x.fillRect(0,0,W,H);
-    x.save();
-    x.translate(cx+pmx*16*(1-dive)+shX, cy+pmy*11*(1-dive)+shY);
-    x.scale(baseScale,baseScale);
-    const depthR=d=>1+d2*7*d;   /* 要素ごとの奥行き膨張 */
-    const fade=1-dive;
+    x.save(); x.translate(cx,cy); x.scale(scale,scale);
+    x.globalAlpha=1-dive;
     /* 半透明ディスク */
-    for(const d of DISCS){const a=d.ang+rot*.4, ex=depthR(d.depth);
-      x.globalAlpha=fade*d.a*pd; x.fillStyle=MUTE;
-      x.beginPath(); x.arc(Math.cos(a)*d.rr*R*ex,Math.sin(a)*d.rr*R*ex,d.rad*(1+d2*2.5*d.depth),0,7); x.fill();}
-    /* リング（層ごとに別速度で迫る） */
+    for(const d of DISCS){const a=d.ang+rot*.4;
+      x.globalAlpha=(1-dive)*d.a*pd; x.fillStyle=MUTE;
+      x.beginPath(); x.arc(Math.cos(a)*d.rr*R,Math.sin(a)*d.rr*R,d.rad,0,7); x.fill();}
+    x.globalAlpha=1-dive;
+    /* リング */
     RINGS.forEach((g,i)=>{const pr=ease(pd*2.2-i*.13); if(pr<=0)return;
-      const ex=depthR(g.depth);
-      x.beginPath(); x.strokeStyle=g.c; x.lineWidth=g.w*(1+d2*2*g.depth);
+      x.beginPath(); x.strokeStyle=g.c; x.lineWidth=g.w;
       if(g.dash)x.setLineDash(g.dash); else x.setLineDash([]);
       const a0=g.a0+rot*g.sp;
-      x.globalAlpha=fade;
-      x.arc(0,0,g.r*R*ex,a0,a0+g.span*pr); x.stroke();
-      /* ダイブ中の残像ゴースト */
-      if(dive>0.08){x.globalAlpha=fade*.28;
-        x.beginPath(); x.arc(0,0,g.r*R*ex*.94,a0,a0+g.span*pr); x.stroke();}
-    });
+      x.arc(0,0,g.r*R,a0,a0+g.span*pr); x.stroke();});
     x.setLineDash([]);
-    /* 差し色アーク */
-    if(pd>.4){const ex=depthR(ACCARC.depth);
-      x.beginPath(); x.strokeStyle=ACC; x.lineWidth=ACCARC.w*(1+d2*2);
-      x.globalAlpha=fade*.75;
+    /* 差し色アーク（1本だけ紫） */
+    if(pd>.4){x.beginPath(); x.strokeStyle=ACC; x.lineWidth=ACCARC.w;
+      x.globalAlpha=(1-dive)*.75;
       const a0=ACCARC.a0-rot*1.4;
-      x.arc(0,0,ACCARC.r*R*ex,a0,a0+ACCARC.span*ease((pd-.4)/.6)); x.stroke();}
-    /* アーム */
+      x.arc(0,0,ACCARC.r*R,a0,a0+ACCARC.span*ease((pd-.4)/.6)); x.stroke();
+      x.globalAlpha=1-dive;}
+    /* アーム（放射線＋端点＋番号） */
     x.font="9px 'IBM Plex Mono',monospace";
     ARMS.forEach((m,i)=>{const pr=ease(pd*1.8-i*.06); if(pr<=0)return;
-      const ex=depthR(m.depth);
-      const a=m.ang+rot*.25, ca=Math.cos(a), sa=Math.sin(a), L=m.len*R*pr*ex;
-      x.strokeStyle=INK; x.lineWidth=m.w*(1+d2*1.5*m.depth); x.globalAlpha=fade*.85;
+      const a=m.ang+rot*.25, ca=Math.cos(a), sa=Math.sin(a), L=m.len*R*pr;
+      x.strokeStyle=INK; x.lineWidth=m.w; x.globalAlpha=(1-dive)*.85;
       x.beginPath(); x.moveTo(ca*L*.06,sa*L*.06); x.lineTo(ca*L,sa*L); x.stroke();
       x.fillStyle=INK;
-      m.dots.forEach(f=>{const rr2=f*R*pr*ex, sz=((f===m.len&&m.big)?6.5:(f===m.len?3.6:2.2))*(1+d2*2*m.depth);
+      m.dots.forEach(f=>{const rr2=f*R*pr, sz=(f===m.len&&m.big)?6.5:(f===m.len?3.6:2.2);
         x.beginPath(); x.arc(ca*rr2,sa*rr2,sz,0,7); x.fill();});
-      if(pr>.95&&dive<.3){x.fillStyle=MUTE; x.globalAlpha=fade*.9;
+      if(pr>.95){x.fillStyle=MUTE; x.globalAlpha=(1-dive)*.9;
         x.fillText(m.no, ca*(L+11)-6, sa*(L+11)+3);}
-    });
+      x.globalAlpha=1-dive;});
     /* 中心 */
-    x.globalAlpha=fade;
     x.beginPath(); x.strokeStyle=INK; x.lineWidth=1.2; x.arc(0,0,R*.045,0,7); x.stroke();
-    /* LINKパルス */
+    /* LINKパルス（ダイブ直前） */
     const pt=(t-(T_HOLD-420))/420;
     if(pt>0&&pt<1){x.beginPath(); x.strokeStyle=ACC; x.globalAlpha=(1-pt)*.8;
-      x.lineWidth=2; x.arc(0,0,R*.045+pt*R*.3,0,7); x.stroke();}
+      x.lineWidth=2; x.arc(0,0,R*.045+pt*R*.3,0,7); x.stroke(); x.globalAlpha=1-dive;}
     x.restore();
-    /* 速度線（遠近・2波） */
+    /* ダイブ粒子（視界を流れ去る） */
     if(dive>0){
-      const maxR=Math.max(W,H)*.85;
       for(const p of P){
-        const dw=Math.max(0,dive-p.wave)/(1-p.wave);
-        if(dw<=0)continue;
-        const rr=(p.r+dw*dw*p.sp*1.6)*maxR;
-        const persp=Math.pow(Math.min(1,rr/maxR),1.6);
-        const rr2=rr+(30+240*dw)*p.sp*persp+8;
+        const rr=(p.r+dive*p.sp)*Math.max(W,H)*.8;
+        const rr2=rr+(26+150*dive)*p.sp;
         const ca=Math.cos(p.ang), sa=Math.sin(p.ang);
-        x.globalAlpha=Math.min(1,dw*3)*(.5+persp*.5);
-        x.strokeStyle=p.col; x.lineWidth=p.w*(0.6+persp*1.8);
+        x.globalAlpha=Math.min(1,dive*2.5)*.9; x.strokeStyle=p.col; x.lineWidth=p.w;
         x.beginPath(); x.moveTo(cx+ca*rr,cy+sa*rr); x.lineTo(cx+ca*rr2,cy+sa*rr2); x.stroke();
       }
       x.globalAlpha=1;
     }
-    /* LINK START ▸ が視界を突き抜ける */
-    if(dive>0&&dive<.85){
-      const ts=1+d2*16, ta=(1-dive/.85);
-      x.save(); x.translate(cx+shX,cy+shY); x.scale(ts,ts);
-      x.globalAlpha=ta*.92; x.fillStyle=INK;
-      x.font="900 26px Archivo,'Zen Kaku Gothic New',sans-serif";
-      x.textAlign="center"; x.letterSpacing="6px";
-      x.fillText("LINK START ▸",0,9);
-      x.restore(); x.globalAlpha=1; x.letterSpacing="0px";
-    }
-    /* ビネット（周辺減光で奥行き） */
-    const vg=x.createRadialGradient(cx,cy,Math.min(W,H)*.3,cx,cy,Math.max(W,H)*.75);
-    vg.addColorStop(0,"rgba(23,24,29,0)");
-    vg.addColorStop(1,"rgba(23,24,29,"+(0.05+dive*0.1)+")");
-    x.fillStyle=vg; x.fillRect(0,0,W,H);
-    /* 突入フラッシュ */
-    if(dive>0){const fA=Math.max(0,1-(t-T_HOLD)/150);
-      if(fA>0){x.globalAlpha=fA*.9; x.fillStyle="#ffffff"; x.fillRect(0,0,W,H); x.globalAlpha=1;}}
     /* ブートログ */
     const n=Math.min(LINES.length,Math.floor(t/(T_HOLD/LINES.length))+(t>60?1:0));
     tag.innerHTML=LINES.slice(0,n).map(([k,v])=>k.padEnd(17,"·")+" <b>"+v+"</b>").join("\n");
     bootEl.style.opacity=String(1-dive);
-    if(t>=T_END){bootEl.remove(); document.body.classList.add("landed"); return;}
+    if(t>=T_END){bootEl.remove();return;}
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
