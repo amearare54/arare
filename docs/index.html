@@ -1,4 +1,4 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><title>arare Studio</title>
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>arare Studio</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800;900&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&family=Shippori+Mincho:wght@600;800&display=swap">
 <style>
   :root{
@@ -1200,8 +1200,8 @@ function renderLink(){
   if(!LIVE.on){
     el.innerHTML=`<span class="st"><span class="dot"></span>OFFLINE — ファイル書き出しモード</span>
       <span class="grow"></span>
-      ${navigator.serial?'<button class="btn ghost mini" id="cUsb">⚡ USBで接続</button>':""}
-      ${navigator.bluetooth?'<button class="btn primary mini" id="cBle">🛜 Bluetoothで接続</button>':""}
+      ${navigator.serial?'<button class="btn ghost mini" id="cUsb">USBで接続</button>':""}
+      ${navigator.bluetooth?'<button class="btn primary mini" id="cBle">Bluetoothで接続</button>':""}
       ${hasAPI?"":`<span class="note">この埋め込み表示では接続APIが使えません → <a href="${PAGES_URL}" target="_blank" rel="noopener">公開ページで開く</a>（Chrome/Edge推奨）</span>`}`;
     const u=el.querySelector("#cUsb"), b=el.querySelector("#cBle");
     if(u)u.addEventListener("click",()=>window.liveConnect&&window.liveConnect("serial"));
