@@ -282,36 +282,61 @@
     radial-gradient(600px 460px at 12% 6%, rgba(86,70,214,.10), transparent 60%),
     radial-gradient(700px 540px at 88% 92%, rgba(114,99,232,.09), transparent 65%),
     radial-gradient(560px 440px at 82% 10%, rgba(23,24,29,.06), transparent 60%)}
-  .panel{background:rgba(255,255,255,.32); -webkit-backdrop-filter:blur(30px) saturate(1.35); backdrop-filter:blur(30px) saturate(1.35);
-    border:1px solid rgba(255,255,255,.85); border-radius:28px;
-    box-shadow:0 26px 60px rgba(28,30,46,.13), 0 3px 8px rgba(28,30,46,.05),
-      inset 0 1.5px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.35)}
+  .panel{background:
+      linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,.08) 42%, rgba(255,255,255,.26)),
+      rgba(255,255,255,.2);
+    -webkit-backdrop-filter:blur(34px) saturate(1.4); backdrop-filter:blur(34px) saturate(1.4);
+    border:1.5px solid rgba(255,255,255,.95); border-radius:30px;
+    box-shadow:0 30px 64px rgba(28,30,46,.15), 0 4px 10px rgba(28,30,46,.05),
+      inset 0 2px 1px rgba(255,255,255,1), inset 0 -8px 16px rgba(255,255,255,.5),
+      inset 2px 0 2px rgba(255,255,255,.45), inset -2px 0 2px rgba(255,255,255,.45)}
   .board-panel{background:
     radial-gradient(circle at 1px 1px, var(--grid) 1px, transparent 1.4px) 0 0/16px 16px,
-    rgba(255,255,255,.4)}
+    linear-gradient(180deg, rgba(255,255,255,.45), rgba(255,255,255,.15) 45%, rgba(255,255,255,.28)),
+    rgba(255,255,255,.22)}
   .btn.primary{background:linear-gradient(180deg,#7b6cf0,#5646d6);
     box-shadow:0 10px 24px rgba(86,70,214,.4), inset 0 1.5px 0 rgba(255,255,255,.45)}
   .btn.primary:hover{background:linear-gradient(180deg,#8677f2,#6152e0)}
-  .btn.ghost,.btn.plain{background:rgba(255,255,255,.42); border:1px solid rgba(255,255,255,.9); color:var(--ink);
-    -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
-    box-shadow:0 8px 20px rgba(28,30,46,.10), inset 0 1.5px 0 #fff, inset 0 -1px 0 rgba(255,255,255,.4)}
+  .btn.ghost,.btn.plain{background:
+      linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,.18) 48%, rgba(255,255,255,.4)),
+      rgba(255,255,255,.22);
+    border:1.5px solid rgba(255,255,255,.95); color:var(--ink);
+    -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+    box-shadow:0 10px 24px rgba(28,30,46,.12), inset 0 1.5px 1px #fff, inset 0 -4px 8px rgba(255,255,255,.55);
+    transition:transform .12s, box-shadow .15s}
+  .btn:hover{transform:translateY(-1px)}
+  .btn:active{transform:translateY(0) scale(.97)}
   .btn.save{background:linear-gradient(180deg,#3cc08d,#2ea376);
     box-shadow:0 10px 22px rgba(46,163,118,.35), inset 0 1.5px 0 rgba(255,255,255,.4)}
-  .chip{background:rgba(255,255,255,.4); border:1px solid rgba(255,255,255,.9);
-    -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
-    box-shadow:0 8px 18px rgba(28,30,46,.09), inset 0 1.5px 0 #fff, inset 0 -1px 0 rgba(255,255,255,.4)}
+  .chip{background:
+      linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,.18) 48%, rgba(255,255,255,.4)),
+      rgba(255,255,255,.2);
+    border:1.5px solid rgba(255,255,255,.95);
+    -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+    box-shadow:0 10px 22px rgba(28,30,46,.11), inset 0 1.5px 1px #fff, inset 0 -4px 8px rgba(255,255,255,.55);
+    transition:transform .12s}
+  .chip:active{transform:scale(.96)}
   .chip.on{background:linear-gradient(180deg,#2c2d36,#17181d); border-color:#17181d; color:#fff;
     box-shadow:0 8px 20px rgba(23,24,29,.3), inset 0 1px 0 rgba(255,255,255,.14)}
-  select,input[type=text]{background:rgba(255,255,255,.5); border-radius:13px;
-    box-shadow:inset 0 1px 2px rgba(28,30,46,.06)}
-  .kb-key,.kb-tab,.mod,.preset{background:rgba(255,255,255,.45); box-shadow:0 4px 10px rgba(28,30,46,.07), inset 0 1px 0 #fff}
+  select,input[type=text]{background:rgba(255,255,255,.42); border-radius:13px; border-color:rgba(255,255,255,.95);
+    box-shadow:inset 0 2px 4px rgba(28,30,46,.07), inset 0 -1px 0 rgba(255,255,255,.7)}
+  .kb-key,.kb-tab,.mod,.preset{background:
+      linear-gradient(180deg, rgba(255,255,255,.65), rgba(255,255,255,.2) 50%, rgba(255,255,255,.38)),
+      rgba(255,255,255,.2);
+    border-color:rgba(255,255,255,.95);
+    box-shadow:0 5px 12px rgba(28,30,46,.09), inset 0 1px 1px #fff, inset 0 -3px 6px rgba(255,255,255,.5)}
+  .kb-key:active{transform:scale(.95)}
   .key rect.cap{filter:drop-shadow(0 3.5px 3px rgba(23,24,29,.13))}
   .key.sel rect.cap{filter:drop-shadow(0 5px 10px rgba(86,70,214,.45))}
   .bind-now{background:rgba(255,255,255,.7)}
   .sw{box-shadow:inset 0 1px 2px rgba(23,24,29,.18)}
   .sw.on{background:linear-gradient(180deg,#7263e8,#5646d6)}
   pre.out{border-radius:18px}
-  .modal{background:rgba(255,255,255,.68); -webkit-backdrop-filter:blur(26px) saturate(1.2); backdrop-filter:blur(26px) saturate(1.2)}
+  .modal{background:
+      linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,.25) 45%, rgba(255,255,255,.4)),
+      rgba(255,255,255,.35);
+    -webkit-backdrop-filter:blur(30px) saturate(1.3); backdrop-filter:blur(30px) saturate(1.3);
+    box-shadow:0 30px 70px rgba(28,30,46,.28), inset 0 2px 1px #fff, inset 0 -6px 14px rgba(255,255,255,.5)}
   .mode-tg{background:rgba(255,255,255,.78); box-shadow:0 4px 12px rgba(28,30,46,.06), inset 0 1px 0 #fff}
   .mode-tg button.on{background:linear-gradient(180deg,#2c2d36,#17181d)}
 
@@ -330,6 +355,13 @@
     .layerbar .livechip{margin-top:8px}
   }
   @media(max-width:980px){ .rail-item{transform:none!important; opacity:1!important} .rail-util{display:contents} }
+
+  /* ---------- KEY EDIT: 横長・ボード直下 ---------- */
+  .main{grid-template-columns:1fr}
+  .insp{position:static}
+  .insp-cols{display:grid; grid-template-columns:300px minmax(0,1fr) 280px; gap:20px; align-items:start}
+  @media(max-width:920px){ .insp-cols{grid-template-columns:1fr} }
+  .insp .kb-grid{max-height:236px}
 </style>
 
 <canvas id="hail"></canvas>
@@ -761,30 +793,38 @@ function renderInsp(){
   const k=KEYS[sel];
   box.innerHTML=`
     <h2>KEY EDIT <span class="pos">${k[0]} · POS ${String(sel).padStart(2,"0")} · ${LIVE.on?(LIVE.names[layer]||layName(layer))+" ●LIVE":layName(layer)}</span></h2>
-    <div class="bind-now" id="bindnow"></div>
-    ${sel>=43?`<div class="sec">タクトSW おすすめ割当</div>
-    <div class="kb-grid">${tactReco().map(([l,b])=>`<button class="kb-key" data-b="${b}" style="grid-column:span 2">${l}</button>`).join("")}</div>
-    <div class="desc" style="margin:6px 0 0;font-size:10.5px;color:var(--mute);line-height:1.55">BT＝接続先の切替（スマホ/PC等を登録順に）。アプリ起動は F13〜F15 を割当て、Mac側のショートカット設定やRaycastでそのキーにアプリを紐づけるのが定石です。<b>UNLOCKはどこかに1つ残すのがおすすめ</b>（ZMK Studioのロック解除に必要）。</div>`:""}
-    <div class="sec">同時修飾（タップに付与）</div>
-    <div class="modrow" id="modrow">
-      ${["LS","LC","LA","LG"].map(m=>`<button class="mod${modState[m]?" on":""}" data-m="${m}">${MODG[m]}</button>`).join("")}
+    <div class="insp-cols">
+    <div>
+      <div class="bind-now" id="bindnow"></div>
+      <div class="sec">同時修飾（タップに付与）</div>
+      <div class="modrow" id="modrow">
+        ${["LS","LC","LA","LG"].map(m=>`<button class="mod${modState[m]?" on":""}" data-m="${m}">${MODG[m]}</button>`).join("")}
+      </div>
+      <div class="sec">ホールド動作（Mod-Tap / Layer-Tap）</div>
+      <select id="holdsel">
+        <option value="none">なし（通常タップ）</option>
+        <option value="LSHFT">⇧ ホールドでShift</option>
+        <option value="LCTRL">⌃ ホールドでCtrl</option>
+        <option value="LALT">⌥ ホールドでOption</option>
+        <option value="LGUI">⌘ ホールドでCmd</option>
+        ${km.map((_,n)=>n?`<option value="lt${n}">ホールドで ${layName(n)} レイヤー</option>`:"").join("")}
+      </select>
+      <div class="sec">RAW（ZMK記法を直接入力）</div>
+      <input type="text" id="rawin" spellcheck="false" placeholder="&kp LS(LG(V)) など">
     </div>
-    <div class="sec">ホールド動作（Mod-Tap / Layer-Tap）</div>
-    <select id="holdsel">
-      <option value="none">なし（通常タップ）</option>
-      <option value="LSHFT">⇧ ホールドでShift</option>
-      <option value="LCTRL">⌃ ホールドでCtrl</option>
-      <option value="LALT">⌥ ホールドでOption</option>
-      <option value="LGUI">⌘ ホールドでCmd</option>
-      ${km.map((_,n)=>n?`<option value="lt${n}">ホールドで ${layName(n)} レイヤー</option>`:"").join("")}
-    </select>
-    <div class="sec">タップするキー</div>
-    <div class="kb-tabs" id="kbtabs">${Object.keys(PICK).map(t=>`<button class="kb-tab${t===pickTab?" on":""}" data-t="${t}">${t}</button>`).join("")}</div>
-    <div class="kb-grid" id="kbgrid"></div>
-    <div class="sec">特殊割当（そのままセット）</div>
-    <div class="kb-grid">${[...deviceSpecials(),...SPECIAL,...layerSpecials()].map(([l,b])=>`<button class="kb-key" data-b="${b}" style="grid-column:span 2">${l}</button>`).join("")}</div>
-    <div class="sec">RAW（ZMK記法を直接入力）</div>
-    <input type="text" id="rawin" spellcheck="false" placeholder="&kp LS(LG(V)) など">`;
+    <div>
+      <div class="sec" style="margin-top:0">タップするキー</div>
+      <div class="kb-tabs" id="kbtabs">${Object.keys(PICK).map(t=>`<button class="kb-tab${t===pickTab?" on":""}" data-t="${t}">${t}</button>`).join("")}</div>
+      <div class="kb-grid" id="kbgrid"></div>
+    </div>
+    <div>
+      ${sel>=43?`<div class="sec" style="margin-top:0">タクトSW おすすめ割当</div>
+      <div class="kb-grid">${tactReco().map(([l,b])=>`<button class="kb-key" data-b="${b}" style="grid-column:span 2">${l}</button>`).join("")}</div>
+      <div class="desc" style="margin:6px 0 0;font-size:10.5px;color:var(--mute);line-height:1.55">BT＝接続先の切替。アプリ起動は F13〜F15 を割当て、Mac側でそのキーにアプリを紐づけます。<b>UNLOCKは1つ残すのがおすすめ</b>。</div>`:""}
+      <div class="sec"${sel>=43?"":' style="margin-top:0"'}>特殊割当（そのままセット）</div>
+      <div class="kb-grid">${[...deviceSpecials(),...SPECIAL,...layerSpecials()].map(([l,b])=>`<button class="kb-key" data-b="${b}" style="grid-column:span 2">${l}</button>`).join("")}</div>
+    </div>
+    </div>`;
   box.querySelector("#bindnow").textContent=(curKm()[layer][sel]||"&trans")+"   →  "+legend(curKm()[layer][sel]||"&trans");
   box.querySelector("#holdsel").value=holdSel;
   box.querySelector("#holdsel").addEventListener("change",e=>{holdSel=e.target.value;});
@@ -1354,15 +1394,15 @@ renderLink();
     c.style.width=innerWidth+"px";c.style.height=innerHeight+"px";}
   rs(); addEventListener("resize",rs);
   /* 静かな雨: 細い糸筋がごくゆっくり落ちる（霰ロゴの雨モチーフ） */
-  const N=Math.min(46,Math.floor(innerWidth/30));
+  const N=Math.min(38,Math.floor(innerWidth/36));
   for(let i=0;i<N;i++)P.push({x:Math.random(),y:Math.random(),
-    len:(9+Math.random()*13),v:.55+Math.random()*.85,drift:.04+Math.random()*.05,
+    len:(13+Math.random()*15),v:.8+Math.random()*.8,drift:.06+Math.random()*.06,
     a:.09+Math.random()*.10,acc:Math.random()<.12});
   (function tick(){
     x.clearRect(0,0,W,H);
     x.lineCap="round";
     for(const p of P){
-      p.y+=p.v/1400; p.x+=p.drift/1400;
+      p.y+=p.v/240; p.x+=p.drift/240;
       if(p.y>1.03){p.y=-.03;p.x=Math.random();}
       const px=p.x*W, py=p.y*H, L=p.len*devicePixelRatio, dx=L*.12;
       x.beginPath();
