@@ -362,6 +362,34 @@
   .insp-cols{display:grid; grid-template-columns:300px minmax(0,1fr) 280px; gap:20px; align-items:start}
   @media(max-width:920px){ .insp-cols{grid-template-columns:1fr} }
   .insp .kb-grid{max-height:236px}
+
+  /* ==== さらにクリア&ぷっくり（最終上書き） ==== */
+  .linkbar{margin-bottom:20px}
+  .panel{background:
+      linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,.06) 40%, rgba(255,255,255,.3)),
+      rgba(255,255,255,.12);
+    -webkit-backdrop-filter:blur(40px) saturate(1.45); backdrop-filter:blur(40px) saturate(1.45);
+    border-radius:32px;
+    box-shadow:0 34px 70px rgba(28,30,46,.16), 0 4px 10px rgba(28,30,46,.05),
+      inset 0 2.5px 1px rgba(255,255,255,1), inset 0 -10px 20px rgba(255,255,255,.55),
+      inset 3px 0 3px rgba(255,255,255,.5), inset -3px 0 3px rgba(255,255,255,.5)}
+  .board-panel{background:
+    radial-gradient(circle at 1px 1px, var(--grid) 1px, transparent 1.4px) 0 0/16px 16px,
+    linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,.12) 42%, rgba(255,255,255,.3)),
+    rgba(255,255,255,.12)}
+  .btn.ghost,.btn.plain,.chip{background:
+      linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.14) 50%, rgba(255,255,255,.48)),
+      rgba(255,255,255,.12)}
+  .kb-key,.kb-tab,.mod,.preset{background:
+      linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,255,255,.16) 52%, rgba(255,255,255,.42)),
+      rgba(255,255,255,.1)}
+  .bind-now{background:
+      linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,.25)),
+      rgba(255,255,255,.2)}
+  .key rect.cap{fill:url(#capgrad); stroke:rgba(255,255,255,.95); stroke-width:1.8}
+  .key:hover rect.cap{stroke:var(--faint)}
+  .key.sel rect.cap{fill:url(#capsel); stroke:var(--accent)}
+  .key.edited rect.cap{stroke:var(--accent2)}
 </style>
 
 <canvas id="hail"></canvas>
@@ -533,6 +561,8 @@ const ENC_OPTS=[
  ["&inc_dec_kp C_BRI_UP C_BRI_DN","輝度 +/−"],
  ["&inc_dec_kp C_NEXT C_PREV","曲送り/戻し"],
  ["&inc_dec_kp LG(Z) LS(LG(Z))","⌘Z / ⇧⌘Z"],
+ ["&inc_dec_kp LG(C) LG(V)","コピー / ペースト"],
+ ["&inc_dec_kp LG(X) LG(V)","カット / ペースト"],
  ["&inc_dec_kp TAB LS(TAB)","Tab / ⇧Tab"]
 ];
 const SPD=[[1,4,"0.25×"],[1,2,"0.5×"],[3,4,"0.75×"],[1,1,"1.0×"],[5,4,"1.25×"],[3,2,"1.5×"],[2,1,"2.0×"],[3,1,"3.0×"]];
@@ -690,6 +720,12 @@ function drawDecor(){
   board.append(g);
 }
 function drawKeys(){
+  const defs=el("defs",{});
+  defs.innerHTML='<linearGradient id="capgrad" x1="0" y1="0" x2="0" y2="1">'
+    +'<stop offset="0" stop-color="#ffffff"/><stop offset="0.55" stop-color="#f5f6fa"/><stop offset="1" stop-color="#ebedf5"/></linearGradient>'
+    +'<linearGradient id="capsel" x1="0" y1="0" x2="0" y2="1">'
+    +'<stop offset="0" stop-color="#8b7cf4"/><stop offset="1" stop-color="#5646d6"/></linearGradient>';
+  board.append(defs);
   KEYS.forEach((k,i)=>{
     const [sw,x,y,w=100,h=100,rot=0,rx,ry]=k;
     const g=el("g",{class:"key","data-i":i,tabindex:0,role:"button"});
@@ -959,7 +995,7 @@ function renderDeck(){
   /* --- エンコーダ --- */
   let mat="";
   if(km.length>1){
-    mat=`<table class="encmat adv"><tr><th>レイヤー別</th><th>ENC1（縦）</th><th>ENC2（横）</th></tr>`;
+    mat=`<table class="encmat adv"><tr><th>レイヤー別</th><th>ENC1</th><th>ENC2</th></tr>`;
     for(let n=1;n<km.length;n++){
       const pair=encL[n];
       const ex=`<option value=""${pair?"":" selected"}>— L0と同じ —</option>`;
@@ -970,11 +1006,13 @@ function renderDeck(){
     mat+=`</table>`;
   }
   document.getElementById("dev-enc").innerHTML=`
-    <h3>ENCODER <small>EC12 縦(左) / CKW12 横(右)</small></h3>
+    <h3>ENCODER <small>EC12（左） / CKW12（右）</small></h3>
     <div class="desc">回転に割り当てる操作。上級ではレイヤーごとの割当と感度も。</div>
-    ${rowH("ENC1（左・縦）の回転","",encSelH('data-e0="1"',enc[0]))}
-    ${rowH("ENC2（右・横）の回転","",encSelH('data-e1="1"',enc[1]))}
+    ${rowH("ENC1（左）の回転","",encSelH('data-e0="1"',enc[0]))}
+    ${rowH("ENC2（右）の回転","",encSelH('data-e1="1"',enc[1]))}
     ${rowH("感度","1回転あたりの反応回数",rgH("enc.trig",0,TRIG.length-1,1,FMT_TRIG),"adv")}
+    ${rowH("ENC1 自由入力","&inc_dec_kp 上回し 下回し",`<input type="text" data-encraw="0" value="${enc[0].replace(/"/g,"&quot;")}" style="width:200px;font-family:var(--mono);font-size:10px">`,"adv")}
+    ${rowH("ENC2 自由入力","例: &inc_dec_kp LG(C) LG(V)",`<input type="text" data-encraw="1" value="${enc[1].replace(/"/g,"&quot;")}" style="width:200px;font-family:var(--mono);font-size:10px">`,"adv")}
     ${mat}`;
   /* 感度sliderはTRIGのindexで持ちたいが値はtrig実値 → 表示用に変換 */
   const trigRange=document.querySelector('[data-rg="enc.trig"]');
@@ -1070,7 +1108,10 @@ document.getElementById("deck").addEventListener("input",e=>{
 document.getElementById("deck").addEventListener("change",e=>{
   if(e.target.matches("[data-rg]")){e.target._histed=false; save(); renderOut(); return;}
   if(e.target.matches("[data-sl]")){pushHist(); sp(e.target.dataset.sl,+e.target.value); save(); renderOut(); return;}
-  if(e.target.matches("[data-e0]")){pushHist(); enc[0]=e.target.value; save(); renderOut(); return;}
+  if(e.target.matches("[data-encraw]")){const v=e.target.value.trim();
+    if(!v.startsWith("&")){toast("ZMKの割当は & で始まります");return;}
+    pushHist(); enc[+e.target.dataset.encraw]=v; save(); renderDeck(); renderOut(); return;}
+  if(e.target.matches("[data-e0]")){pushHist(); enc[0]=e.target.value; save(); renderDeck(); renderOut(); return;}
   if(e.target.matches("[data-e1]")){pushHist(); enc[1]=e.target.value; save(); renderOut(); return;}
   if(e.target.matches("[data-joypush]")){pushHist(); km[0][39]=e.target.value; save(); refreshKeys(); renderDeck(); return;}
   if(e.target.matches("[data-devname]")){pushHist(); devs[+e.target.dataset.devname].name=e.target.value.trim(); save(); renderDeck(); renderOut(); return;}
@@ -1393,23 +1434,25 @@ renderLink();
   function rs(){W=c.width=innerWidth*devicePixelRatio;H=c.height=innerHeight*devicePixelRatio;
     c.style.width=innerWidth+"px";c.style.height=innerHeight+"px";}
   rs(); addEventListener("resize",rs);
-  /* 静かな雨: 細い糸筋がごくゆっくり落ちる（霰ロゴの雨モチーフ） */
-  const N=Math.min(38,Math.floor(innerWidth/36));
+  /* 霰（あられ）: 白い小さな氷粒がころころ落ちる */
+  const N=Math.min(34,Math.floor(innerWidth/40));
   for(let i=0;i<N;i++)P.push({x:Math.random(),y:Math.random(),
-    len:(13+Math.random()*15),v:.8+Math.random()*.8,drift:.06+Math.random()*.06,
-    a:.09+Math.random()*.10,acc:Math.random()<.12});
-  (function tick(){
+    r:1.7+Math.random()*2.5,v:.85+Math.random()*.95,
+    ph:Math.random()*6.28,wob:.12+Math.random()*.22,acc:Math.random()<.1});
+  (function tick(now){
     x.clearRect(0,0,W,H);
-    x.lineCap="round";
     for(const p of P){
-      p.y+=p.v/240; p.x+=p.drift/240;
-      if(p.y>1.03){p.y=-.03;p.x=Math.random();}
-      const px=p.x*W, py=p.y*H, L=p.len*devicePixelRatio, dx=L*.12;
-      x.beginPath();
-      x.moveTo(px,py); x.lineTo(px+dx,py+L);
-      x.strokeStyle=p.acc?`rgba(114,99,232,${p.a+.06})`:`rgba(138,143,168,${p.a})`;
-      x.lineWidth=1*devicePixelRatio;
-      x.stroke();
+      p.y+=p.v/240;
+      if(p.y>1.04){p.y=-.04;p.x=Math.random();}
+      const wx=Math.sin((now||0)*.0014+p.ph)*p.wob*.01;
+      const px=(p.x+wx)*W, py=p.y*H, r=p.r*devicePixelRatio;
+      /* 下の影 → 白い粒 → 縁 の3層でぷっくりした氷粒に */
+      x.beginPath(); x.arc(px, py+r*.45, r, 0, 7);
+      x.fillStyle="rgba(178,182,204,.28)"; x.fill();
+      x.beginPath(); x.arc(px, py, r, 0, 7);
+      x.fillStyle=p.acc?"rgba(199,192,248,.95)":"rgba(255,255,255,.95)"; x.fill();
+      x.strokeStyle=p.acc?"rgba(114,99,232,.4)":"rgba(158,162,184,.4)";
+      x.lineWidth=1; x.stroke();
     }
     requestAnimationFrame(tick);
   })();
