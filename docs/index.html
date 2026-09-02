@@ -276,6 +276,56 @@
   .modal h4{margin:0 0 6px; font-family:var(--disp); font-weight:800; font-size:15px; letter-spacing:.04em}
   .modal p{margin:0 0 16px; font-size:12px; color:var(--mute); line-height:1.7}
   .modal .btnrow{justify-content:flex-end}
+
+  /* ========== Liquid Glass 質感（色トークンは不変） ========== */
+  body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:none; background:
+    radial-gradient(560px 420px at 12% 6%, rgba(86,70,214,.07), transparent 60%),
+    radial-gradient(660px 500px at 88% 92%, rgba(114,99,232,.06), transparent 65%),
+    radial-gradient(520px 420px at 82% 10%, rgba(23,24,29,.045), transparent 60%)}
+  .panel{background:rgba(255,255,255,.6); -webkit-backdrop-filter:blur(22px) saturate(1.15); backdrop-filter:blur(22px) saturate(1.15);
+    border:1px solid rgba(255,255,255,.8); border-radius:24px;
+    box-shadow:0 18px 44px rgba(28,30,46,.10), 0 2px 6px rgba(28,30,46,.05), inset 0 1px 0 rgba(255,255,255,.9)}
+  .board-panel{background:
+    radial-gradient(circle at 1px 1px, var(--grid) 1px, transparent 1.4px) 0 0/16px 16px,
+    rgba(255,255,255,.72)}
+  .btn.primary{background:linear-gradient(180deg,#7b6cf0,#5646d6);
+    box-shadow:0 10px 24px rgba(86,70,214,.4), inset 0 1.5px 0 rgba(255,255,255,.45)}
+  .btn.primary:hover{background:linear-gradient(180deg,#8677f2,#6152e0)}
+  .btn.ghost,.btn.plain{background:rgba(255,255,255,.78); border:1px solid rgba(255,255,255,.8); color:var(--ink);
+    box-shadow:0 4px 14px rgba(28,30,46,.08), inset 0 1px 0 #fff}
+  .btn.save{background:linear-gradient(180deg,#3cc08d,#2ea376);
+    box-shadow:0 10px 22px rgba(46,163,118,.35), inset 0 1.5px 0 rgba(255,255,255,.4)}
+  .chip{background:rgba(255,255,255,.78); border:1px solid rgba(255,255,255,.85);
+    box-shadow:0 4px 12px rgba(28,30,46,.07), inset 0 1px 0 #fff}
+  .chip.on{background:linear-gradient(180deg,#2c2d36,#17181d); border-color:#17181d; color:#fff;
+    box-shadow:0 8px 20px rgba(23,24,29,.3), inset 0 1px 0 rgba(255,255,255,.14)}
+  select,input[type=text]{background:rgba(255,255,255,.8); border-radius:12px}
+  .kb-key,.kb-tab,.mod,.preset{background:rgba(255,255,255,.75); box-shadow:0 2px 8px rgba(28,30,46,.05), inset 0 1px 0 #fff}
+  .key rect.cap{filter:drop-shadow(0 2.5px 2px rgba(23,24,29,.10))}
+  .key.sel rect.cap{filter:drop-shadow(0 5px 10px rgba(86,70,214,.45))}
+  .bind-now{background:rgba(255,255,255,.7)}
+  .sw{box-shadow:inset 0 1px 2px rgba(23,24,29,.18)}
+  .sw.on{background:linear-gradient(180deg,#7263e8,#5646d6)}
+  pre.out{border-radius:18px}
+  .modal{background:rgba(255,255,255,.82); -webkit-backdrop-filter:blur(26px) saturate(1.2); backdrop-filter:blur(26px) saturate(1.2)}
+  .mode-tg{background:rgba(255,255,255,.78); box-shadow:0 4px 12px rgba(28,30,46,.06), inset 0 1px 0 #fff}
+  .mode-tg button.on{background:linear-gradient(180deg,#2c2d36,#17181d)}
+
+  /* ========== 左サイドのレイヤーレール（選択中が手前へ膨らむ弧） ========== */
+  .layerbar .chip.util{font-size:11px}
+  @media(min-width:981px){
+    .app{padding-left:120px}
+    .layerbar{position:fixed; left:14px; top:50%; transform:translateY(-50%); z-index:6;
+      display:flex; flex-direction:column; align-items:flex-start; gap:7px; margin:0; width:100px}
+    .rail-item{transition:transform .35s cubic-bezier(.3,.9,.3,1), opacity .3s, box-shadow .3s; padding:9px 18px; letter-spacing:.1em}
+    .rail-item.on{background:rgba(255,255,255,.92); color:var(--ink); border:2px solid var(--accent);
+      box-shadow:0 10px 26px rgba(86,70,214,.25), inset 0 1px 0 #fff}
+    .rail-util{display:flex; flex-wrap:wrap; gap:6px; width:86px; margin-top:12px}
+    .layerbar .chip.util{padding:0; width:34px; height:34px; display:flex; align-items:center; justify-content:center}
+    .layerbar .hint{order:99; margin-top:10px; width:104px; line-height:1.6; font-size:8.5px; margin-left:0}
+    .layerbar .livechip{margin-top:8px}
+  }
+  @media(max-width:980px){ .rail-item{transform:none!important; opacity:1!important} .rail-util{display:contents} }
 </style>
 
 <canvas id="hail"></canvas>
@@ -748,41 +798,40 @@ function renderInsp(){
 }
 
 /* ================= layers（番号制・追加可能） ================= */
+function applyRailCurve(bar){
+  const items=[...bar.querySelectorAll(".rail-item")];
+  const wide=innerWidth>980;
+  items.forEach((el,n)=>{
+    if(!wide){el.style.transform="";el.style.opacity="";return;}
+    const d=Math.abs(n-layer), N=4;
+    const f=d>=N?0:Math.sqrt(1-(d/N)*(d/N));
+    el.style.transform=`translateX(${(f*34).toFixed(1)}px) scale(${(0.92+f*0.1).toFixed(3)})`;
+    el.style.opacity=(0.5+f*0.5).toFixed(2);
+  });
+}
+addEventListener("resize",()=>{const b=document.getElementById("layerbar"); if(b)applyRailCurve(b);});
 function renderLayerbar(){
   const bar=document.getElementById("layerbar");
   if(LIVE.on){
-    bar.innerHTML=LIVE.layers.map((_,n)=>`<button class="chip${n===layer?" on":""}" data-l="${n}">${LIVE.names[n]||layName(n)}</button>`).join("")
+    bar.innerHTML=LIVE.layers.map((_,n)=>`<button class="chip rail-item${n===layer?" on":""}" data-l="${n}">${LIVE.names[n]||layName(n)}</button>`).join("")
       +'<span class="livechip">● LIVE</span><span class="hint" id="edithint"></span>';
-    bar.querySelectorAll(".chip[data-l]").forEach(c=>c.addEventListener("click",()=>{
+    bar.querySelectorAll(".rail-item").forEach(c=>c.addEventListener("click",()=>{
       layer=+c.dataset.l; renderLayerbar(); renderInsp(); refreshKeys();
     }));
+    applyRailCurve(bar);
     return;
   }
-  bar.innerHTML=km.map((_,n)=>`<button class="chip${n===layer?" on":""}" data-l="${n}">${layName(n)}</button>`).join("")
+  bar.innerHTML=km.map((_,n)=>`<button class="chip rail-item${n===layer?" on":""}" data-l="${n}">${layName(n)}</button>`).join("")
+    +'<div class="rail-util">'
     +(km.length<10?'<button class="chip util" id="addlayer" title="レイヤーを追加">＋</button>':"")
     +(km.length>1?'<button class="chip util" id="dellayer" title="最後のレイヤーを削除">－</button>':"")
     +(km.length<10?'<button class="chip util" id="duplayer" title="表示中のレイヤーを複製">⧉</button>':"")
-    +(km.length<10?'<button class="chip util" id="jislayer" title="表示中のレイヤーをJIS配列用に変換して複製">JIS⧉</button>':"")
-    +'<button class="chip util" id="resetinit" title="初期配置に戻す（⌘Zで取消可）">⟲</button>'
+    +(km.length<10?'<button class="chip util" id="jislayer" title="表示中のレイヤーをJIS配列用に変換して複製">JIS</button>':"")
+    +'<button class="chip util" id="resetinit" title="初期配置に戻す（確認あり）">⟲</button>'
     +'<button class="chip util" id="undobtn" title="元に戻す（⌘Z）">↶</button>'
     +'<button class="chip util" id="redobtn" title="やり直す（⇧⌘Z）">↷</button>'
-    +'<span class="hint" id="edithint"></span>';
-  const dup=bar.querySelector("#duplayer");
-  if(dup)dup.addEventListener("click",()=>{
-    pushHist(); km.push(km[layer].slice()); const src=layer; layer=km.length-1; save();
-    renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
-    toast(layName(src)+" を複製して "+layName(layer)+" を作りました");
-  });
-  const jis=bar.querySelector("#jislayer");
-  if(jis)jis.addEventListener("click",()=>{
-    pushHist(); km.push(km[layer].map(jisTranslate)); const src=layer; layer=km.length-1; save();
-    renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
-    toast(layName(src)+" をJIS配列用に変換して "+layName(layer)+" を作りました（記号キーを変換）");
-  });
-  bar.querySelector("#resetinit").addEventListener("click",confirmReset);
-  bar.querySelector("#undobtn").addEventListener("click",undo);
-  bar.querySelector("#redobtn").addEventListener("click",redo);
-  bar.querySelectorAll(".chip[data-l]").forEach(c=>c.addEventListener("click",()=>{
+    +'</div><span class="hint" id="edithint"></span>';
+  bar.querySelectorAll(".rail-item").forEach(c=>c.addEventListener("click",()=>{
     layer=+c.dataset.l; renderLayerbar(); renderInsp(); refreshKeys();
   }));
   const add=bar.querySelector("#addlayer");
@@ -798,6 +847,22 @@ function renderLayerbar(){
     save();
     renderLayerbar(); renderInsp(); renderDeck(); refreshKeys(); toast("最後のレイヤーを削除しました");
   });
+  const dup=bar.querySelector("#duplayer");
+  if(dup)dup.addEventListener("click",()=>{
+    pushHist(); km.push(km[layer].slice()); const src=layer; layer=km.length-1; save();
+    renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
+    toast(layName(src)+" を複製して "+layName(layer)+" を作りました");
+  });
+  const jis=bar.querySelector("#jislayer");
+  if(jis)jis.addEventListener("click",()=>{
+    pushHist(); km.push(km[layer].map(jisTranslate)); const src=layer; layer=km.length-1; save();
+    renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
+    toast(layName(src)+" をJIS配列用に変換して "+layName(layer)+" を作りました（記号キーを変換）");
+  });
+  bar.querySelector("#resetinit").addEventListener("click",confirmReset);
+  bar.querySelector("#undobtn").addEventListener("click",undo);
+  bar.querySelector("#redobtn").addEventListener("click",redo);
+  applyRailCurve(bar);
 }
 renderLayerbar();
 
