@@ -503,6 +503,7 @@
     <div class="panel dev" id="dev-mt"></div>
     <div class="panel dev" id="dev-devices"></div>
     <div class="panel dev" id="dev-combo"></div>
+    <div class="panel dev" id="dev-hud"></div>
   </div>
 </div>
 
@@ -1141,10 +1142,75 @@ function renderDeck(){
     pushHist(); combos.splice(+b.dataset.combodel,1); save(); renderDeck(); refreshKeys(); renderOut();
   }));
   renderProfiles();
+  hudRender();
+}
+
+/* ================= ArareHUD（メニューバー常駐アプリ）との連携 =================
+ * ArareHUD が 127.0.0.1:47800 に立てる制御サーバへ問い合わせ、
+ * メニューバーのアイコン表示をこの画面から切り替える。
+ * ローカルアプリへの接続は配信元が限られるため、公開ページ／localhost でのみ有効。 */
+const HUD_BASE="http://127.0.0.1:47800";
+const HUD_HOST_OK=["amearare54.github.io","localhost","127.0.0.1"].includes(location.hostname);
+const hud={status:"idle",menuBar:false,layerName:"",err:""};
+
+async function hudFetch(path,opt){
+  const ac=new AbortController();
+  const timer=setTimeout(()=>ac.abort(),1500);
+  try{
+    const r=await fetch(HUD_BASE+path,Object.assign({signal:ac.signal,cache:"no-store"},opt||{}));
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    return await r.json();
+  } finally { clearTimeout(timer); }
+}
+function hudApply(d){
+  hud.status="ok"; hud.menuBar=!!d.menuBar; hud.layerName=d.layerName||""; hud.err="";
+}
+async function hudProbe(silent){
+  if(!HUD_HOST_OK){hud.status="unsupported"; hudRender(); return;}
+  hud.status="probing"; hudRender();
+  try{ hudApply(await hudFetch("/state")); }
+  catch(e){ hud.status="down"; hud.err=String(e&&e.message||e); }
+  hudRender();
+  if(!silent&&hud.status==="down")toast("ArareHUD が見つかりません。アプリを起動してから再検出してください");
+}
+async function hudSetMenuBar(v){
+  try{
+    hudApply(await hudFetch("/menubar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({visible:v})}));
+    hudRender();
+    toast(v?"ArareHUD をメニューバーに表示しました":"ArareHUD をメニューバーから隠しました（この画面か、アプリを開き直すと戻せます）");
+  }catch(e){
+    hud.status="down"; hudRender();
+    toast("切り替えに失敗しました: "+(e&&e.message||e));
+  }
+}
+function hudRender(){
+  const el=document.getElementById("dev-hud");
+  if(!el)return;
+  const head=`<h3>ARARE HUD <small>レイヤーオーバーレイ</small></h3>
+    <div class="desc">キーボードの現在のレイヤー（Base / Sym / Num）を画面に重ねて表示する常駐アプリです。メニューバーのアイコンを出すかどうかをここで選べます。</div>`;
+  let body;
+  if(hud.status==="unsupported"){
+    body=`<div class="row"><div class="lab">この表示では操作できません<small>ローカルアプリへの接続が許可されていない配信元です</small></div>
+      <div class="ctl"><a class="btn ghost mini" href="https://amearare54.github.io/zmk-config-arare/" target="_blank" rel="noopener">公開ページで開く ↗</a></div></div>`;
+  }else if(hud.status==="ok"){
+    body=`<div class="row"><div class="lab"><span class="dot live" style="display:inline-block;margin-right:6px"></span>ArareHUD に接続済み<small>現在のレイヤー: ${hud.layerName||"—"}</small></div>
+        <div class="ctl"><button class="btn plain mini" data-hudprobe="1">再検出</button></div></div>
+      <div class="row"><div class="lab">メニューバーに表示<small>オフにするとアイコンが消えます（ここか、ArareHUD.app を開き直すと戻ります）</small></div>
+        <div class="ctl"><button class="sw${hud.menuBar?" on":""}" data-hudtg="1" role="switch" aria-checked="${hud.menuBar}" aria-label="メニューバーに表示"></button></div></div>`;
+  }else if(hud.status==="probing"){
+    body=`<div class="row"><div class="lab"><span class="dot"></span> 検出中…</div><div class="ctl"></div></div>`;
+  }else{
+    body=`<div class="row"><div class="lab"><span class="dot" style="display:inline-block;margin-right:6px"></span>ArareHUD が見つかりません<small>アプリを起動してから「再検出」を押してください</small></div>
+        <div class="ctl"><button class="btn ghost mini" data-hudprobe="1">再検出</button></div></div>
+      <div class="desc" style="margin:6px 0 0">起動方法: <code style="font-family:var(--mono)">open ~/arare/tools/layer-hud/ArareHUD.app</code></div>`;
+  }
+  el.innerHTML=head+body;
 }
 
 /* デッキのイベント（委譲） */
 document.getElementById("deck").addEventListener("click",e=>{
+  if(e.target.closest("[data-hudtg]")){hudSetMenuBar(!hud.menuBar); return;}
+  if(e.target.closest("[data-hudprobe]")){hudProbe(false); return;}
   const sw=e.target.closest(".sw[data-tg]");
   if(sw){pushHist(); sp(sw.dataset.tg,!gp(sw.dataset.tg)); save(); renderDeck(); renderOut(); return;}
   const sg=e.target.closest("[data-sg]");
@@ -1539,6 +1605,7 @@ renderLink();
 
 renderDeck();
 refreshKeys();
+hudProbe(true);
 
 /* ================= 起動シーケンス（オーラリー校正 → リンク・ダイブ） ================= */
 (function(){
