@@ -1189,9 +1189,10 @@ function hudRender(){
   const head=`<h3>ARARE HUD <small>レイヤーオーバーレイ</small></h3>
     <div class="desc">キーボードの現在のレイヤー（Base / Sym / Num）を画面に重ねて表示する常駐アプリです。メニューバーのアイコンを出すかどうかをここで選べます。</div>`;
   let body;
+  const openBtn=`<a class="btn ghost mini" href="${HUD_BASE}/" target="_blank" rel="noopener">HUDの設定を開く ↗</a>`;
   if(hud.status==="unsupported"){
-    body=`<div class="row"><div class="lab">この表示では操作できません<small>ローカルアプリへの接続が許可されていない配信元です</small></div>
-      <div class="ctl"><a class="btn ghost mini" href="https://amearare54.github.io/zmk-config-arare/" target="_blank" rel="noopener">公開ページで開く ↗</a></div></div>`;
+    body=`<div class="row"><div class="lab">この画面からは直接操作できません<small>ローカルアプリへの接続が許可されていない配信元です</small></div>
+      <div class="ctl">${openBtn}</div></div>`;
   }else if(hud.status==="ok"){
     body=`<div class="row"><div class="lab"><span class="dot live" style="display:inline-block;margin-right:6px"></span>ArareHUD に接続済み<small>現在のレイヤー: ${hud.layerName||"—"}</small></div>
         <div class="ctl"><button class="btn plain mini" data-hudprobe="1">再検出</button></div></div>
@@ -1200,9 +1201,10 @@ function hudRender(){
   }else if(hud.status==="probing"){
     body=`<div class="row"><div class="lab"><span class="dot"></span> 検出中…</div><div class="ctl"></div></div>`;
   }else{
-    body=`<div class="row"><div class="lab"><span class="dot" style="display:inline-block;margin-right:6px"></span>ArareHUD が見つかりません<small>アプリを起動してから「再検出」を押してください</small></div>
-        <div class="ctl"><button class="btn ghost mini" data-hudprobe="1">再検出</button></div></div>
-      <div class="desc" style="margin:6px 0 0">起動方法: <code style="font-family:var(--mono)">open ~/arare/tools/layer-hud/ArareHUD.app</code></div>`;
+    body=`<div class="row"><div class="lab"><span class="dot" style="display:inline-block;margin-right:6px"></span>ここからは接続できませんでした<small>ArareHUD が起動していないか、このブラウザがローカル接続を遮断しています</small></div>
+        <div class="ctl"><button class="btn plain mini" data-hudprobe="1">再検出</button>${openBtn}</div></div>
+      <div class="desc" style="margin:6px 0 0">「HUDの設定を開く」は ArareHUD 自身が配信するページなので、ブラウザの制限を受けずに切り替えられます。<br>
+        起動していない場合: <code style="font-family:var(--mono)">open ~/arare/tools/layer-hud/ArareHUD.app</code></div>`;
   }
   el.innerHTML=head+body;
 }
