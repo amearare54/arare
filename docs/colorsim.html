@@ -713,6 +713,9 @@ function ensurePickFbo(w, h){
 /* ================= camera ================= */
 const cam = { az:-0.56, el:0.50, dist:420, target:[0,2,0], fov:32*Math.PI/180 };
 const CAMS = { iso:{az:-0.56,el:0.50}, top:{az:0,el:1.53}, front:{az:0,el:0.10}, side:{az:Math.PI/2,el:0.14} };
+/* 分解図の基準カメラ: AZ 23.7° / EL 15.0°, fitDist比0.85 ≒ D 523mm相当 */
+const EXPLODE_CAM = { az:23.7*Math.PI/180, el:15.0*Math.PI/180, fit:0.85 };
+const AUTO_SPEED = 0.0018;
 let camAnim = null;
 let explodeT = 0;   // animated 0..1
 const stage = document.getElementById('stage');
@@ -725,7 +728,7 @@ function fitDist(view){
 }
 function refit(animate){
   const b = worldBounds(state.view, true);
-  const d = fitDist(state.view);
+  const d = fitDist(state.view) * (state.explode ? EXPLODE_CAM.fit : 1);
   if (animate && !REDUCED) camAnim = {t0:performance.now(), dur:450,
     from:{az:cam.az, el:cam.el, dist:cam.dist, target:[...cam.target]},
     to:{az:cam.az, el:cam.el, dist:d, target:b.ctr}};
@@ -1407,7 +1410,14 @@ document.querySelectorAll('#botbar .views button[data-cam]').forEach(b=>{
 });
 const rottgl = document.getElementById('rottgl');
 rottgl.addEventListener('click', ()=>{
-  state.auto=!state.auto; rottgl.classList.toggle('on', state.auto); dirty=true;
+  state.auto=!state.auto; rottgl.classList.toggle('on', state.auto);
+  if (state.auto){
+    if (REDUCED) cam.el = EXPLODE_CAM.el;
+    else camAnim = {t0:performance.now(), dur:600,
+      from:{az:cam.az, el:cam.el, dist:cam.dist, target:[...cam.target]},
+      to:{az:cam.az, el:EXPLODE_CAM.el, dist:cam.dist, target:[...cam.target]}};
+  }
+  dirty=true;
 });
 const explodetgl = document.getElementById('explodetgl');
 explodetgl.addEventListener('click', ()=>{
@@ -1416,7 +1426,15 @@ explodetgl.addEventListener('click', ()=>{
   explodetgl.classList.toggle('on', state.explode);
   explodetgl.setAttribute('aria-pressed', state.explode);
   if (REDUCED){ explodeT = explodeTarget(); }
-  refit(true); dirty=true;
+  if (state.explode){
+    const bws = worldBounds(state.view, true);
+    const d = fitDist(state.view)*EXPLODE_CAM.fit;
+    if (REDUCED){ cam.az=EXPLODE_CAM.az; cam.el=EXPLODE_CAM.el; cam.dist=d; cam.target=[...bws.ctr]; }
+    else camAnim = {t0:performance.now(), dur:600,
+      from:{az:cam.az, el:cam.el, dist:cam.dist, target:[...cam.target]},
+      to:{az:EXPLODE_CAM.az, el:EXPLODE_CAM.el, dist:d, target:bws.ctr}};
+  } else refit(true);
+  dirty=true;
 });
 
 /* ================= pointer / orbit ================= */
@@ -1564,7 +1582,7 @@ function tick(now){
     if (Math.abs(explodeT-et) <= 0.001) explodeT = et;
     dirty=true;
   }
-  if (state.auto){ cam.az += 0.004; dirty=true; }
+  if (state.auto){ cam.az += AUTO_SPEED; dirty=true; }
   const selActive = !!state.sel && visibleSides().some(s=>entriesOf(s, state.sel.group).some(e=>isSelected(s,e)));
   if (!booted || dirty || selActive){
     drawScene(now);
