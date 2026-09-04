@@ -6,6 +6,8 @@ manifest:
       url-base: https://github.com/sekigon-gonnoc
     - name: nuovotaka
       url-base: https://github.com/nuovotaka
+    - name: t-ogura
+      url-base: https://github.com/t-ogura
   projects:
     - name: zmk
       remote: zmkfirmware
@@ -23,5 +25,11 @@ manifest:
       remote: nuovotaka
       revision: 780dfcd6b796063367893ff41e233773e12fb07c
       path: modules/zmk-pointing-acceleration
+    # ステータスBLEアドバタイズ（ArareHUDレイヤー表示用。v2.2.3タグのSHA。
+    # central=右のみ送信・ホスト接続中も継続。manufacturer data 26B: [6]=active_layer）
+    - name: prospector-zmk-module
+      remote: t-ogura
+      revision: 72a71aeea816eb0f86ffc5b108b267076ce5f0af
+      path: modules/prospector-zmk-module
   self:
     path: config
