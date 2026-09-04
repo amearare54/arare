@@ -416,10 +416,12 @@ const SWATCHES = [
   ['シグナルオレンジ','#d95d2a'],['マスタード','#d8a521'],['チョコ','#4a3428'],
 ];
 const PRESETS = {
-  'PROTO':      {top_plate:'#f4f5f6', middle_plate:'#f4f5f6', bottom_plate:'#e2e4e7', gasket:'#17191c',
+  /* PROTO = ユーザー確定配色 (2026-09-05 カラーコードから反映。値は {L,R} で左右別色可) */
+  'PROTO':      {top_plate:'#f4f5f6', middle_plate:'#f4f5f6', bottom_plate:'#17191c', gasket:'#17191c',
                  keycaps:'#f6f7f8', switches:'#c9cdd2', pcb:'#f4f5f6',
                  enc_wheel:'#17191c', enc_cover:'#f4f5f6', knob:'#17191c', joystick:'#17191c',
-                 trackball:'#33373d', part1:'#17191c', part2:'#17191c', part3:'#8b9095', part4:'#17191c', part_x:'#f4f5f6'},
+                 trackball:{L:'#33373d', R:'#f4f5f6'},
+                 part1:'#17191c', part2:'#17191c', part3:'#8b9095', part4:'#17191c', part_x:'#f4f5f6'},
   'STEALTH':    {top_plate:'#1d2024', middle_plate:'#24272b', bottom_plate:'#1d2024', gasket:'#111214',
                  keycaps:'#24272b', switches:'#17191c', pcb:'#141619',
                  enc_wheel:'#33373d', enc_cover:'#24272b', knob:'#33373d', joystick:'#33373d',
@@ -488,7 +490,10 @@ const state = {
   explode: false,
   inspect: null,   // {side|null, group, sub|null} 単体表示モード
 };
-for (const g of GROUP_DEFS) state.colors[g.id] = {L:PRESETS.PROTO[g.id], R:PRESETS.PROTO[g.id]};
+for (const g of GROUP_DEFS){
+  const v = PRESETS.PROTO[g.id];
+  state.colors[g.id] = (typeof v === 'object' && v) ? {L:v.L, R:v.R} : {L:v, R:v};
+}
 state.subColors = JSON.parse(JSON.stringify(PRESET_SUBS.PROTO));
 
 /* ================= data decode ================= */
@@ -1183,7 +1188,10 @@ hexin.addEventListener('change', ()=>{
       }
     } else {
       const p = PRESETS[b.dataset.p];
-      for (const g of GROUP_DEFS) presentSides(g.id).forEach(s=>state.colors[g.id][s]=p[g.id]);
+      for (const g of GROUP_DEFS) presentSides(g.id).forEach(s=>{
+        const v = p[g.id];
+        state.colors[g.id][s] = (typeof v === 'object' && v) ? v[s] : v;
+      });
     }
     state.subColors = JSON.parse(JSON.stringify(PRESET_SUBS[b.dataset.p] || {L:{}, R:{}}));
     renderParts(); syncColorUI(); dirty=true;
