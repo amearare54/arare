@@ -41,6 +41,9 @@
     transition:box-shadow .15s;
   }
   .gh:hover{box-shadow:0 2px 10px rgba(23,24,29,.14)}
+  .arrbar{display:flex; align-items:center; gap:7px}
+  .arrlab{font-family:var(--mono); font-size:10px; color:var(--mute); letter-spacing:.06em}
+  .arr-tg button{padding:5px 13px; font-size:11px; font-family:var(--disp); font-weight:800; letter-spacing:.08em}
   @media(max-width:760px){ .readouts{display:none} }
 
   /* ---------- hero ---------- */
@@ -234,6 +237,28 @@
   .seg{display:flex; border:1px solid var(--line); border-radius:9px; overflow:hidden}
   .seg button{border:none; background:var(--card2); font-family:var(--mono); font-size:10.5px; padding:6px 9px; cursor:pointer; color:var(--mute)}
   .seg button.on{background:var(--ink); color:#fff}
+  /* 接続（CONNECTIONS）パネル */
+  #dev-devices{grid-column:1/-1}
+  .conn-status{display:flex; gap:12px; flex-wrap:wrap; margin:8px 0 10px}
+  .cs-cell{flex:1 1 160px; border:1px solid var(--line); border-radius:14px; padding:10px 14px; background:rgba(255,255,255,.55)}
+  .cs-cell span{display:block; font-family:var(--mono); font-size:9.5px; letter-spacing:.12em; color:var(--mute); margin-bottom:3px}
+  .cs-cell b{font-size:13px; font-weight:700}
+  .conn-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; margin-top:6px}
+  .conn-card{border:1px solid var(--line); border-radius:16px; padding:12px 14px; background:rgba(255,255,255,.6);
+    display:flex; flex-direction:column; gap:7px}
+  .conn-card.idle{opacity:.62}
+  .cc-head{display:flex; align-items:center; gap:9px}
+  .cc-num{flex:none; width:26px; height:26px; border-radius:50%; background:var(--ink); color:#fff;
+    font-family:var(--disp); font-weight:800; font-size:12px; display:flex; align-items:center; justify-content:center}
+  .cc-head input{flex:1; min-width:0; padding:6px 9px; font-size:12px}
+  .cc-row{display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:11.5px}
+  .cc-row>span:first-child{color:var(--mute)}
+  .cc-row select{font-size:11px; padding:5px 7px}
+  .cc-keys{display:flex; gap:4px; flex-wrap:wrap; justify-content:flex-end}
+  .cc-keys code{font-family:var(--mono); font-size:10px; background:rgba(86,70,214,.08); color:var(--accent);
+    border:1px solid var(--glow); border-radius:7px; padding:2px 6px}
+  .cc-keys em{font-size:10.5px; color:var(--mute); font-style:normal}
+  .cc-assign{margin-top:2px}
   table.encmat{width:100%; border-collapse:collapse; font-size:11px; margin-top:4px}
   table.encmat th,table.encmat td{padding:5px 4px; text-align:left; border-top:1px dashed var(--line)}
   table.encmat th{font-family:var(--mono); font-size:9.5px; letter-spacing:.15em; color:var(--mute); border-top:none}
@@ -340,21 +365,9 @@
   .mode-tg{background:rgba(255,255,255,.78); box-shadow:0 4px 12px rgba(28,30,46,.06), inset 0 1px 0 #fff}
   .mode-tg button.on{background:linear-gradient(180deg,#2c2d36,#17181d)}
 
-  /* ========== 左サイドのレイヤーレール（選択中が手前へ膨らむ弧） ========== */
+  /* レイヤーバー（ボード上部・横並び） */
   .layerbar .chip.util{font-size:11px}
-  @media(min-width:981px){
-    .app{padding-left:160px}
-    .layerbar{position:fixed; left:16px; top:50%; transform:translateY(-50%); z-index:6;
-      display:flex; flex-direction:column; align-items:flex-start; gap:13px; margin:0; width:130px}
-    .rail-item{transition:transform .4s cubic-bezier(.3,.9,.3,1), opacity .35s, box-shadow .3s; padding:10px 20px; letter-spacing:.1em}
-    .rail-item.on{background:rgba(255,255,255,.9); color:var(--ink); border:2px solid var(--accent); padding:12px 24px; font-size:13px;
-      box-shadow:0 14px 32px rgba(86,70,214,.3), inset 0 1.5px 0 #fff}
-    .rail-util{display:flex; flex-wrap:wrap; gap:6px; width:86px; margin-top:12px}
-    .layerbar .chip.util{padding:0; width:34px; height:34px; display:flex; align-items:center; justify-content:center}
-    .layerbar .hint{order:99; margin-top:10px; width:104px; line-height:1.6; font-size:8.5px; margin-left:0}
-    .layerbar .livechip{margin-top:8px}
-  }
-  @media(max-width:980px){ .rail-item{transform:none!important; opacity:1!important} .rail-util{display:contents} }
+  .rail-util{display:contents}
 
   /* ---------- KEY EDIT: 横長・ボード直下 ---------- */
   .main{grid-template-columns:1fr}
@@ -442,6 +455,12 @@
     <div class="cell">UNIT<b>ARARE</b></div>
     <div class="cell">KEYS<b>47 / BLE SPLIT</b></div>
     <div class="cell">FW<b id="fwrev">main</b></div>
+  </div>
+  <div class="arrbar" title="キーマップが想定するホスト側のキーボード配列。切替えると全レイヤーの記号キーを変換します">
+    <span class="arrlab">配列</span>
+    <div class="mode-tg arr-tg" id="arrtg">
+      <button data-a="us">US</button><button data-a="jis">JIS</button>
+    </div>
   </div>
   <a class="gh" href="https://github.com/amearare54/zmk-config-arare" target="_blank" rel="noopener">GitHub ↗</a>
 </header>
@@ -582,11 +601,18 @@ const DEVS_DEFAULT=[0,1,2,3,4].map(()=>({name:"",layer:0,jis:false}));
 const JIS_MAP={AT:"LBKT",CARET:"EQUAL",AMPS:"LS(N6)",ASTRK:"LS(SQT)",LPAR:"LS(N8)",RPAR:"LS(N9)",
  UNDER:"LS(INT1)",PLUS:"LS(SEMI)",EQUAL:"LS(MINUS)",LBKT:"RBKT",RBKT:"NUHS",LBRC:"LS(RBKT)",RBRC:"LS(NUHS)",
  BSLH:"INT1",PIPE:"LS(INT3)",COLON:"SQT",SQT:"LS(N7)",DQT:"LS(N2)",GRAVE:"LS(LBKT)",TILDE:"LS(EQUAL)"};
+const INV_JIS={}; for(const k in JIS_MAP)INV_JIS[JIS_MAP[k]]=k;
 function jisKey(n){return JIS_MAP[n]||n;}
+function usKey(n){return INV_JIS[n]||n;}
 function jisTranslate(b){let m;
  if((m=b.match(/^&kp (.+)$/)))return "&kp "+jisKey(m[1]);
  if((m=b.match(/^&mt (\S+) (.+)$/)))return `&mt ${m[1]} ${jisKey(m[2])}`;
  if((m=b.match(/^&lt (\d+) (.+)$/)))return `&lt ${m[1]} ${jisKey(m[2])}`;
+ return b;}
+function usTranslate(b){let m;
+ if((m=b.match(/^&kp (.+)$/)))return "&kp "+usKey(m[1]);
+ if((m=b.match(/^&mt (\S+) (.+)$/)))return `&mt ${m[1]} ${usKey(m[2])}`;
+ if((m=b.match(/^&lt (\d+) (.+)$/)))return `&lt ${m[1]} ${usKey(m[2])}`;
  return b;}
 const JOY_PUSH=[["左クリック","&mkp LCLK"],["右クリック","&mkp RCLK"],["中クリック","&mkp MCLK"],["Enter","&kp ENTER"],["Space","&kp SPACE"],["Esc","&kp ESC"]];
 const TB_PRESETS=[
@@ -610,6 +636,7 @@ const GLYPH={MINUS:"-",EQUAL:"=",COMMA:",",DOT:".",AT:"@",FSLH:"/",BSLH:"\\",SEM
 const MODG={LS:"⇧",LC:"⌃",LA:"⌥",LG:"⌘",RS:"⇧",RC:"⌃",RA:"⌥",RG:"⌘"};
 const layName=n=>"L"+n;
 function keyGlyph(code){
+  if(arr==="jis"&&INV_JIS[code])code=INV_JIS[code]; // JISモード中は「JISホストで実際に出る記号」を表示
   let mods="",m;
   while((m=code.match(/^(LS|LC|LA|LG|RS|RC|RA|RG)\((.+)\)$/))){ mods+=MODG[m[1]]; code=m[2]; }
   return mods+(GLYPH[code]||code);
@@ -625,6 +652,9 @@ function legend(b){
   if((m=b.match(/^&bt BT_SEL (\d)$/)))return"BT"+(+m[1]+1);
   if(b==="&bt BT_NXT")return"BT→";
   if(b==="&bt BT_PRV")return"BT←";
+  if(b==="&out OUT_USB")return"USB";
+  if(b==="&out OUT_BLE")return"BLE";
+  if(b==="&out OUT_TOG")return"OUT⇄";
   if((m=b.match(/^&bt_dev(\d)$/)))return"▸"+((devs&&devs[+m[1]]&&devs[+m[1]].name)||("DEV"+(+m[1]+1)));
   if((m=b.match(/^&kp (.+)$/)))return keyGlyph(m[1]);
   if((m=b.match(/^&mt (\S+) (.+)$/)))return keyGlyph(m[1])+"/"+keyGlyph(m[2]);
@@ -636,11 +666,11 @@ function legend(b){
 }
 
 /* ================= state ================= */
-let km, enc, encL, dev, devs, combos, mode="basic", layer=0, sel=-1;
+let km, enc, encL, dev, devs, combos, mode="basic", layer=0, sel=-1, arr="us";
 function load(){
   km=JSON.parse(JSON.stringify(SHIPPED.layers)); enc=[...SHIPPED.sensors];
   dev=JSON.parse(JSON.stringify(DEV_DEFAULT)); encL={};
-  devs=JSON.parse(JSON.stringify(DEVS_DEFAULT)); combos=[];
+  devs=JSON.parse(JSON.stringify(DEVS_DEFAULT)); combos=[]; arr="us";
   try{
     const d=JSON.parse(localStorage.getItem("arare-studio-draft"));
     if(d && d.km && d.km.length>=1 && d.km.length<=10 && d.km.every(l=>l.length===47)){
@@ -648,13 +678,14 @@ function load(){
       if(d.dev)for(const g of GROUPS)if(d.dev[g])Object.assign(dev[g],d.dev[g]);
       if(d.devs&&d.devs.length===5)devs=d.devs;
       if(Array.isArray(d.combos))combos=d.combos;
+      if(d.arr==="jis")arr="jis";
     }
   }catch(e){}
 }
-function save(){ try{localStorage.setItem("arare-studio-draft",JSON.stringify({km,enc,encL,dev,devs,combos,mode}));}catch(e){} }
+function save(){ try{localStorage.setItem("arare-studio-draft",JSON.stringify({km,enc,encL,dev,devs,combos,mode,arr}));}catch(e){} }
 /* ===== Undo / Redo ===== */
 let hist=[], redoStack=[];
-function snapState(){return JSON.stringify({km,enc,encL,dev,devs,combos});}
+function snapState(){return JSON.stringify({km,enc,encL,dev,devs,combos,arr});}
 function pushHist(){hist.push(snapState()); if(hist.length>80)hist.shift(); redoStack.length=0;}
 function applyState(s){
   const d=JSON.parse(s);
@@ -662,8 +693,9 @@ function applyState(s){
   devs=(d.devs&&d.devs.length===5)?d.devs:JSON.parse(JSON.stringify(DEVS_DEFAULT));
   dev=JSON.parse(JSON.stringify(DEV_DEFAULT));
   for(const g of GROUPS)if(d.dev&&d.dev[g])Object.assign(dev[g],d.dev[g]);
+  arr=d.arr==="jis"?"jis":"us";
   if(layer>=km.length)layer=km.length-1; if(sel>=47)sel=-1;
-  save(); renderLayerbar(); renderDeck(); renderInsp(); refreshKeys();
+  save(); renderArrTg(); renderLayerbar(); renderDeck(); renderInsp(); refreshKeys();
 }
 function undo(){
   if(LIVE.on){ if(window.liveUndo)window.liveUndo(); return; }
@@ -793,6 +825,7 @@ function tactReco(){
 }
 const SPECIAL=[["▽ 透過","&trans"],["✕ 無効","&none"],["CLK·L","&mkp LCLK"],["CLK·R","&mkp RCLK"],["CLK·M","&mkp MCLK"],
  ["BT接続先1","&bt BT_SEL 0"],["BT接続先2","&bt BT_SEL 1"],["BT接続先3","&bt BT_SEL 2"],["BT次へ","&bt BT_NXT"],
+ ["出力→USB","&out OUT_USB"],["出力→BLE","&out OUT_BLE"],["出力⇄切替","&out OUT_TOG"],
  ["RESET","&sys_reset"],["BOOT","&bootloader"],["UNLOCK","&studio_unlock"],["BT消去","&bt BT_CLR"]];
 const TACT_RECO=[["BT接続先1","&bt BT_SEL 0"],["BT接続先2","&bt BT_SEL 1"],["BT接続先3","&bt BT_SEL 2"],["BT次へ","&bt BT_NXT"],["BTペア解除","&bt BT_CLR"],
  ["アプリ用 F13","&kp F13"],["アプリ用 F14","&kp F14"],["アプリ用 F15","&kp F15"],["RESET","&sys_reset"],["UNLOCK","&studio_unlock"]];
@@ -817,6 +850,7 @@ function setBinding(b){
   pushHist(); km[layer][sel]=b; save(); renderInsp(); refreshKeys();
 }
 function applyKp(code){
+  if(arr==="jis")code=jisKey(code); // JISモード中は選んだ記号がJISホストでそのまま出るコードに変換
   let c=code;
   if(modState.LG)c=`LG(${c})`; if(modState.LA)c=`LA(${c})`; if(modState.LC)c=`LC(${c})`; if(modState.LS)c=`LS(${c})`;
   if(holdSel==="none") setBinding(`&kp ${c}`);
@@ -878,40 +912,27 @@ function renderInsp(){
 }
 
 /* ================= layers（番号制・追加可能） ================= */
-function applyRailCurve(bar){
-  const items=[...bar.querySelectorAll(".rail-item")];
-  const wide=innerWidth>980;
-  items.forEach((el,n)=>{
-    if(!wide){el.style.transform="";el.style.opacity="";return;}
-    const d=Math.abs(n-layer);
-    const f=Math.max(0,Math.cos(Math.min(d*0.55,1.5708)));
-    el.style.transform=`translateX(${(f*64).toFixed(1)}px) scale(${(0.84+f*0.18).toFixed(3)})`;
-    el.style.opacity=(0.35+f*0.65).toFixed(2);
-  });
-}
-addEventListener("resize",()=>{const b=document.getElementById("layerbar"); if(b)applyRailCurve(b);});
 function renderLayerbar(){
   const bar=document.getElementById("layerbar");
   if(LIVE.on){
-    bar.innerHTML=LIVE.layers.map((_,n)=>`<button class="chip rail-item${n===layer?" on":""}" data-l="${n}">${LIVE.names[n]||layName(n)}</button>`).join("")
+    bar.innerHTML=LIVE.layers.map((_,n)=>`<button class="chip${n===layer?" on":""}" data-l="${n}">${LIVE.names[n]||layName(n)}</button>`).join("")
       +'<span class="livechip">● LIVE</span><span class="hint" id="edithint"></span>';
-    bar.querySelectorAll(".rail-item").forEach(c=>c.addEventListener("click",()=>{
+    bar.querySelectorAll(".chip[data-l]").forEach(c=>c.addEventListener("click",()=>{
       layer=+c.dataset.l; renderLayerbar(); renderInsp(); refreshKeys();
     }));
-    applyRailCurve(bar);
     return;
   }
-  bar.innerHTML=km.map((_,n)=>`<button class="chip rail-item${n===layer?" on":""}" data-l="${n}">${layName(n)}</button>`).join("")
+  bar.innerHTML=km.map((_,n)=>`<button class="chip${n===layer?" on":""}" data-l="${n}">${layName(n)}</button>`).join("")
     +'<div class="rail-util">'
     +(km.length<10?'<button class="chip util" id="addlayer" title="レイヤーを追加">＋</button>':"")
     +(km.length>1?'<button class="chip util" id="dellayer" title="最後のレイヤーを削除">－</button>':"")
     +(km.length<10?'<button class="chip util" id="duplayer" title="表示中のレイヤーを複製">⧉</button>':"")
-    +(km.length<10?'<button class="chip util" id="jislayer" title="表示中のレイヤーをJIS配列用に変換して複製">JIS</button>':"")
+    +(km.length<10&&arr!=="jis"?'<button class="chip util" id="jislayer" title="表示中のレイヤーをJIS配列用に変換して複製">JIS</button>':"")
     +'<button class="chip util" id="resetinit" title="初期配置に戻す（確認あり）">⟲</button>'
     +'<button class="chip util" id="undobtn" title="元に戻す（⌘Z）">↶</button>'
     +'<button class="chip util" id="redobtn" title="やり直す（⇧⌘Z）">↷</button>'
     +'</div><span class="hint" id="edithint"></span>';
-  bar.querySelectorAll(".rail-item").forEach(c=>c.addEventListener("click",()=>{
+  bar.querySelectorAll(".chip[data-l]").forEach(c=>c.addEventListener("click",()=>{
     layer=+c.dataset.l; renderLayerbar(); renderInsp(); refreshKeys();
   }));
   const add=bar.querySelector("#addlayer");
@@ -942,9 +963,27 @@ function renderLayerbar(){
   bar.querySelector("#resetinit").addEventListener("click",confirmReset);
   bar.querySelector("#undobtn").addEventListener("click",undo);
   bar.querySelector("#redobtn").addEventListener("click",redo);
-  applyRailCurve(bar);
 }
 renderLayerbar();
+
+/* ================= 配列（US⇄JIS）の切替 — ヘッダーの menu bar から ================= */
+function renderArrTg(){
+  document.querySelectorAll("#arrtg button").forEach(b=>b.classList.toggle("on",b.dataset.a===arr));
+}
+function switchArr(v){
+  if(v===arr)return;
+  if(LIVE.on){toast("LIVE接続中は配列を切替できません（切断してから切替えてください）");return;}
+  pushHist();
+  const tr=v==="jis"?jisTranslate:usTranslate;
+  km=km.map(l=>l.map(tr));
+  arr=v; save();
+  renderArrTg(); renderLayerbar(); renderDeck(); renderInsp(); refreshKeys();
+  toast(v==="jis"
+    ?"JIS配列モードに切替えました（全レイヤーの記号キーをJISホスト向けに変換。表示は出力される記号のまま）"
+    :"US配列モードに切替えました（記号キーをUSホスト向けに戻しました）");
+}
+document.querySelectorAll("#arrtg button").forEach(b=>b.addEventListener("click",()=>switchArr(b.dataset.a)));
+renderArrTg();
 
 /* ================= 設定デッキ（かんたん/上級・プロファイル） ================= */
 function gp(path){const [g,k]=path.split(".");return dev[g][k];}
@@ -1034,20 +1073,39 @@ function renderDeck(){
     <div class="desc">「タップで文字・長押しで修飾キー」の切替時間。誤爆するなら長め、もたつくなら短めに。</div>
     ${rowH("Mod-Tap 判定時間","この時間より長く押すと⇧⌃⌥⌘側になる",rgH("mt.term",120,350,10,FMT_MS))}
     ${rowH("Layer-Tap 判定時間","ホールドでレイヤー系の判定時間",rgH("mt.ltTerm",120,350,10,FMT_MS),"adv")}`;
-  /* --- DEVICES（BTプロファイル別キーマップ） --- */
+  /* --- 接続（CONNECTIONS: 接続先の管理・切り替え） --- */
   const layOpts=(cur)=>km.map((_,n)=>`<option value="${n}"${n===cur?" selected":""}>${layName(n)}</option>`).join("");
+  const devKeyRefs=(n)=>{const out=[];km.forEach((l,li)=>l.forEach((b,i)=>{if(b==="&bt_dev"+n)out.push(layName(li)+"·"+KEYS[i][0]);}));return out;};
+  const connCards=devs.map((d,n)=>{
+    const refs=devKeyRefs(n);
+    return `<div class="conn-card${d.name||refs.length?"":" idle"}">
+      <div class="cc-head">
+        <span class="cc-num">${n+1}</span>
+        <input type="text" data-devname="${n}" value="${d.name.replace(/"/g,"&quot;")}" placeholder="例: MacBook Pro">
+      </div>
+      <div class="cc-row"><span>キーマップ</span><select data-devlayer="${n}">${layOpts(d.layer)}</select></div>
+      <div class="cc-row"><span>配列</span><select data-devjis="${n}"><option value="us"${d.jis?"":" selected"}>US</option><option value="jis"${d.jis?" selected":""}>JIS</option></select></div>
+      <div class="cc-row"><span>切替キー</span><span class="cc-keys">${refs.length?refs.map(r=>`<code>${r}</code>`).join(" "):'<em>未割当</em>'}</span></div>
+      <button class="btn plain mini cc-assign" data-assigndev="${n}">選択中のキーに切替キーを割当</button>
+    </div>`;}).join("");
   document.getElementById("dev-devices").innerHTML=`
-    <h3>DEVICES <small>接続先ごとのキーマップ</small></h3>
-    <div class="desc">接続先（BTプロファイル）に名前とキーマップを割当てると「▸切替キー」が作られ、<b>1キーで接続先とキーマップが同時に切替わります</b>（Mac⇄Windows等）。切替キーはタクトSWのおすすめ割当・特殊割当から。</div>
-    <table class="encmat"><tr><th>#</th><th>名前</th><th>キーマップ</th><th>JIS</th></tr>
-    ${devs.map((d,n)=>`<tr>
-      <td style="font-family:var(--mono)">BT${n+1}</td>
-      <td><input type="text" data-devname="${n}" value="${d.name.replace(/"/g,"&quot;")}" placeholder="例: MacBook" style="padding:5px 7px;font-size:11px"></td>
-      <td><select data-devlayer="${n}">${layOpts(d.layer)}</select></td>
-      <td><input type="checkbox" data-devjis="${n}"${d.jis?" checked":""}></td>
-    </tr>`).join("")}
-    </table>
-    <div class="desc" style="margin:6px 0 0">JISにチェックした接続先には、レイヤーバーの「JIS⧉」で作ったJIS変換レイヤーを割当ててください（記号のズレを吸収）。</div>`;
+    <h3>接続 <small>CONNECTIONS — 接続先の管理と切り替え</small></h3>
+    <div class="conn-status">
+      <div class="cs-cell"><span>アクティブな接続</span><b>${LIVE.on?`${LIVE.device}（${LIVE.transport}）`:"未接続"}</b></div>
+      <div class="cs-cell"><span>現在の配列</span><b>${arr==="jis"?"JIS":"US"}</b></div>
+      <div class="cs-cell"><span>出力優先度</span><b>USB &gt; BLE（ZMK標準）</b></div>
+    </div>
+    <div class="desc">接続先（BTプロファイル1〜5）ごとに名前・キーマップ・配列を設定できます。「切替キー」を割当てると、実機でそのキーを押すだけで<b>接続先とキーマップが同時に切替わります</b>（Mac⇄Windows⇄iPad等）。JISの接続先には「JIS⧉」で作った変換レイヤーを割当ててください。</div>
+    <div class="conn-grid">${connCards}</div>
+    <div class="cc-row" style="margin-top:10px;border-top:1px dashed var(--line);padding-top:10px">
+      <span>出力先（USB⇄BLE）の手動切替</span>
+      <span class="cc-keys">
+        <button class="btn plain mini" data-assignout="&amp;out OUT_USB">USBへ</button>
+        <button class="btn plain mini" data-assignout="&amp;out OUT_BLE">BLEへ</button>
+        <button class="btn plain mini" data-assignout="&amp;out OUT_TOG">⇄切替</button>
+      </span>
+    </div>
+    <div class="desc" style="margin:4px 0 0">USBとBLEを同時接続しているときはUSBが優先されます。上のボタンで<b>選択中のキー</b>に出力先切替を割当てると、キー1つでBLE側へ送るよう強制できます。</div>`;
   /* --- COMBO（同時押し） --- */
   const comboRows=combos.map((c,i)=>`<div class="row">
       <div class="lab">${c.keys.map(k=>legend((km[0]||[])[k]||"&trans")).join(" + ")}<small>POS ${c.keys.join(",")}</small></div>
@@ -1094,6 +1152,21 @@ document.getElementById("deck").addEventListener("click",e=>{
   }
   const pre=e.target.closest("[data-pre]");
   if(pre){pushHist(); Object.assign(dev.tb,TB_PRESETS[+pre.dataset.pre][2]); save(); renderDeck(); renderOut(); toast("プリセット「"+TB_PRESETS[+pre.dataset.pre][0]+"」を適用しました"); return;}
+  const ad=e.target.closest("[data-assigndev]");
+  if(ad){
+    if(sel<0){toast("先にボード上で割当てたいキーをクリックしてください");return;}
+    const n=+ad.dataset.assigndev;
+    setBinding("&bt_dev"+n); renderDeck();
+    toast(`${layName(layer)} の ${KEYS[sel][0]} に「▸${devs[n].name||"BT"+(n+1)}」切替キーを割当てました`);
+    return;
+  }
+  const ao=e.target.closest("[data-assignout]");
+  if(ao){
+    if(sel<0){toast("先にボード上で割当てたいキーをクリックしてください");return;}
+    setBinding(ao.dataset.assignout); renderDeck();
+    toast(`${layName(layer)} の ${KEYS[sel][0]} に出力先切替（${legend(ao.dataset.assignout)}）を割当てました`);
+    return;
+  }
 });
 document.getElementById("deck").addEventListener("input",e=>{
   const rg=e.target.closest("[data-rg]"); if(!rg)return;
@@ -1116,7 +1189,7 @@ document.getElementById("deck").addEventListener("change",e=>{
   if(e.target.matches("[data-joypush]")){pushHist(); km[0][39]=e.target.value; save(); refreshKeys(); renderDeck(); return;}
   if(e.target.matches("[data-devname]")){pushHist(); devs[+e.target.dataset.devname].name=e.target.value.trim(); save(); renderDeck(); renderOut(); return;}
   if(e.target.matches("[data-devlayer]")){pushHist(); devs[+e.target.dataset.devlayer].layer=+e.target.value; save(); renderOut(); return;}
-  if(e.target.matches("[data-devjis]")){pushHist(); devs[+e.target.dataset.devjis].jis=e.target.checked; save(); renderOut(); return;}
+  if(e.target.matches("[data-devjis]")){pushHist(); devs[+e.target.dataset.devjis].jis=e.target.value==="jis"; save(); renderOut(); return;}
   if(e.target.matches("[data-combobind]")){const v=e.target.value.trim(); if(!v.startsWith("&")){toast("ZMKの割当は & で始まります");return;} pushHist(); combos[+e.target.dataset.combobind].binding=v; save(); renderOut(); return;}
   if(e.target.matches("[data-combotime]")){pushHist(); combos[+e.target.dataset.combotime].timeout=+e.target.value; save(); renderOut(); return;}
   const em=e.target.closest("[data-em]");
@@ -1145,7 +1218,7 @@ function renderProfiles(){
   document.getElementById("profsave").addEventListener("click",()=>{
     const name=document.getElementById("profname").value.trim()||document.getElementById("profsel").value;
     if(!name){toast("プロファイル名を入力してください");return;}
-    const ps=getProfiles(); ps[name]={km,enc,encL,dev,devs,combos};
+    const ps=getProfiles(); ps[name]={km,enc,encL,dev,devs,combos,arr};
     try{localStorage.setItem("arare-profiles",JSON.stringify(ps));}catch(e){}
     renderProfiles(); document.getElementById("profsel").value=name;
     toast("プロファイル「"+name+"」を保存しました（このブラウザ内）");
@@ -1164,8 +1237,9 @@ function renderProfiles(){
     combos=Array.isArray(p.combos)?JSON.parse(JSON.stringify(p.combos)):[];
     dev=JSON.parse(JSON.stringify(DEV_DEFAULT));
     for(const g of GROUPS)if(p.dev&&p.dev[g])Object.assign(dev[g],p.dev[g]);
+    arr=p.arr==="jis"?"jis":"us";
     if(layer>=km.length)layer=km.length-1; sel=-1; save();
-    renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
+    renderArrTg(); renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
     toast("プロファイル「"+e.target.value+"」を読み込みました");
   });
 }
@@ -1189,6 +1263,7 @@ ${fmtLayer(i)}
         };`;}).join("\n\n");
   return `/*
  * arare keymap — arare Studio で生成（${d}）
+ * 配列: ${arr==="jis"?"JIS":"US"}ホスト向け
  *
  * ポジション順は arare.dtsi のコメント参照（47キー×${km.length}レイヤー）。
  */
@@ -1196,6 +1271,7 @@ ${fmtLayer(i)}
 #include <behaviors.dtsi>
 #include <dt-bindings/zmk/keys.h>
 #include <dt-bindings/zmk/bt.h>
+#include <dt-bindings/zmk/outputs.h>
 #include <dt-bindings/zmk/pointing.h>
 
 ${dev.mt.term!==200?`&mt { tapping-term-ms = <${dev.mt.term}>; };
@@ -1364,9 +1440,9 @@ function resetAll(){
   pushHist();
   km=JSON.parse(JSON.stringify(SHIPPED.layers)); enc=[...SHIPPED.sensors]; layer=0;
   dev=JSON.parse(JSON.stringify(DEV_DEFAULT)); encL={};
-  devs=JSON.parse(JSON.stringify(DEVS_DEFAULT)); combos=[]; comboCapture=null;
+  devs=JSON.parse(JSON.stringify(DEVS_DEFAULT)); combos=[]; comboCapture=null; arr="us";
   try{localStorage.removeItem("arare-studio-draft");}catch(e){}
-  renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
+  renderArrTg(); renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
   toast("初期配置に戻しました（⌘Zで取り消せます・プロファイルは残ります）");
 }
 function confirmReset(){
@@ -1420,7 +1496,7 @@ function renderLink(){
   }
 }
 window.__arare={
-  LIVE, renderLink, renderLayerbar, renderInsp, refreshKeys, toast,
+  LIVE, renderLink, renderLayerbar, renderInsp, refreshKeys, renderDeck, toast,
   get layer(){return layer}, set layer(v){layer=v},
   clearSel(){sel=-1;}
 };
@@ -1574,7 +1650,7 @@ function log(...a){
   const s=a.map(x=>typeof x==="string"?x:JSON.stringify(x)).join(" ");
   if(el){el.textContent+=s+"\n"; el.scrollTop=el.scrollHeight;}
 }
-function rerender(){A.renderLink();A.renderLayerbar();A.renderInsp();A.refreshKeys();}
+function rerender(){A.renderLink();A.renderLayerbar();A.renderInsp();A.refreshKeys();A.renderDeck();}
 
 /* --- ZMKキーコードのエンコード/デコード --- */
 const KEYPAGE=0x07,CONSPAGE=0x0C;
@@ -1611,7 +1687,7 @@ function decKey(p){
 /* --- 挙動(behavior)マップ: displayName → 当アプリの記法 --- */
 const NAME_MATCH=[["&studio_unlock","studio unlock"],["&bootloader","bootloader"],["&sys_reset","reset"],
  ["&kp","key press"],["&mt","mod-tap"],["&lt","layer tap"],["&mo","momentary layer"],["&tog","toggle layer"],["&to","to layer"],
- ["&trans","transparent"],["&none","none"],["&mkp","mouse button"],["&bt","bluetooth"]];
+ ["&trans","transparent"],["&none","none"],["&mkp","mouse button"],["&bt","bluetooth"],["&out","output"]];
 let B={},BID={}; // B["&kp"]=id / BID[id]={key,displayName}
 
 let call=null, transport=null, notifAbort=null;
@@ -1699,6 +1775,7 @@ function decodeBinding(b){
     case "&bootloader":return "&bootloader";
     case "&studio_unlock":return "&studio_unlock";
     case "&bt":return p1===3?("&bt BT_SEL "+p2):p1===0?"&bt BT_CLR":p1===1?"&bt BT_NXT":p1===2?"&bt BT_PRV":rawBind(b);
+    case "&out":return p1===0?"&out OUT_TOG":p1===1?"&out OUT_USB":p1===2?"&out OUT_BLE":rawBind(b);
     default:return rawBind(b);
   }
 }
@@ -1720,6 +1797,9 @@ function encodeBinding(s){
   if(s==="&bt BT_CLR"&&B["&bt"]!=null)return {behaviorId:B["&bt"],param1:0,param2:0};
   if(s==="&bt BT_NXT"&&B["&bt"]!=null)return {behaviorId:B["&bt"],param1:1,param2:0};
   if(s==="&bt BT_PRV"&&B["&bt"]!=null)return {behaviorId:B["&bt"],param1:2,param2:0};
+  if(s==="&out OUT_TOG"&&B["&out"]!=null)return {behaviorId:B["&out"],param1:0,param2:0};
+  if(s==="&out OUT_USB"&&B["&out"]!=null)return {behaviorId:B["&out"],param1:1,param2:0};
+  if(s==="&out OUT_BLE"&&B["&out"]!=null)return {behaviorId:B["&out"],param1:2,param2:0};
   return null;
 }
 window.liveConnect=connect;
