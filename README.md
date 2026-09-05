@@ -24,17 +24,17 @@
 <tr>
 <td align="center" width="33%">
 <a href="https://amearare54.github.io/arare/manual.html"><img src="docs/icon-manual.png" alt="" width="72"></a><br>
-<a href="https://amearare54.github.io/arare/manual.html"><b>取扱説明書</b></a><br>
+<a href="https://amearare54.github.io/arare/manual.html"><b>MANUAL</b></a><br>
 どんなキーボードか知る
 </td>
 <td align="center" width="33%">
 <a href="https://amearare54.github.io/arare/colorsim.html"><img src="docs/icon-colorsim.png" alt="" width="72"></a><br>
-<a href="https://amearare54.github.io/arare/colorsim.html"><b>カラーシミュレーター</b></a><br>
+<a href="https://amearare54.github.io/arare/colorsim.html"><b>COLOR SIMULATOR</b></a><br>
 色を決めるとき
 </td>
 <td align="center" width="33%">
 <a href="https://amearare54.github.io/arare/"><img src="docs/icon-studio.png" alt="" width="72"></a><br>
-<a href="https://amearare54.github.io/arare/"><b>arare Studio</b></a><br>
+<a href="https://amearare54.github.io/arare/"><b>STUDIO</b></a><br>
 キーを変えたくなったら
 </td>
 </tr>
@@ -43,9 +43,9 @@
 
 > [!TIP]
 > リンクが開けないときは、こちらから直接どうぞ。
-> 取扱説明書 <https://amearare54.github.io/arare/manual.html> ／
-> カラーシミュレーター <https://amearare54.github.io/arare/colorsim.html> ／
-> arare Studio <https://amearare54.github.io/arare/>
+> MANUAL <https://amearare54.github.io/arare/manual.html> ／
+> COLOR SIMULATOR <https://amearare54.github.io/arare/colorsim.html> ／
+> STUDIO <https://amearare54.github.io/arare/>
 >
 > arare Studio で実機につないで書き換える機能だけ、Chrome / Edge が必要です。
 > 取扱説明書は開いたときに短い演出（4.6秒）が流れますが、クリックなどでいつでも飛ばせます。
@@ -207,7 +207,7 @@ USB-C のとなりに、同じ大きさの小さな穴が2つあります。片�
 ---
 
 <p align="center">
-  <a href="https://amearare54.github.io/arare/manual.html">取扱説明書</a> ・
-  <a href="https://amearare54.github.io/arare/colorsim.html">カラーシミュレーター</a> ・
-  <a href="https://amearare54.github.io/arare/">arare Studio</a>
+  <a href="https://amearare54.github.io/arare/manual.html">MANUAL</a> ・
+  <a href="https://amearare54.github.io/arare/colorsim.html">COLOR SIMULATOR</a> ・
+  <a href="https://amearare54.github.io/arare/">STUDIO</a>
 </p>
