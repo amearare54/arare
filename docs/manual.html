@@ -280,8 +280,8 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
   display:grid; place-items:center; overflow:hidden;
 }
 #arare-intro.gone{opacity:0; transition:opacity .18s linear; pointer-events:none}
-#arare-intro /* JS が落ちても 9 秒で必ず本文へ通す（通常は JS が先に DOM から外す） */
-#arare-intro{animation:arareIntroFailsafe 17s steps(1,end) forwards}
+#arare-intro /* JS が落ちても 8.5 秒で必ず本文へ通す（通常は JS が先に DOM から外す） */
+#arare-intro{animation:arareIntroFailsafe 8.5s steps(1,end) forwards}
 @keyframes arareIntroFailsafe{#arare-intro to{opacity:0;visibility:hidden;pointer-events:none}}
 #arare-intro.still{animation:none}
 #arare-intro #stage{width:100%; height:100%; display:block}
@@ -2061,7 +2061,7 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
   }
 
   /* ── 再生 ── */
-  var rate = mode === 'short' ? 1.9 : 0.49;
+  var rate = mode === 'short' ? 1.9 : 0.98;
   anims.forEach(function (o) {
     if (o.a.updatePlaybackRate) o.a.updatePlaybackRate(rate); else o.a.playbackRate = rate;
     o.a.play();
@@ -2083,7 +2083,7 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
   }
   document.documentElement.style.overflow = 'hidden';
   setTimeout(finish, ms(T.end + 0.35) / rate);
-  setTimeout(finish, 13500);
+  setTimeout(finish, 6750);
   ['click', 'keydown', 'wheel', 'touchstart'].forEach(function (ev) {
     addEventListener(ev, finish, { once: true, passive: true });
   });
