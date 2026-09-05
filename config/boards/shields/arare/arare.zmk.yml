@@ -2,7 +2,7 @@ file_format: "1"
 id: arare
 name: arare
 type: shield
-url: https://github.com/amearare54/zmk-config-arare
+url: https://github.com/amearare54/arare
 requires: [seeeduino_xiao_ble]
 features:
   - keys

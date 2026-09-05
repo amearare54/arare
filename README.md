@@ -23,18 +23,18 @@
 <table>
 <tr>
 <td align="center" width="33%">
-<a href="https://amearare54.github.io/zmk-config-arare/manual.html"><img src="docs/icon-manual.png" alt="" width="72"></a><br>
-<a href="https://amearare54.github.io/zmk-config-arare/manual.html"><b>取扱説明書</b></a><br>
+<a href="https://amearare54.github.io/arare/manual.html"><img src="docs/icon-manual.png" alt="" width="72"></a><br>
+<a href="https://amearare54.github.io/arare/manual.html"><b>取扱説明書</b></a><br>
 どんなキーボードか知る
 </td>
 <td align="center" width="33%">
-<a href="https://amearare54.github.io/zmk-config-arare/colorsim.html"><img src="docs/icon-colorsim.png" alt="" width="72"></a><br>
-<a href="https://amearare54.github.io/zmk-config-arare/colorsim.html"><b>カラーシミュレーター</b></a><br>
+<a href="https://amearare54.github.io/arare/colorsim.html"><img src="docs/icon-colorsim.png" alt="" width="72"></a><br>
+<a href="https://amearare54.github.io/arare/colorsim.html"><b>カラーシミュレーター</b></a><br>
 色を決めるとき
 </td>
 <td align="center" width="33%">
-<a href="https://amearare54.github.io/zmk-config-arare/"><img src="docs/icon-studio.png" alt="" width="72"></a><br>
-<a href="https://amearare54.github.io/zmk-config-arare/"><b>arare Studio</b></a><br>
+<a href="https://amearare54.github.io/arare/"><img src="docs/icon-studio.png" alt="" width="72"></a><br>
+<a href="https://amearare54.github.io/arare/"><b>arare Studio</b></a><br>
 キーを変えたくなったら
 </td>
 </tr>
@@ -43,9 +43,9 @@
 
 > [!TIP]
 > リンクが開けないときは、こちらから直接どうぞ。
-> 取扱説明書 <https://amearare54.github.io/zmk-config-arare/manual.html> ／
-> カラーシミュレーター <https://amearare54.github.io/zmk-config-arare/colorsim.html> ／
-> arare Studio <https://amearare54.github.io/zmk-config-arare/>
+> 取扱説明書 <https://amearare54.github.io/arare/manual.html> ／
+> カラーシミュレーター <https://amearare54.github.io/arare/colorsim.html> ／
+> arare Studio <https://amearare54.github.io/arare/>
 >
 > arare Studio で実機につないで書き換える機能だけ、Chrome / Edge が必要です。
 > 取扱説明書は開いたときに短い演出（4.6秒）が流れますが、クリックなどでいつでも飛ばせます。
@@ -62,19 +62,19 @@ ZMK の設定・ピン割当・ビルドを見に来た方は [技術情報](#�
 | 左手・スティック | トラックパッドの代わりとして載せています。2 本指・3 本指でするような操作を、親指ひとつでできるように、というつもりです。倒す操作（アナログ入力）は準備中で、いまは押し込みのみ有効です。 |
 | 完全無線 | 左右それぞれに電池とマイコンがあり、間をつなぐケーブルがありません。残量はマイコンのランプが色で知らせます。 |
 | ホットスワップ | Kailh Choc v2 互換のキースイッチを、はんだ付けなしで差し替えられます。 |
-| キーマップ | ブラウザから何度でも変えられます（[arare Studio](https://amearare54.github.io/zmk-config-arare/)）。 |
+| キーマップ | ブラウザから何度でも変えられます（[arare Studio](https://amearare54.github.io/arare/)）。 |
 
 ## まず見てほしいもの
 
-**1. 大きさと各部を見る** → [取扱説明書の「各部の名称」](https://amearare54.github.io/zmk-config-arare/manual.html#parts)
+**1. 大きさと各部を見る** → [取扱説明書の「各部の名称」](https://amearare54.github.io/arare/manual.html#parts)
 
 平面図・側面図・正面図に寸法を入れた総組立図を載せています。コンセプト、はじめかた、出荷時のキーマップ、名前の由来、仕様・お手入れ・安全にお使いいただくために、なども入っています。
 
-**2. 色を決める** → [カラーシミュレーターを開く](https://amearare54.github.io/zmk-config-arare/colorsim.html)
+**2. 色を決める** → [カラーシミュレーターを開く](https://amearare54.github.io/arare/colorsim.html)
 
 ケースは3Dプリントなので、部品ごとに色を選べます。実機と同じ3Dデータをブラウザに載せていて、クリア樹脂の見えかたも再現します。EXPLODE で分解図、AUTO でゆっくり回しながら確かめられます。
 
-**3. キー配列を見る** → [arare Studio を開く](https://amearare54.github.io/zmk-config-arare/)
+**3. キー配列を見る** → [arare Studio を開く](https://amearare54.github.io/arare/)
 
 実機がなくても、配置図の上でキーの割り当てを触ってみられます。
 
@@ -82,11 +82,11 @@ ZMK の設定・ピン割当・ビルドを見に来た方は [技術情報](#�
 
 1. **電源を入れる** — 左右それぞれの側面にあるスライドスイッチを内側（ON）へ。左右とも忘れずに。
 2. **パソコンとつなぐ** — Bluetooth の一覧から `arare` を選びます。一覧に出るのは右手側だけで、左手側は右手側と自動でつながります。
-3. **キーの割り当てを変える** — 書き換える前に、内側のタクトスイッチ（UNLOCK）を一回押します。→ [arare Studio](https://amearare54.github.io/zmk-config-arare/)
+3. **キーの割り当てを変える** — 書き換える前に、内側のタクトスイッチ（UNLOCK）を一回押します。→ [arare Studio](https://amearare54.github.io/arare/)
 
 ### ランプの見かた
 
-USB-C のとなりに、同じ大きさの小さな穴が2つあります。片方がマイコン基板のリセットスイッチ、もう片方がランプです（どちらがどちらかは [取扱説明書の各部の名称](https://amearare54.github.io/zmk-config-arare/manual.html#parts) の図で確かめられます）。
+USB-C のとなりに、同じ大きさの小さな穴が2つあります。片方がマイコン基板のリセットスイッチ、もう片方がランプです（どちらがどちらかは [取扱説明書の各部の名称](https://amearare54.github.io/arare/manual.html#parts) の図で確かめられます）。
 
 ランプは電池残量を色で知らせます。ふだんは消えています。
 
@@ -99,7 +99,7 @@ USB-C のとなりに、同じ大きさの小さな穴が2つあります。片�
 電源を入れたときと、しばらく置いてから使いはじめたときに 1.5 秒だけ点きます。残量が 20 % 以下になると赤く2回点滅して以降5分ごと、10 % 以下になると赤く3回点滅して以降2分ごとに知らせます。**点滅するのは使っているあいだだけで、置きっぱなしのときと充電中は光りません。** USB-C をつないでいるあいだは、残量の色が点いたままになります。
 
 > [!TIP]
-> つながらないとき、充電のしかた、接続先の切り替えは、[取扱説明書の「はじめかた」](https://amearare54.github.io/zmk-config-arare/manual.html#start) にまとめています。
+> つながらないとき、充電のしかた、接続先の切り替えは、[取扱説明書の「はじめかた」](https://amearare54.github.io/arare/manual.html#start) にまとめています。
 
 ## 仕様
 
@@ -207,7 +207,7 @@ USB-C のとなりに、同じ大きさの小さな穴が2つあります。片�
 ---
 
 <p align="center">
-  <a href="https://amearare54.github.io/zmk-config-arare/manual.html">取扱説明書</a> ・
-  <a href="https://amearare54.github.io/zmk-config-arare/colorsim.html">カラーシミュレーター</a> ・
-  <a href="https://amearare54.github.io/zmk-config-arare/">arare Studio</a>
+  <a href="https://amearare54.github.io/arare/manual.html">取扱説明書</a> ・
+  <a href="https://amearare54.github.io/arare/colorsim.html">カラーシミュレーター</a> ・
+  <a href="https://amearare54.github.io/arare/">arare Studio</a>
 </p>

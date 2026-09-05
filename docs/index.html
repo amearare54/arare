@@ -465,7 +465,7 @@
       <button data-a="us">US</button><button data-a="jis">JIS</button>
     </div>
   </div>
-  <a class="gh" href="https://github.com/amearare54/zmk-config-arare" target="_blank" rel="noopener">GitHub ↗</a>
+  <a class="gh" href="https://github.com/amearare54/arare" target="_blank" rel="noopener">GitHub ↗</a>
 </header>
 
 <div class="panel linkbar" id="linkbar"></div>
@@ -522,7 +522,7 @@
   <div class="steps">
     <div class="step"><div class="n">01 · COPY</div><b>ファイルをコピー</b><p>タブでファイルを選び、コピー。変更したファイルだけでOK。</p></div>
     <div class="step"><div class="n">02 · COMMIT</div><b>GitHub に貼る</b><p>「GitHubで貼り付け先を開く」→ 全置換して Commit（タブごとに対応ページが開きます）。</p></div>
-    <div class="step"><div class="n">03 · BUILD</div><b>Actions が UF2 を生成</b><p><a href="https://github.com/amearare54/zmk-config-arare/actions" target="_blank" rel="noopener">Actions</a> の Artifacts から firmware をDL。</p></div>
+    <div class="step"><div class="n">03 · BUILD</div><b>Actions が UF2 を生成</b><p><a href="https://github.com/amearare54/arare/actions" target="_blank" rel="noopener">Actions</a> の Artifacts から firmware をDL。</p></div>
     <div class="step"><div class="n">04 · FLASH</div><b>XIAO に書き込み</b><p>リセット2度押し→現れたドライブへ UF2 をコピー。実機微調整は <a href="https://studio.dya.cormoran.works/" target="_blank" rel="noopener">DYA Studio</a> でも。</p></div>
   </div>
 </div>
@@ -1509,7 +1509,7 @@ document.getElementById("copybtn").addEventListener("click",async()=>{
 });
 document.getElementById("openedit").addEventListener("click",()=>{
   const f=FILES.find(f=>f.id===activeFile)||FILES[0];
-  window.open("https://github.com/amearare54/zmk-config-arare/edit/main/"+f.path,"_blank","noopener");
+  window.open("https://github.com/amearare54/arare/edit/main/"+f.path,"_blank","noopener");
 });
 function resetAll(){
   pushHist();
@@ -1542,7 +1542,7 @@ function confirmReset(){
 document.getElementById("resetbtn").addEventListener("click",confirmReset);
 
 /* ================= LIVE接続バー ================= */
-const PAGES_URL="https://amearare54.github.io/zmk-config-arare/";
+const PAGES_URL="https://amearare54.github.io/arare/";
 function renderLink(){
   const el=document.getElementById("linkbar");
   const hasAPI=!!(navigator.bluetooth||navigator.serial);
