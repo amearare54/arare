@@ -966,7 +966,7 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
       <tr><td>タクトスイッチ（外側）</td><td class="k">左右</td><td>RESET。動きが怪しいときに、その側だけを再起動します。</td></tr>
       <tr><td>タクトスイッチ（内側）</td><td class="k">左右</td><td>UNLOCK。Studio からキーを書き換える前に、いちど押します。</td></tr>
       <tr><td>電源スイッチ</td><td class="k">左右</td><td>内側の側面にあるスライドスイッチ。左右それぞれに付いています。</td></tr>
-      <tr><td>リセットスイッチ・ライトの穴</td><td class="k">左右</td><td>USB-C のとなりに小さな穴が 2 つ（&#216;1.86 mm・左右とも同じ大きさ）。マイコン基板のリセットスイッチとランプが、ここから見えます。ファームウェアを書き込むときに使います。（ランプは電池残量には連動していません。残量はパソコン側の Bluetooth の表示で確認できます）</td></tr>
+      <tr><td>リセットスイッチ・ライトの穴</td><td class="k">左右</td><td>USB-C のとなりに小さな穴が 2 つ（&#216;1.86 mm・左右とも同じ大きさ）。マイコン基板のリセットスイッチとランプが、ここから見えます。ファームウェアを書き込むときに使います。<strong>ランプは電池残量を色で知らせます</strong>（下の「ランプの見かた」）。</td></tr>
       <tr><td>USB-C</td><td class="k">左右</td><td>充電とファームウェアの書き込みに使います。</td></tr>
     </tbody>
   </table>
@@ -1290,9 +1290,40 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
     <li><b>電源を入れる</b><span>左右それぞれの側面にあるスライドスイッチを、内側（ON）へ動かします。<strong>左右とも</strong>忘れずに。</span></li>
     <li><b>パソコンとつなぐ</b><span>パソコンの Bluetooth 設定を開き、一覧に出てくる <span class="k">arare</span> を選びます。左手側は右手側と自動でつながるので、パソコン側の操作は一度だけです。</span></li>
     <li><b>つながらないときは</b><span>いちど両側の電源を切り、右手側 → 左手側の順に入れ直します。それでも見つからないときは、外側のタクトスイッチ（RESET）を左右とも一回ずつ押してください。</span></li>
-    <li><b>充電する</b><span>USB-C ケーブルをつなぐと充電されます。<strong>左右は別々の電池</strong>なので、片側ずつ充電してください。充電しながら使うこともできます。<br><strong>残量はパソコン側の Bluetooth の表示で確認します。</strong>左右とも残量を報告していて、右手側が左手側のぶんもまとめて送っています。本体のランプは残量とは連動していません。</span></li>
+    <li><b>充電する</b><span>USB-C ケーブルをつなぐと充電されます。<strong>左右は別々の電池</strong>なので、片側ずつ充電してください。充電しながら使うこともできます。<br><strong>残量はパソコン側の Bluetooth の表示で確認します。</strong>左右とも残量を報告していて、右手側が左手側のぶんもまとめて送っています。</span></li>
     <li><b>キーを自分用に変える</b><span><a href="#studio">arare Studio</a> をブラウザで開きます。書き換える前に、内側のタクトスイッチ（UNLOCK）を一回押してください。</span></li>
   </ol>
+  <h3>ランプの見かた</h3>
+  <div class="prose">
+    <p>USB-C のとなりの小さな穴から、マイコン基板のランプが見えます。
+    <strong>電池残量を色で知らせます。</strong>ふだんは消えていて、知らせるべきときだけ光ります
+    （点けっぱなしにすると、そのぶん電池が減るためです）。</p>
+  </div>
+  <div class="tblwrap">
+  <table>
+    <thead><tr><th>色</th><th>残量</th></tr></thead>
+    <tbody>
+      <tr><td><span class="k">緑</span></td><td>60 % 以上</td></tr>
+      <tr><td><span class="k">橙</span></td><td>20 &#12316; 60 %</td></tr>
+      <tr><td><span class="k">赤</span></td><td>20 % 以下</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="tblwrap">
+  <table>
+    <thead><tr><th>光るとき</th><th>光りかた</th></tr></thead>
+    <tbody>
+      <tr><td>電源を入れたとき</td><td>残量の色が 1.5 秒つきます</td></tr>
+      <tr><td>しばらく置いたあと、また使いはじめたとき</td><td>同じく 1.5 秒つきます</td></tr>
+      <tr><td>残量が 20 % を切ったとき</td><td>その場で赤く 2 回点滅。以降、使っているあいだ 5 分ごとに知らせます</td></tr>
+      <tr><td>残量が 10 % を切ったとき</td><td>赤く 3 回点滅。以降 2 分ごとに知らせます</td></tr>
+      <tr><td>USB-C をつないでいるあいだ</td><td>残量の色がつきっぱなしになります。緑に変われば充電が進んだ合図です</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="prose"><p>眠っているあいだと充電中は、残量が少なくても催促しません。
+  パーセントの数字で見たいときは、パソコン側の Bluetooth の表示で確認できます。</p></div>
+
   <h3>接続先を切り替える</h3>
   <div class="prose"><p>Bluetooth の接続先は 5 台まで覚えられます。切り替えるキーは出荷時には割り当てていないので、よく使う 2 台以上を行き来する方は、Studio の「接続」画面から好きなキーに割り当ててください。</p></div>
 </section>
