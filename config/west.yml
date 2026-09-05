@@ -8,6 +8,9 @@ manifest:
       url-base: https://github.com/nuovotaka
     - name: t-ogura
       url-base: https://github.com/t-ogura
+    # ジョイスティック（アナログXY）用
+    - name: badjeff
+      url-base: https://github.com/badjeff
   projects:
     - name: zmk
       remote: zmkfirmware
@@ -31,5 +34,14 @@ manifest:
       remote: t-ogura
       revision: 72a71aeea816eb0f86ffc5b108b267076ce5f0af
       path: modules/prospector-zmk-module
+    # 左手ジョイスティックのアナログXY。ADCの複数chを1つのinputイベントにまとめる。
+    # 作者本人がREADMEで「ポーリング方式のため消費電力が高く無線ビルドには非推奨」と警告しているが、
+    # ユーザーが消費電力を承知のうえで採用を決定（2026-09-05）。
+    # ZMKバージョン対応の記載はリポジトリに無く、v0.3.0との互換は依存API
+    # （input_report / sensor_driver_api / ADC_DT_SPEC_GET_BY_IDX）のソース照合による間接確認のみ。
+    - name: zmk-analog-input-driver
+      remote: badjeff
+      revision: 2684f22ee7e2168d4393f7e63676912210a796fc
+      path: modules/zmk-analog-input-driver
   self:
     path: config

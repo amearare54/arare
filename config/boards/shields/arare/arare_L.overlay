@@ -5,10 +5,12 @@
 
 #include "arare.dtsi"
 
-/* ジョイスティックのアナログXYを使うときは次の行のコメントを外す。
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
+/* ジョイスティックのアナログXYを使うので有効。
  * 電池ドライバを oversampling=0 の arare 版へ差し替えて SAADC の停止を避ける。
  * 理由と代償は arare_L.conf のコメントを参照。 */
-/* #include "arare_saadc_fix.dtsi" */
+#include "arare_saadc_fix.dtsi"
 
 &kscan_matrix {
     gpios
@@ -27,6 +29,57 @@
         compatible = "zmk,kscan-gpio-direct";
         input-gpios = <&xiao_d 10 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
     };
+
+    /* ジョイスティック NS40-T のアナログXY（2026-09-05）
+     *   /L_JOY_X = XIAO pad5 = D4 = P0.04 = AIN2
+     *   /L_JOY_Y = XIAO pad6 = D5 = P0.05 = AIN3
+     *   （実基板 arare_L.kicad_pcb のネットと seeed_xiao_connector.dtsi で照合済み）
+     *
+     * ★★ 子ノードは io-channels のチャネル番号の昇順で並べること ★★
+     *   ドライバは adc_read を1回だけ発行し、結果を as_buff[子ノードのindex] で読む。
+     *   一方 SAADC はバッファへチャネル番号の昇順で詰める。
+     *   よって AIN2 を先、AIN3 を後にしないと X と Y が入れ替わる。
+     *
+     * ★ report-on-change-only は絶対に付けないこと。
+     *   付けると「倒し続けても最初の1回しか動かない」挙動になる。
+     *
+     * 実機合わせの数値（mv-mid / mv-min-max / mv-deadzone / scale / invert）は
+     * arare_tuning_L.dtsi 側で上書きする。ここは必須プロパティと安全側の初期値のみ。 */
+    joystick: analog_input_0 {
+        compatible = "zmk,analog-input";
+        status = "okay";
+        sampling-hz = <100>;
+
+        joy_x: x-ch {                      /* 昇順1番目: AIN2 */
+            io-channels = <&adc 2>;
+            mv-mid = <1650>;               /* 3V3/2。実機で確定させる */
+            mv-min-max = <1200>;
+            mv-deadzone = <60>;            /* uint8_t 格納なので 255 以下 */
+            scale-multiplier = <4>;
+            scale-divisor = <280>;         /* 1/70 と同比のまま分解能を上げてある */
+            evt-type = <INPUT_EV_REL>;
+            input-code = <INPUT_REL_X>;
+        };
+
+        joy_y: y-ch {                      /* 昇順2番目: AIN3 */
+            io-channels = <&adc 3>;
+            mv-mid = <1650>;
+            mv-min-max = <1200>;
+            mv-deadzone = <60>;
+            scale-multiplier = <4>;
+            scale-divisor = <280>;
+            evt-type = <INPUT_EV_REL>;
+            input-code = <INPUT_REL_Y>;
+        };
+    };
+};
+
+/* peripheral(左)側は device の指定が必須。
+ * ここに input-processors を足す場合、state が NULL で渡るため
+ * scaler は端数が捨てられ、behaviors 系は NULL 参照で落ちる。
+ * 速度・加速は central(右) 側の &joystick_listener に置くこと。 */
+&joystick_split {
+    device = <&joystick>;
 };
 
 &kscan0 {
