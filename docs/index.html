@@ -742,10 +742,14 @@ function el(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAt
 function drawDecor(){
   // トラックボール(右)・ジョイスティック(左)・エンコーダリング・照準
   const g=el("g",{});
-  const tb=el("circle",{cx:990,cy:415,r:62,class:"deco deco-accent","stroke-dasharray":"4 5"});
+  // トラックボール: 実基板の座標から算出。KiCad(92.9, 88.2)mm ＝ ケース設計のボール中心。
+  // 変換 units=(mm-offset)*100/17、右基板 offset=(-93.126, 17.027)mm（回転なしキー20個でフィット・残差0.2mm以下）
+  // 外側の破線=ボールø25(r=73.5) / 内側=カップ底開口ø17.2(r=50.6)
+  const TB={x:1094,y:419};
+  const tb=el("circle",{cx:TB.x,cy:TB.y,r:73.5,class:"deco deco-accent","stroke-dasharray":"4 5"});
   g.append(tb);
-  g.append(el("circle",{cx:990,cy:415,r:38,class:"deco"}));
-  const tbl=el("text",{x:990,y:420,class:"deco-label","text-anchor":"middle"});tbl.textContent="TRACKBALL";g.append(tbl);
+  g.append(el("circle",{cx:TB.x,cy:TB.y,r:50.6,class:"deco"}));
+  const tbl=el("text",{x:TB.x,y:TB.y+5,class:"deco-label","text-anchor":"middle"});tbl.textContent="TRACKBALL";g.append(tbl);
   g.append(el("circle",{cx:561,cy:220,r:34,class:"deco"}));
   g.append(el("circle",{cx:753,cy:220,r:34,class:"deco deco-accent"}));
   const j=el("circle",{cx:590,cy:443,r:30,class:"deco","stroke-dasharray":"2 4"});g.append(j);
