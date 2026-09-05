@@ -1,0 +1,8 @@
+# arare 独自の電池電圧ドライバ用バインディング
+# ZMK の zmk,battery-voltage-divider と同じプロパティを取る（voltage-divider.yaml を継承）。
+# 違いは adc_sequence.oversampling を 0 にしている点だけ。理由は arare_L.conf のコメント参照。
+description: "Battery SoC monitoring using voltage divider - arare variant with SAADC oversampling disabled"
+
+compatible: "arare,battery-voltage-divider"
+
+include: voltage-divider.yaml

@@ -1,0 +1,31 @@
+/*
+ * ジョイスティックのアナログXYを使えるようにするための差し替え。
+ *
+ * ZMK本家の電池ドライバは SAADC の oversampling=4 が固定で、アナログスティックの
+ * 複数チャネル読みと同居させると SAADC が停止する（理由は arare_L.conf のコメント参照）。
+ * ここでは本家の &vbatt を無効にし、oversampling=0 の arare 版ノードへ chosen を向け替える。
+ *
+ * 使い方: arare_L.overlay の #include 行のコメントを外す。
+ * 代償: 平均化が無くなるぶん電池残量の読みが少しノイジーになる。
+ */
+
+/* 本家のノードを止める（これで CONFIG_ZMK_BATTERY_VOLTAGE_DIVIDER も無効になる） */
+&vbatt {
+    status = "disabled";
+};
+
+/ {
+    /* XIAO nRF52840 のボード定義と同じ分圧回路。oversampling だけが違う */
+    vbatt_arare: vbatt_arare {
+        compatible = "arare,battery-voltage-divider";
+        io-channels = <&adc 7>;
+        output-ohms = <510000>;
+        full-ohms = <(1000000 + 510000)>;
+        power-gpios = <&gpio0 14 (GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
+        status = "okay";
+    };
+
+    chosen {
+        zmk,battery = &vbatt_arare;
+    };
+};

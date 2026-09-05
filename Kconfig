@@ -1,3 +1,5 @@
+DT_COMPAT_ARARE_BATTERY_VOLTAGE_DIVIDER := arare,battery-voltage-divider
+
 # arare 独自設定
 
 menuconfig ARARE_BATTERY_LED
@@ -36,3 +38,16 @@ config ARARE_BATTERY_LED_CRITICAL_INTERVAL_SEC
     default 120
 
 endif # ARARE_BATTERY_LED
+
+# arare 独自の電池電圧ドライバ（SAADCのオーバーサンプリングを無効化した版）
+# デバイスツリーに arare,battery-voltage-divider のノードがあれば自動で有効になる。
+# ジョイスティックのアナログXYと電池計測を共存させるためのもの。理由は arare_L.conf 参照。
+config ARARE_BATTERY_VOLTAGE_DIVIDER
+    bool
+    default $(dt_compat_enabled,$(DT_COMPAT_ARARE_BATTERY_VOLTAGE_DIVIDER))
+    select ADC
+    select ZMK_BATTERY
+    depends on SENSOR
+    help
+      ZMK本家の battery_voltage_divider と同一だが oversampling=0。
+      本家を fork せずに済ませるため設定リポジトリ側にドライバを持つ。
