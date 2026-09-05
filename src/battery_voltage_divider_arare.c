@@ -24,8 +24,6 @@
 
 #include "battery_common.h"
 
-#error "VERIFY-MARKER: arare版電池ドライバがコンパイルされている"
-
 LOG_MODULE_REGISTER(arare_battery, CONFIG_ZMK_LOG_LEVEL);
 
 struct io_channel_config {
