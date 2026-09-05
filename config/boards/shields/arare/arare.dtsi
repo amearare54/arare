@@ -133,6 +133,33 @@ RC(4,3) RC(4,2)                                         RC(4,6) RC(4,7)
         sensors = <&left_encoder &right_encoder>;
         triggers-per-rotation = <10>;
     };
+
+    /* ---- ジョイスティック(左)の入力を右へ中継する口（2026-09-05）----
+     * ★このブロックと arare_L.overlay の `&joystick_split { device = <&joystick>; }` は
+     *   必ずセットで存在させること。片方だけだと左手ビルドが必ず落ちる。
+     *   app/src/pointing/input_split.c の peripheral 分岐に
+     *     BUILD_ASSERT(DT_INST_NODE_HAS_PROP(n, device), ...)
+     *   があり、status okay な zmk,input-split 全部に展開されるため。
+     * 親ノードの #address-cells/#size-cells は必須（root直下は #address-cells=2 のため）。 */
+    split_inputs {
+        #address-cells = <1>;
+        #size-cells = <0>;
+
+        joystick_split: joystick_split@0 {
+            compatible = "zmk,input-split";
+            reg = <0>;
+        };
+    };
+
+    /* listener は central(右)でしか定義されない
+     * （app/src/pointing/Kconfig の `if !ZMK_SPLIT || ZMK_SPLIT_ROLE_CENTRAL`）。
+     * 既定 disabled にし、arare_R.overlay で okay にする。
+     * device をここに書くのは、左右が include する共有ファイルがそれを書ける唯一の場所だから。 */
+    joystick_listener: joystick_listener {
+        compatible = "zmk,input-listener";
+        status = "disabled";
+        device = <&joystick_split>;
+    };
 };
 
 /* uart0はD6/D7を掴む（左=M2/M3, 右=ENC_A/B と衝突）ため両側で無効化 */

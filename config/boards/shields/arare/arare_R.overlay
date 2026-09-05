@@ -76,4 +76,13 @@
 
 /* トラックボール・右エンコーダの詳細設定は別ファイルに分離。
  * arare Studio の生成テキストで差し替える */
+/* 左手から届いたジョイスティックの入力を受ける listener を有効化（2026-09-05）。
+ * ★status は必ずこのファイルに置くこと。
+ *   arare_tuning_R.dtsi は arare Studio が生成テキストで丸ごと差し替える運用なので、
+ *   そちらに書くと再生成時にジョイスティックが黙って無効化される。
+ * 速度・加速などの input-processors は tuning 側から &joystick_listener を参照して書く。 */
+&joystick_listener {
+    status = "okay";
+};
+
 #include "arare_tuning_R.dtsi"
