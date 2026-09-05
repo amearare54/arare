@@ -1,0 +1,38 @@
+# arare 独自設定
+
+menuconfig ARARE_BATTERY_LED
+    bool "arare: 電池残量をマイコンのLEDで知らせる"
+    depends on ZMK_BATTERY_REPORTING
+    help
+      XIAO nRF52840 内蔵のRGB LEDで電池残量を色で示す。
+      常時点灯はせず、起動直後・スリープ復帰時に短く点灯し、
+      残量が少ないときだけ定期的に赤く点滅して充電を促す。
+      USB接続中は残量色を点灯したままにする。
+
+if ARARE_BATTERY_LED
+
+config ARARE_BATTERY_LED_GOOD_PCT
+    int "この値以上を緑にする(%)"
+    default 60
+
+config ARARE_BATTERY_LED_LOW_PCT
+    int "この値以下で充電を促す(%)"
+    default 20
+
+config ARARE_BATTERY_LED_CRITICAL_PCT
+    int "この値以下は警告を強める(%)"
+    default 10
+
+config ARARE_BATTERY_LED_GLANCE_MS
+    int "起動時・復帰時に残量色を点灯する時間(ミリ秒)"
+    default 1500
+
+config ARARE_BATTERY_LED_WARN_INTERVAL_SEC
+    int "残量が少ないときの警告間隔(秒)"
+    default 300
+
+config ARARE_BATTERY_LED_CRITICAL_INTERVAL_SEC
+    int "残量が危険域のときの警告間隔(秒)"
+    default 120
+
+endif # ARARE_BATTERY_LED
