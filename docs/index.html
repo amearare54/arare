@@ -1070,7 +1070,7 @@ function renderDeck(){
   const joyEx=JOY_PUSH.some(([,v])=>v===cur)?"":`<option value="${cur}" selected>${legend(cur)}（現在）</option>`;
   document.getElementById("dev-joy").innerHTML=`
     <h3>JOYSTICK <small>NS40-T · 左手</small></h3>
-    <div class="desc">押込ボタンはすぐ使えます。アナログ部はファームウェア実装待ち（設定は保存され、チューニングLに予約として書き出されます）。</div>
+    <div class="desc">押込ボタンはすぐ使えます。<b>倒す操作（アナログXY）は未実装です</b> — マイコンのアナログ変換器を電池残量の測定と共有しており、現状のZMKでは同時に使うと停止する問題があるためです。ここでの設定は保存され、チューニングLに予約として書き出されます。</div>
     ${rowH("押込ボタン","スティックを押し込んだとき",`<select data-joypush="1">${joyEx}${JOY_PUSH.map(([l,v])=>`<option value="${v}"${v===cur?" selected":""}>${l}</option>`).join("")}</select>`)}
     <div class="row"><div class="lab">アナログ操作 <span class="badge">PREVIEW</span><small>フェーズ2で有効化</small></div><div class="ctl">${segH("joy.mode",[["mouse","マウス"],["scroll","スクロール"],["arrows","矢印"]])}</div></div>
     ${rowH("速さ","",rgH("joy.speed",1,10,1,FMT_RAW))}
