@@ -586,7 +586,9 @@ const ENC_OPTS=[
  ["&inc_dec_kp LG(Z) LS(LG(Z))","⌘Z / ⇧⌘Z"],
  ["&inc_dec_kp LG(C) LG(V)","コピー / ペースト"],
  ["&inc_dec_kp LG(X) LG(V)","カット / ペースト"],
- ["&inc_dec_kp TAB LS(TAB)","Tab / ⇧Tab"]
+ ["&inc_dec_kp TAB LS(TAB)","Tab / ⇧Tab"],
+ ["&inc_dec_kp LG(EQUAL) LG(MINUS)","拡大 / 縮小（⌘+ / ⌘−）"],
+ ["&inc_dec_kp LC(EQUAL) LC(MINUS)","拡大 / 縮小（Ctrl+ / Ctrl−・Win）"]
 ];
 const SPD=[[1,4,"0.25×"],[1,2,"0.5×"],[3,4,"0.75×"],[1,1,"1.0×"],[5,4,"1.25×"],[3,2,"1.5×"],[2,1,"2.0×"],[3,1,"3.0×"]];
 const TRIG=[6,8,10,12,15,20,24];
@@ -606,17 +608,26 @@ const JIS_MAP={AT:"LBKT",CARET:"EQUAL",AMPS:"LS(N6)",ASTRK:"LS(SQT)",LPAR:"LS(N8
  UNDER:"LS(INT1)",PLUS:"LS(SEMI)",EQUAL:"LS(MINUS)",LBKT:"RBKT",RBKT:"NUHS",LBRC:"LS(RBKT)",RBRC:"LS(NUHS)",
  BSLH:"INT1",PIPE:"LS(INT3)",COLON:"SQT",SQT:"LS(N7)",DQT:"LS(N2)",GRAVE:"LS(LBKT)",TILDE:"LS(EQUAL)"};
 const INV_JIS={}; for(const k in JIS_MAP)INV_JIS[JIS_MAP[k]]=k;
-function jisKey(n){return JIS_MAP[n]||n;}
-function usKey(n){return INV_JIS[n]||n;}
+/* 修飾つき（LG(EQUAL) 等）にも対応。丸ごと一致を優先し、無ければ修飾を剥いて再帰する */
+function mapKeyCode(n,map){
+  if(map[n])return map[n];
+  const m=n.match(/^(LS|LC|LA|LG|RS|RC|RA|RG)\((.+)\)$/);
+  if(m)return `${m[1]}(${mapKeyCode(m[2],map)})`;
+  return n;
+}
+function jisKey(n){return mapKeyCode(n,JIS_MAP);}
+function usKey(n){return mapKeyCode(n,INV_JIS);}
 function jisTranslate(b){let m;
  if((m=b.match(/^&kp (.+)$/)))return "&kp "+jisKey(m[1]);
  if((m=b.match(/^&mt (\S+) (.+)$/)))return `&mt ${m[1]} ${jisKey(m[2])}`;
  if((m=b.match(/^&lt (\d+) (.+)$/)))return `&lt ${m[1]} ${jisKey(m[2])}`;
+ if((m=b.match(/^&inc_dec_kp (\S+) (\S+)$/)))return `&inc_dec_kp ${jisKey(m[1])} ${jisKey(m[2])}`;
  return b;}
 function usTranslate(b){let m;
  if((m=b.match(/^&kp (.+)$/)))return "&kp "+usKey(m[1]);
  if((m=b.match(/^&mt (\S+) (.+)$/)))return `&mt ${m[1]} ${usKey(m[2])}`;
  if((m=b.match(/^&lt (\d+) (.+)$/)))return `&lt ${m[1]} ${usKey(m[2])}`;
+ if((m=b.match(/^&inc_dec_kp (\S+) (\S+)$/)))return `&inc_dec_kp ${usKey(m[1])} ${usKey(m[2])}`;
  return b;}
 const JOY_PUSH=[["左クリック","&mkp LCLK"],["右クリック","&mkp RCLK"],["中クリック","&mkp MCLK"],["Enter","&kp ENTER"],["Space","&kp SPACE"],["Esc","&kp ESC"]];
 const TB_PRESETS=[
@@ -985,6 +996,8 @@ function switchArr(v){
   pushHist();
   const tr=v==="jis"?jisTranslate:usTranslate;
   km=km.map(l=>l.map(tr));
+  enc=enc.map(tr);                                   /* L0のエンコーダー */
+  for(const n in encL)encL[n]=encL[n].map(tr);       /* レイヤー別のエンコーダー */
   arr=v; save();
   renderArrTg(); renderLayerbar(); renderDeck(); renderInsp(); refreshKeys();
   toast(v==="jis"
