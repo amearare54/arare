@@ -1,0 +1,1927 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>arare Studio</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="arare_icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800;900&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&family=Shippori+Mincho:wght@600;800&display=swap">
+<style>
+  :root{
+    --ground:#f6f6f7; --card:#ffffff; --card2:#fafafa;
+    --ink:#17181d; --mute:#83858f; --faint:#b6b8c2;
+    --line:#e5e6ea; --grid:#dcdde3;
+    --accent:#5646d6; --accent2:#7263e8; --glow:#cfc9f5; --accent-soft:#f0eefc;
+    --ok:#2ea376; --warn:#d99a2b;
+    --disp:"Archivo","Zen Kaku Gothic New",system-ui,sans-serif;
+    --jp:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN",system-ui,sans-serif;
+    --mono:"IBM Plex Mono","SF Mono",ui-monospace,monospace;
+    --min:"Shippori Mincho","Hiragino Mincho ProN",serif;
+  }
+  *{box-sizing:border-box}
+  html{color-scheme:light}
+  body{
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--jp); font-size:14px; line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  #hail{position:fixed; inset:0; z-index:0; pointer-events:none}
+  .app{position:relative; z-index:1; max-width:1280px; margin:0 auto; padding:0 clamp(14px,3vw,32px) 56px}
+
+  /* ---------- header ---------- */
+  header{
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    padding:18px 2px 14px; border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex; align-items:center; gap:14px; min-width:0}
+  .brand .logo-svg{height:30px; width:auto; color:var(--ink); flex:none}
+  .brand .div{width:1px; height:26px; background:var(--line)}
+  .brand .sub{font-family:var(--disp); font-weight:800; letter-spacing:.24em; font-size:13px}
+  .brand .sub small{display:block; font-family:var(--mono); font-weight:400; letter-spacing:.12em; font-size:9.5px; color:var(--mute)}
+  .readouts{display:flex; gap:14px; align-items:center; font-family:var(--mono); font-size:10px; color:var(--mute); letter-spacing:.06em}
+  .readouts b{display:block; color:var(--ink); font-weight:600; font-size:11px}
+  .readouts .cell{text-align:right}
+  .gh{
+    font-family:var(--mono); font-size:11px; text-decoration:none; color:var(--ink);
+    border:1px solid var(--line); border-radius:999px; padding:7px 14px; background:var(--card);
+    transition:box-shadow .15s;
+  }
+  .gh:hover{box-shadow:0 2px 10px rgba(23,24,29,.14)}
+  .arrbar{display:flex; align-items:center; gap:7px}
+  .arrlab{font-family:var(--mono); font-size:10px; color:var(--mute); letter-spacing:.06em}
+  .arr-tg button{padding:5px 13px; font-size:11px; font-family:var(--disp); font-weight:800; letter-spacing:.08em}
+  @media(max-width:760px){ .readouts{display:none} }
+
+  /* ---------- hero ---------- */
+  .hero{position:relative; padding:30px 2px 6px; overflow:hidden}
+  .hero .eyebrow{font-family:var(--mono); font-size:10.5px; letter-spacing:.3em; color:var(--accent); margin-bottom:8px}
+  .hero h1{
+    margin:0; font-family:var(--disp); font-weight:900; letter-spacing:.02em;
+    font-size:clamp(26px,4.6vw,44px); line-height:1.1; text-wrap:balance;
+  }
+  .hero h1 .vio{color:var(--accent)}
+  .hero p{margin:10px 0 0; color:var(--mute); max-width:34em}
+  .chip.util{padding:8px 14px; color:var(--mute); font-weight:600}
+
+  /* ---------- layer chips ---------- */
+  .layerbar{display:flex; align-items:center; gap:10px; margin:22px 0 12px; flex-wrap:wrap}
+  .chip{
+    font-family:var(--disp); font-weight:800; letter-spacing:.14em; font-size:12px;
+    padding:8px 20px; border-radius:999px; border:1px solid var(--line); background:var(--card);
+    color:var(--mute); cursor:pointer; transition:all .15s;
+  }
+  .chip:hover{border-color:var(--faint); color:var(--ink)}
+  .chip.on{background:var(--ink); border-color:var(--ink); color:#fff; box-shadow:0 4px 14px rgba(23,24,29,.22)}
+  .layerbar .hint{font-family:var(--mono); font-size:10.5px; color:var(--mute); letter-spacing:.05em; margin-left:auto}
+  .chip:focus-visible,.gh:focus-visible,button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+  /* ---------- main grid ---------- */
+  .main{display:grid; grid-template-columns:minmax(0,1fr) 330px; gap:16px; align-items:start}
+  @media(max-width:980px){ .main{grid-template-columns:1fr} }
+
+  .panel{
+    background:var(--card); border:1px solid var(--line); border-radius:18px;
+    box-shadow:0 8px 30px rgba(28,30,46,.06);
+  }
+  .board-panel{position:relative; padding:18px 14px 8px; overflow:hidden;
+    background:
+      radial-gradient(circle at 1px 1px, var(--grid) 1px, transparent 1.4px) 0 0/16px 16px,
+      var(--card);
+  }
+  .corner{position:absolute; width:14px; height:14px; border:1.5px solid var(--faint); pointer-events:none}
+  .corner.tl{top:8px; left:8px; border-right:none; border-bottom:none}
+  .corner.tr{top:8px; right:8px; border-left:none; border-bottom:none}
+  .corner.bl{bottom:8px; left:8px; border-right:none; border-top:none}
+  .corner.br{bottom:8px; right:8px; border-left:none; border-top:none}
+  .board-meta{
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:var(--mono); font-size:9.5px; letter-spacing:.14em; color:var(--mute); padding:0 8px 6px;
+  }
+  #hoverinfo{color:var(--ink); min-height:1.2em}
+  svg.board{display:block; width:100%; height:auto}
+
+  /* keys (SVG) */
+  .key rect.cap{fill:var(--card2); stroke:var(--line); stroke-width:1.6; rx:9;
+    transition:fill .12s, stroke .12s; cursor:pointer}
+  .key:hover rect.cap{stroke:var(--ink); fill:#f1f1f4}
+  .key.sel rect.cap{fill:var(--accent); stroke:var(--accent)}
+  .key.edited rect.cap{stroke:var(--accent2); stroke-dasharray:none; stroke-width:2.2}
+  .key.combo-pick rect.cap{stroke:var(--accent); stroke-dasharray:5 3; stroke-width:2.4; fill:var(--accent-soft)}
+  .key text{font-family:var(--jp); font-weight:700; fill:var(--ink); pointer-events:none}
+  .key.sel text{fill:#fff}
+  .key text.mini{font-family:var(--mono); font-weight:500; fill:var(--faint)}
+  .key.sel text.mini{fill:var(--glow)}
+  .deco{fill:none; stroke:var(--grid); stroke-width:1.4}
+  .deco-label{font-family:var(--mono); font-size:11px; letter-spacing:.2em; fill:var(--faint)}
+  .deco-accent{stroke:var(--faint)}
+
+  /* ---------- inspector ---------- */
+  .insp{padding:16px 16px 18px; position:sticky; top:12px}
+  .insp h2{
+    margin:0 0 2px; font-family:var(--disp); font-weight:800; font-size:13px; letter-spacing:.2em;
+    display:flex; justify-content:space-between; align-items:baseline;
+  }
+  .insp h2 .pos{font-family:var(--mono); font-weight:500; font-size:10px; color:var(--mute); letter-spacing:.1em}
+  .bind-now{
+    margin:10px 0 12px; padding:12px 14px; border-radius:12px; background:var(--card2);
+    border:1px solid var(--line); border-left:3px solid var(--accent);
+    font-family:var(--mono); font-size:12.5px; color:var(--ink);
+    word-break:break-all; min-height:1.4em;
+  }
+  .insp .sec{font-family:var(--mono); font-size:9.5px; letter-spacing:.22em; color:var(--mute); margin:14px 0 6px}
+  .modrow{display:flex; gap:6px}
+  .mod{
+    flex:1; font-family:var(--jp); font-size:14px; padding:7px 0; text-align:center;
+    border:1px solid var(--line); border-radius:9px; background:var(--card2); cursor:pointer; color:var(--mute);
+  }
+  .mod.on{background:var(--ink); color:#fff; border-color:var(--ink)}
+  select,input[type=text]{
+    width:100%; font-family:var(--mono); font-size:12px; color:var(--ink);
+    padding:8px 10px; border:1px solid var(--line); border-radius:10px; background:var(--card2);
+  }
+  .kb-tabs{display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px}
+  .kb-tab{
+    font-family:var(--jp); font-size:11px; font-weight:500; padding:5px 10px; border-radius:999px;
+    border:1px solid var(--line); background:var(--card); color:var(--mute); cursor:pointer;
+  }
+  .kb-tab.on{border-color:var(--ink); color:var(--ink); background:#f1f1f4}
+  .kb-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(44px,1fr)); gap:5px; max-height:180px; overflow-y:auto; padding:2px}
+  .kb-key{
+    font-family:var(--mono); font-size:11.5px; padding:8px 2px; text-align:center;
+    border:1px solid var(--line); border-radius:8px; background:var(--card2); cursor:pointer;
+    transition:all .1s; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .kb-key:hover{border-color:var(--ink); color:var(--ink); background:#f1f1f4}
+  .insp .empty{color:var(--mute); text-align:center; padding:34px 8px; font-size:13px}
+  .insp .empty .big{font-family:var(--disp); font-weight:900; font-size:23px; letter-spacing:.22em; color:var(--faint); display:block; margin-bottom:8px}
+
+  /* ---------- encoders ---------- */
+  .enc-card{margin-top:16px; padding:14px 16px; display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  @media(max-width:640px){ .enc-card{grid-template-columns:1fr} }
+  .enc h3{margin:0 0 4px; font-family:var(--disp); font-weight:800; font-size:11px; letter-spacing:.18em}
+  .enc h3 small{color:var(--mute); font-family:var(--mono); font-weight:400; letter-spacing:.08em; margin-left:6px}
+
+  /* ---------- forge ---------- */
+  .forge{margin-top:16px; padding:20px}
+  .forge-head{display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap}
+  .forge-head h2{margin:0; font-family:var(--disp); font-weight:900; font-size:19px; letter-spacing:.06em}
+  .forge-head h2 span{color:var(--accent)}
+  .forge-head .stats{font-family:var(--mono); font-size:10.5px; color:var(--mute); letter-spacing:.08em}
+  .forge-head .stats b{color:var(--accent); font-weight:600}
+  .btnrow{display:flex; gap:10px; flex-wrap:wrap}
+  .btn{
+    font-family:var(--disp); font-weight:800; letter-spacing:.1em; font-size:12.5px;
+    border:none; border-radius:999px; padding:11px 22px; cursor:pointer; transition:all .15s;
+  }
+  .btn.primary{background:var(--accent); color:#fff; box-shadow:0 5px 16px rgba(86,70,214,.35)}
+  .btn.primary:hover{background:var(--accent2)}
+  .btn.ghost{background:var(--card); color:var(--ink); border:1px solid var(--line)}
+  .btn.ghost:hover{background:#f1f1f4}
+  .btn.plain{background:var(--card2); color:var(--mute); border:1px solid var(--line)}
+  pre.out{
+    margin:14px 0 0; background:#232538; color:#e6e4f7; border-radius:14px; padding:16px;
+    font-family:var(--mono); font-size:11px; line-height:1.55; overflow-x:auto; max-height:300px;
+  }
+  pre.out .cm{color:#8f93b8}
+  .steps{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:18px}
+  @media(max-width:760px){ .steps{grid-template-columns:1fr 1fr} }
+  .step{background:var(--card2); border:1px solid var(--line); border-radius:14px; padding:12px 14px}
+  .step .n{font-family:var(--mono); font-size:10px; color:var(--accent); letter-spacing:.2em}
+  .step b{display:block; font-size:12.5px; margin:4px 0 2px}
+  .step p{margin:0; font-size:11px; color:var(--mute); line-height:1.5}
+  .step a{color:var(--accent)}
+
+  footer{
+    margin-top:28px; padding-top:14px; border-top:1px solid var(--line);
+    display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    font-family:var(--mono); font-size:9.5px; letter-spacing:.18em; color:var(--faint);
+  }
+  .toast{
+    position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:#fff; font-family:var(--jp); font-size:13px;
+    padding:11px 22px; border-radius:999px; opacity:0; transition:all .25s; z-index:9; pointer-events:none;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  @media(prefers-reduced-motion:reduce){ .toast{transition:none} }
+
+  /* ---------- 設定デッキ（かんたん/上級） ---------- */
+  .deck{margin-top:16px}
+  .deck-head{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:10px}
+  .deck-head h2{margin:0; font-family:var(--disp); font-weight:900; font-size:16px; letter-spacing:.08em}
+  .mode-tg{display:flex; border:1px solid var(--line); border-radius:999px; overflow:hidden; background:var(--card)}
+  .mode-tg button{border:none; background:transparent; font-family:var(--jp); font-weight:700; font-size:12px; padding:8px 16px; cursor:pointer; color:var(--mute)}
+  .mode-tg button.on{background:var(--ink); color:#fff}
+  .profilebar{display:flex; gap:6px; align-items:center; flex-wrap:wrap}
+  .profilebar select,.profilebar input{width:auto; min-width:110px; padding:7px 9px; font-size:11.5px}
+  .profilebar .btn{padding:8px 14px; font-size:11px}
+  .dev-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(310px,1fr)); gap:16px; align-items:start}
+  .dev{padding:16px}
+  .dev h3{margin:0 0 2px; font-family:var(--disp); font-weight:800; font-size:12px; letter-spacing:.18em; display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+  .dev h3 small{color:var(--mute); font-family:var(--mono); font-weight:400; letter-spacing:.06em}
+  .badge{font-family:var(--mono); font-size:9px; letter-spacing:.12em; color:var(--accent); border:1px solid var(--glow); border-radius:999px; padding:2px 8px}
+  .dev .desc{font-size:11px; color:var(--mute); margin:2px 0 8px; line-height:1.55}
+  .row{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 0; border-top:1px dashed var(--line)}
+  .row .lab{font-size:12.5px; font-weight:500}
+  .row .lab small{display:block; font-size:10px; color:var(--mute); font-weight:400}
+  .row .ctl{display:flex; align-items:center; gap:8px; flex:0 0 auto; flex-wrap:wrap; justify-content:flex-end}
+  .row select{width:auto; padding:6px 8px; font-size:11px}
+  input[type=range]{accent-color:var(--accent); width:120px}
+  .val{font-family:var(--mono); font-size:11px; min-width:50px; text-align:right}
+  .sw{position:relative; width:38px; height:22px; border-radius:999px; background:var(--faint); border:none; cursor:pointer; transition:background .15s; flex:none; padding:0}
+  .sw::after{content:""; position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; transition:left .15s; box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  .sw.on{background:var(--accent)}
+  .sw.on::after{left:19px}
+  .presets{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px}
+  .preset{border:1px solid var(--line); border-radius:12px; background:var(--card2); padding:10px 12px; text-align:left; cursor:pointer; transition:border-color .12s; font-family:var(--jp)}
+  .preset:hover{border-color:var(--ink)}
+  .preset b{display:block; font-size:12.5px}
+  .preset span{font-size:10px; color:var(--mute); line-height:1.4; display:block}
+  .adv{display:none}
+  .deck.advmode .adv{display:revert}
+  .deck.advmode .row.adv{display:flex}
+  .deck.advmode .basiconly{display:none}
+  .seg{display:flex; border:1px solid var(--line); border-radius:9px; overflow:hidden}
+  .seg button{border:none; background:var(--card2); font-family:var(--mono); font-size:10.5px; padding:6px 9px; cursor:pointer; color:var(--mute)}
+  .seg button.on{background:var(--ink); color:#fff}
+  /* 接続（CONNECTIONS）パネル */
+  #dev-devices{grid-column:1/-1}
+  .conn-status{display:flex; gap:12px; flex-wrap:wrap; margin:8px 0 10px}
+  .cs-cell{flex:1 1 160px; border:1px solid var(--line); border-radius:14px; padding:10px 14px; background:rgba(255,255,255,.55)}
+  .cs-cell span{display:block; font-family:var(--mono); font-size:9.5px; letter-spacing:.12em; color:var(--mute); margin-bottom:3px}
+  .cs-cell b{font-size:13px; font-weight:700}
+  .conn-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; margin-top:6px}
+  .conn-card{border:1px solid var(--line); border-radius:16px; padding:12px 14px; background:rgba(255,255,255,.6);
+    display:flex; flex-direction:column; gap:7px}
+  .conn-card.idle{opacity:.62}
+  .cc-head{display:flex; align-items:center; gap:9px}
+  .cc-num{flex:none; width:26px; height:26px; border-radius:50%; background:var(--ink); color:#fff;
+    font-family:var(--disp); font-weight:800; font-size:12px; display:flex; align-items:center; justify-content:center}
+  .cc-head input{flex:1; min-width:0; padding:6px 9px; font-size:12px}
+  .cc-row{display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:11.5px}
+  .cc-row>span:first-child{color:var(--mute)}
+  .cc-row select{font-size:11px; padding:5px 7px}
+  .cc-keys{display:flex; gap:4px; flex-wrap:wrap; justify-content:flex-end}
+  .cc-keys code{font-family:var(--mono); font-size:10px; background:rgba(86,70,214,.08); color:var(--accent);
+    border:1px solid var(--glow); border-radius:7px; padding:2px 6px}
+  .cc-keys em{font-size:10.5px; color:var(--mute); font-style:normal}
+  .cc-assign{margin-top:2px}
+  table.encmat{width:100%; border-collapse:collapse; font-size:11px; margin-top:4px}
+  table.encmat th,table.encmat td{padding:5px 4px; text-align:left; border-top:1px dashed var(--line)}
+  table.encmat th{font-family:var(--mono); font-size:9.5px; letter-spacing:.15em; color:var(--mute); border-top:none}
+  table.encmat select{width:100%; font-size:10.5px; padding:5px 6px}
+  .ftabs{display:flex; gap:6px; margin-top:14px}
+  .ftab{font-family:var(--mono); font-size:11px; padding:7px 14px; border-radius:9px 9px 0 0; border:1px solid var(--line); border-bottom:none; background:var(--card2); color:var(--mute); cursor:pointer}
+  .ftab.on{background:#232538; color:#e6e4f7; border-color:#232538}
+
+  /* ---------- LIVE接続バー ---------- */
+  .linkbar{margin-top:14px; padding:12px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+  .linkbar .st{display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:11px; letter-spacing:.08em; color:var(--mute)}
+  .dot{width:8px; height:8px; border-radius:50%; background:var(--faint); flex:none}
+  .dot.live{background:var(--ok); box-shadow:0 0 0 3px rgba(46,163,118,.18)}
+  .dot.lock{background:var(--warn); box-shadow:0 0 0 3px rgba(217,154,43,.18)}
+  .linkbar .grow{flex:1}
+  .linkbar .note{font-size:10.5px; color:var(--mute)}
+  .linkbar .note a{color:var(--accent)}
+  .btn.mini{padding:8px 16px; font-size:11.5px}
+  .btn.save{background:var(--ok); color:#fff}
+  .unsaved{font-family:var(--mono); font-size:10px; color:var(--warn); letter-spacing:.1em}
+  .rpclog{width:100%; max-height:130px; overflow-y:auto; background:#232538; color:#9aa0c7; border-radius:10px;
+    padding:8px 12px; font-family:var(--mono); font-size:9.5px; line-height:1.6; white-space:pre-wrap; word-break:break-all}
+  .livechip{font-family:var(--mono); font-size:9px; letter-spacing:.14em; color:var(--ok); border:1px solid rgba(46,163,118,.4); border-radius:999px; padding:2px 8px}
+
+  /* ---------- 起動シーケンス（SESSION LINK） ---------- */
+  #boot{position:fixed; inset:0; z-index:60; background:var(--ground); cursor:pointer}
+  #boot canvas{position:absolute; inset:0; width:100%; height:100%}
+  .boot-title{position:absolute; left:28px; top:24px; font-family:var(--disp); font-weight:900; letter-spacing:.32em; font-size:13px; color:var(--ink)}
+  .boot-title small{display:block; font-family:var(--mono); font-weight:400; font-size:8.5px; letter-spacing:.3em; color:var(--faint); margin-top:5px}
+  .boot-tag{position:absolute; left:28px; bottom:26px; font-family:var(--mono); font-size:10px; letter-spacing:.16em; color:var(--mute); line-height:2; white-space:pre}
+  .boot-tag b{color:var(--ink); font-weight:600}
+  .boot-skip{position:absolute; right:28px; bottom:26px; font-family:var(--mono); font-size:9px; letter-spacing:.24em; color:var(--faint)}
+  @media(prefers-reduced-motion:reduce){ #boot{display:none} }
+
+  /* ---------- 確認モーダル ---------- */
+  .modal-bg{position:fixed; inset:0; background:rgba(23,24,29,.32); z-index:70;
+    display:flex; align-items:center; justify-content:center; padding:20px}
+  .modal{background:var(--card); border:1px solid var(--line); border-radius:18px;
+    padding:22px 24px 18px; max-width:360px; width:100%; box-shadow:0 18px 50px rgba(23,24,29,.22)}
+  .modal h4{margin:0 0 6px; font-family:var(--disp); font-weight:800; font-size:15px; letter-spacing:.04em}
+  .modal p{margin:0 0 16px; font-size:12px; color:var(--mute); line-height:1.7}
+  .modal .btnrow{justify-content:flex-end}
+
+  /* ========== Liquid Glass 質感（色トークンは不変） ========== */
+  body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:none; background:
+    radial-gradient(600px 460px at 12% 6%, rgba(86,70,214,.10), transparent 60%),
+    radial-gradient(700px 540px at 88% 92%, rgba(114,99,232,.09), transparent 65%),
+    radial-gradient(560px 440px at 82% 10%, rgba(23,24,29,.06), transparent 60%)}
+  .panel{background:
+      linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,.08) 42%, rgba(255,255,255,.26)),
+      rgba(255,255,255,.2);
+    -webkit-backdrop-filter:blur(34px) saturate(1.4); backdrop-filter:blur(34px) saturate(1.4);
+    border:1.5px solid rgba(255,255,255,.95); border-radius:30px;
+    box-shadow:0 30px 64px rgba(28,30,46,.15), 0 4px 10px rgba(28,30,46,.05),
+      inset 0 2px 1px rgba(255,255,255,1), inset 0 -8px 16px rgba(255,255,255,.5),
+      inset 2px 0 2px rgba(255,255,255,.45), inset -2px 0 2px rgba(255,255,255,.45)}
+  .board-panel{background:
+    radial-gradient(circle at 1px 1px, var(--grid) 1px, transparent 1.4px) 0 0/16px 16px,
+    linear-gradient(180deg, rgba(255,255,255,.45), rgba(255,255,255,.15) 45%, rgba(255,255,255,.28)),
+    rgba(255,255,255,.22)}
+  .btn.primary{background:linear-gradient(180deg,#7b6cf0,#5646d6);
+    box-shadow:0 10px 24px rgba(86,70,214,.4), inset 0 1.5px 0 rgba(255,255,255,.45)}
+  .btn.primary:hover{background:linear-gradient(180deg,#8677f2,#6152e0)}
+  .btn.ghost,.btn.plain{background:
+      linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,.18) 48%, rgba(255,255,255,.4)),
+      rgba(255,255,255,.22);
+    border:1.5px solid rgba(255,255,255,.95); color:var(--ink);
+    -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+    box-shadow:0 10px 24px rgba(28,30,46,.12), inset 0 1.5px 1px #fff, inset 0 -4px 8px rgba(255,255,255,.55);
+    transition:transform .12s, box-shadow .15s}
+  .btn:hover{transform:translateY(-1px)}
+  .btn:active{transform:translateY(0) scale(.97)}
+  .btn.save{background:linear-gradient(180deg,#3cc08d,#2ea376);
+    box-shadow:0 10px 22px rgba(46,163,118,.35), inset 0 1.5px 0 rgba(255,255,255,.4)}
+  .chip{background:
+      linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,.18) 48%, rgba(255,255,255,.4)),
+      rgba(255,255,255,.2);
+    border:1.5px solid rgba(255,255,255,.95);
+    -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+    box-shadow:0 10px 22px rgba(28,30,46,.11), inset 0 1.5px 1px #fff, inset 0 -4px 8px rgba(255,255,255,.55);
+    transition:transform .12s}
+  .chip:active{transform:scale(.96)}
+  .chip.on{background:linear-gradient(180deg,#2c2d36,#17181d); border-color:#17181d; color:#fff;
+    box-shadow:0 8px 20px rgba(23,24,29,.3), inset 0 1px 0 rgba(255,255,255,.14)}
+  select,input[type=text]{background:rgba(255,255,255,.42); border-radius:13px; border-color:rgba(255,255,255,.95);
+    box-shadow:inset 0 2px 4px rgba(28,30,46,.07), inset 0 -1px 0 rgba(255,255,255,.7)}
+  .kb-key,.kb-tab,.mod,.preset{background:
+      linear-gradient(180deg, rgba(255,255,255,.65), rgba(255,255,255,.2) 50%, rgba(255,255,255,.38)),
+      rgba(255,255,255,.2);
+    border-color:rgba(255,255,255,.95);
+    box-shadow:0 5px 12px rgba(28,30,46,.09), inset 0 1px 1px #fff, inset 0 -3px 6px rgba(255,255,255,.5)}
+  .kb-key:active{transform:scale(.95)}
+  .key rect.cap{filter:drop-shadow(0 3.5px 3px rgba(23,24,29,.13))}
+  .key.sel rect.cap{filter:drop-shadow(0 5px 10px rgba(86,70,214,.45))}
+  .bind-now{background:rgba(255,255,255,.7)}
+  .sw{box-shadow:inset 0 1px 2px rgba(23,24,29,.18)}
+  .sw.on{background:linear-gradient(180deg,#7263e8,#5646d6)}
+  pre.out{border-radius:18px}
+  .modal{background:
+      linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,.25) 45%, rgba(255,255,255,.4)),
+      rgba(255,255,255,.35);
+    -webkit-backdrop-filter:blur(30px) saturate(1.3); backdrop-filter:blur(30px) saturate(1.3);
+    box-shadow:0 30px 70px rgba(28,30,46,.28), inset 0 2px 1px #fff, inset 0 -6px 14px rgba(255,255,255,.5)}
+  .mode-tg{background:rgba(255,255,255,.78); box-shadow:0 4px 12px rgba(28,30,46,.06), inset 0 1px 0 #fff}
+  .mode-tg button.on{background:linear-gradient(180deg,#2c2d36,#17181d)}
+
+  /* レイヤーバー（ボード上部・横並び） */
+  .layerbar .chip.util{font-size:11px}
+  .rail-util{display:contents}
+
+  /* ---------- KEY EDIT: 横長・ボード直下 ---------- */
+  .main{grid-template-columns:1fr}
+  .insp{position:static}
+  .insp-cols{display:grid; grid-template-columns:300px minmax(0,1fr) 280px; gap:20px; align-items:start}
+  @media(max-width:920px){ .insp-cols{grid-template-columns:1fr} }
+  .insp .kb-grid{max-height:236px}
+
+  /* ==== さらにクリア&ぷっくり（最終上書き） ==== */
+  .linkbar{margin-bottom:20px}
+  .panel{background:
+      linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,.06) 40%, rgba(255,255,255,.3)),
+      rgba(255,255,255,.12);
+    -webkit-backdrop-filter:blur(40px) saturate(1.45); backdrop-filter:blur(40px) saturate(1.45);
+    border-radius:32px;
+    box-shadow:0 34px 70px rgba(28,30,46,.16), 0 4px 10px rgba(28,30,46,.05),
+      inset 0 2.5px 1px rgba(255,255,255,1), inset 0 -10px 20px rgba(255,255,255,.55),
+      inset 3px 0 3px rgba(255,255,255,.5), inset -3px 0 3px rgba(255,255,255,.5)}
+  .board-panel{background:
+    radial-gradient(circle at 1px 1px, var(--grid) 1px, transparent 1.4px) 0 0/16px 16px,
+    linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,.12) 42%, rgba(255,255,255,.3)),
+    rgba(255,255,255,.12)}
+  .btn.ghost,.btn.plain,.chip{background:
+      linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.14) 50%, rgba(255,255,255,.48)),
+      rgba(255,255,255,.12)}
+  .kb-key,.kb-tab,.mod,.preset{background:
+      linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,255,255,.16) 52%, rgba(255,255,255,.42)),
+      rgba(255,255,255,.1)}
+  .bind-now{background:
+      linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,.25)),
+      rgba(255,255,255,.2)}
+  .key rect.cap{fill:url(#capgrad); stroke:rgba(255,255,255,.95); stroke-width:1.8}
+  .key:hover rect.cap{stroke:var(--faint)}
+  .key.sel rect.cap{fill:url(#capsel); stroke:var(--accent)}
+  .key.edited rect.cap{stroke:var(--accent2)}
+</style>
+
+<canvas id="hail"></canvas>
+<div id="boot" aria-hidden="true">
+  <canvas id="bootcv"></canvas>
+  <div class="boot-title">ARARE STUDIO<small>SESSION LINK — CYCLICAL CHECK</small></div>
+  <div class="boot-tag" id="boottag"></div>
+  <div class="boot-skip">CLICK TO SKIP ▸</div>
+</div>
+<div class="app">
+
+<header>
+  <div class="brand">
+    <svg xmlns="http://www.w3.org/2000/svg" class="logo-svg" role="img" aria-label="arare" viewBox="0 0 1697.0000 482.0000">
+<title>arare</title>
+<g fill="currentColor" fill-rule="evenodd">
+<path d="M848.0000,-0.5000 L896.0000,-0.5000 L897.0000,0.5000 L901.0000,0.5000 L902.0000,1.5000 L911.0000,1.5000 L912.0000,2.5000 L917.0000,2.5000 L918.0000,3.5000 L922.0000,3.5000 L923.0000,4.5000 L926.0000,4.5000 L927.0000,5.5000 L929.0000,5.5000 L930.0000,6.5000 L932.0000,6.5000 L933.0000,7.5000 L936.0000,7.5000 L937.0000,8.5000 L939.0000,8.5000 L940.0000,9.5000 L943.0000,9.5000 L946.0000,11.5000 L948.0000,11.5000 L949.0000,12.5000 L951.0000,12.5000 L952.0000,13.5000 L953.0000,13.5000 L954.0000,14.5000 L955.0000,14.5000 L956.0000,15.5000 L957.0000,15.5000 L958.0000,16.5000 L959.0000,16.5000 L960.0000,17.5000 L963.0000,18.5000 L965.0000,20.5000 L967.0000,20.5000 L969.0000,22.5000 L970.0000,22.5000 L971.0000,23.5000 L972.0000,23.5000 L974.0000,25.5000 L975.0000,25.5000 L979.0000,29.5000 L980.0000,29.5000 L984.0000,33.5000 L985.0000,33.5000 L991.5000,40.0000 L991.5000,41.0000 L997.5000,47.0000 L997.5000,48.0000 L999.5000,50.0000 L999.5000,51.0000 L1002.5000,54.0000 L1002.5000,55.0000 L1003.5000,56.0000 L1004.5000,59.0000 L1006.5000,61.0000 L1006.5000,63.0000 L1008.5000,66.0000 L1008.5000,68.0000 L1009.5000,69.0000 L1009.5000,70.0000 L1011.5000,73.0000 L1011.5000,75.0000 L1013.5000,78.0000 L1013.5000,80.0000 L1014.5000,81.0000 L1014.5000,84.0000 L1015.5000,85.0000 L1015.5000,88.0000 L1016.5000,89.0000 L1016.5000,94.0000 L1017.5000,95.0000 L1017.5000,99.0000 L1018.5000,100.0000 L1018.5000,134.0000 L1017.5000,135.0000 L1017.5000,143.0000 L1016.5000,144.0000 L1016.5000,150.0000 L1015.5000,151.0000 L1015.5000,158.0000 L1014.5000,159.0000 L1014.5000,164.0000 L1013.5000,165.0000 L1013.5000,171.0000 L1012.5000,172.0000 L1012.5000,174.0000 L1011.5000,175.0000 L1011.5000,185.0000 L1010.5000,186.0000 L1010.5000,193.0000 L1009.5000,194.0000 L1009.5000,198.0000 L1008.5000,199.0000 L1008.5000,208.0000 L1007.5000,209.0000 L1007.5000,211.0000 L1006.5000,212.0000 L1006.5000,221.0000 L1005.5000,222.0000 L1005.5000,225.0000 L1004.5000,226.0000 L1004.5000,232.0000 L1003.5000,233.0000 L1003.5000,236.0000 L1002.5000,237.0000 L1002.5000,245.0000 L1001.5000,246.0000 L1001.5000,249.0000 L1000.5000,250.0000 L1000.5000,257.0000 L999.5000,258.0000 L999.5000,260.0000 L998.5000,261.0000 L998.5000,269.0000 L997.5000,270.0000 L997.5000,274.0000 L996.5000,275.0000 L996.5000,282.0000 L995.5000,283.0000 L995.5000,286.0000 L994.5000,287.0000 L994.5000,295.0000 L993.5000,296.0000 L993.5000,298.0000 L992.5000,299.0000 L992.5000,305.0000 L991.5000,306.0000 L991.5000,310.0000 L990.5000,311.0000 L990.5000,317.0000 L989.5000,318.0000 L989.5000,323.0000 L988.5000,324.0000 L988.5000,329.0000 L987.5000,330.0000 L987.5000,337.0000 L986.5000,338.0000 L986.5000,343.0000 L985.5000,344.0000 L985.5000,349.0000 L984.0000,351.5000 L916.0000,351.5000 L914.5000,350.0000 L914.5000,347.0000 L915.5000,346.0000 L915.5000,340.0000 L916.5000,339.0000 L916.5000,335.0000 L917.5000,334.0000 L917.5000,327.0000 L918.5000,326.0000 L918.5000,322.0000 L919.5000,321.0000 L919.5000,312.0000 L920.5000,311.0000 L920.5000,309.0000 L921.5000,308.0000 L921.5000,302.0000 L920.0000,301.5000 L919.5000,303.0000 L910.0000,312.5000 L909.0000,312.5000 L908.5000,314.0000 L904.0000,318.5000 L903.0000,318.5000 L896.0000,325.5000 L895.0000,325.5000 L891.0000,329.5000 L890.0000,329.5000 L888.0000,331.5000 L887.0000,331.5000 L884.0000,334.5000 L883.0000,334.5000 L882.0000,335.5000 L879.0000,336.5000 L877.0000,338.5000 L876.0000,338.5000 L875.0000,339.5000 L872.0000,340.5000 L870.0000,342.5000 L868.0000,342.5000 L867.0000,343.5000 L866.0000,343.5000 L861.0000,346.5000 L859.0000,346.5000 L856.0000,348.5000 L854.0000,348.5000 L853.0000,349.5000 L851.0000,349.5000 L850.0000,350.5000 L848.0000,350.5000 L845.0000,352.5000 L841.0000,352.5000 L840.0000,353.5000 L837.0000,353.5000 L836.0000,354.5000 L834.0000,354.5000 L833.0000,355.5000 L828.0000,355.5000 L827.0000,356.5000 L823.0000,356.5000 L822.0000,357.5000 L799.0000,357.5000 L798.0000,358.5000 L796.0000,358.5000 L795.0000,357.5000 L779.0000,357.5000 L778.0000,356.5000 L773.0000,356.5000 L772.0000,355.5000 L768.0000,355.5000 L767.0000,354.5000 L764.0000,354.5000 L763.0000,353.5000 L759.0000,353.5000 L758.0000,352.5000 L756.0000,352.5000 L755.0000,351.5000 L753.0000,351.5000 L752.0000,350.5000 L750.0000,350.5000 L749.0000,349.5000 L745.0000,349.5000 L740.0000,346.5000 L738.0000,346.5000 L737.0000,345.5000 L736.0000,345.5000 L731.0000,342.5000 L729.0000,342.5000 L728.0000,341.5000 L727.0000,341.5000 L726.0000,340.5000 L723.0000,339.5000 L721.0000,337.5000 L720.0000,337.5000 L718.0000,335.5000 L717.0000,335.5000 L714.0000,332.5000 L713.0000,332.5000 L709.0000,328.5000 L708.0000,328.5000 L700.5000,321.0000 L700.5000,320.0000 L695.5000,315.0000 L695.5000,314.0000 L693.5000,312.0000 L692.5000,309.0000 L690.5000,307.0000 L690.5000,306.0000 L688.5000,303.0000 L688.5000,301.0000 L687.5000,300.0000 L687.5000,299.0000 L685.5000,297.0000 L685.5000,296.0000 L684.5000,295.0000 L684.5000,293.0000 L682.5000,290.0000 L682.5000,288.0000 L681.5000,287.0000 L681.5000,284.0000 L680.5000,283.0000 L680.5000,278.0000 L679.5000,277.0000 L679.5000,274.0000 L678.5000,273.0000 L678.5000,265.0000 L677.5000,264.0000 L677.5000,242.0000 L678.5000,241.0000 L678.5000,232.0000 L679.5000,231.0000 L679.5000,228.0000 L680.5000,227.0000 L680.5000,222.0000 L681.5000,221.0000 L681.5000,218.0000 L683.5000,215.0000 L683.5000,212.0000 L684.5000,211.0000 L684.5000,209.0000 L686.5000,207.0000 L686.5000,205.0000 L687.5000,204.0000 L687.5000,203.0000 L688.5000,202.0000 L688.5000,201.0000 L689.5000,200.0000 L689.5000,199.0000 L690.5000,198.0000 L690.5000,197.0000 L691.5000,196.0000 L691.5000,195.0000 L692.5000,194.0000 L693.5000,191.0000 L695.5000,189.0000 L695.5000,188.0000 L697.5000,186.0000 L697.5000,185.0000 L701.5000,181.0000 L701.5000,180.0000 L705.5000,176.0000 L705.5000,175.0000 L707.0000,173.5000 L708.0000,173.5000 L718.0000,163.5000 L719.0000,163.5000 L723.0000,159.5000 L724.0000,159.5000 L727.0000,156.5000 L730.0000,155.5000 L732.0000,153.5000 L734.0000,153.5000 L737.0000,150.5000 L739.0000,150.5000 L740.0000,149.5000 L741.0000,149.5000 L743.0000,147.5000 L745.0000,147.5000 L750.0000,144.5000 L752.0000,144.5000 L755.0000,142.5000 L757.0000,142.5000 L762.0000,139.5000 L765.0000,139.5000 L766.0000,138.5000 L769.0000,138.5000 L772.0000,136.5000 L774.0000,136.5000 L775.0000,135.5000 L778.0000,135.5000 L781.0000,133.5000 L787.0000,133.5000 L788.0000,132.5000 L792.0000,132.5000 L793.0000,131.5000 L795.0000,131.5000 L796.0000,130.5000 L803.0000,130.5000 L804.0000,129.5000 L813.0000,129.5000 L814.0000,128.5000 L823.0000,128.5000 L824.0000,127.5000 L827.0000,127.5000 L828.0000,126.5000 L871.0000,126.5000 L872.0000,125.5000 L889.0000,125.5000 L890.0000,126.5000 L892.0000,126.5000 L893.0000,125.5000 L902.0000,125.5000 L903.0000,126.5000 L904.0000,125.5000 L911.0000,125.5000 L912.0000,126.5000 L914.0000,126.5000 L915.0000,125.5000 L943.0000,125.5000 L944.5000,124.0000 L944.5000,118.0000 L943.5000,117.0000 L943.5000,111.0000 L942.5000,110.0000 L942.5000,108.0000 L941.5000,107.0000 L941.5000,103.0000 L940.5000,102.0000 L940.5000,100.0000 L938.5000,97.0000 L938.5000,95.0000 L936.5000,93.0000 L936.5000,91.0000 L935.5000,90.0000 L935.5000,89.0000 L932.5000,86.0000 L932.5000,85.0000 L926.5000,79.0000 L926.0000,77.5000 L925.0000,77.5000 L922.0000,74.5000 L921.0000,74.5000 L918.0000,71.5000 L915.0000,70.5000 L913.0000,68.5000 L911.0000,68.5000 L910.0000,67.5000 L909.0000,67.5000 L908.0000,66.5000 L906.0000,66.5000 L903.0000,64.5000 L901.0000,64.5000 L900.0000,63.5000 L897.0000,63.5000 L896.0000,62.5000 L893.0000,62.5000 L892.0000,61.5000 L889.0000,61.5000 L888.0000,60.5000 L884.0000,60.5000 L883.0000,59.5000 L846.0000,59.5000 L845.0000,60.5000 L840.0000,60.5000 L839.0000,61.5000 L830.0000,61.5000 L829.0000,62.5000 L826.0000,62.5000 L825.0000,63.5000 L819.0000,63.5000 L818.0000,64.5000 L815.0000,64.5000 L814.0000,65.5000 L811.0000,65.5000 L810.0000,66.5000 L808.0000,66.5000 L807.0000,67.5000 L804.0000,67.5000 L801.0000,69.5000 L798.0000,69.5000 L797.0000,70.5000 L795.0000,70.5000 L794.0000,71.5000 L792.0000,71.5000 L791.0000,72.5000 L789.0000,72.5000 L788.0000,73.5000 L786.0000,73.5000 L785.0000,74.5000 L784.0000,74.5000 L783.0000,75.5000 L782.0000,75.5000 L781.0000,76.5000 L780.0000,76.5000 L775.0000,79.5000 L773.0000,79.5000 L770.0000,81.5000 L768.0000,81.5000 L767.0000,82.5000 L766.0000,82.5000 L764.0000,84.5000 L762.0000,84.5000 L761.0000,85.5000 L760.0000,85.5000 L758.0000,87.5000 L757.0000,87.5000 L756.0000,88.5000 L755.0000,88.5000 L750.0000,91.5000 L748.0000,91.5000 L747.0000,92.5000 L744.5000,90.0000 L744.5000,89.0000 L740.5000,84.0000 L739.5000,81.0000 L736.5000,78.0000 L736.5000,76.0000 L735.5000,75.0000 L735.5000,74.0000 L733.5000,72.0000 L733.5000,71.0000 L732.5000,70.0000 L732.5000,69.0000 L730.5000,67.0000 L730.5000,66.0000 L729.5000,65.0000 L728.5000,62.0000 L726.5000,60.0000 L726.5000,59.0000 L725.5000,58.0000 L725.5000,57.0000 L724.5000,56.0000 L724.5000,55.0000 L723.5000,54.0000 L722.5000,51.0000 L719.5000,48.0000 L719.5000,47.0000 L718.5000,46.0000 L718.5000,43.0000 L719.0000,42.5000 L722.0000,41.5000 L725.0000,38.5000 L726.0000,38.5000 L731.0000,34.5000 L733.0000,34.5000 L735.0000,32.5000 L737.0000,32.5000 L739.0000,30.5000 L740.0000,30.5000 L741.0000,29.5000 L742.0000,29.5000 L743.0000,28.5000 L744.0000,28.5000 L745.0000,27.5000 L746.0000,27.5000 L751.0000,24.5000 L753.0000,24.5000 L754.0000,23.5000 L755.0000,23.5000 L756.0000,22.5000 L757.0000,22.5000 L762.0000,19.5000 L764.0000,19.5000 L765.0000,18.5000 L767.0000,18.5000 L770.0000,16.5000 L772.0000,16.5000 L773.0000,15.5000 L775.0000,15.5000 L776.0000,14.5000 L778.0000,14.5000 L781.0000,12.5000 L784.0000,12.5000 L785.0000,11.5000 L788.0000,11.5000 L789.0000,10.5000 L791.0000,10.5000 L792.0000,9.5000 L794.0000,9.5000 L795.0000,8.5000 L798.0000,8.5000 L799.0000,7.5000 L802.0000,7.5000 L803.0000,6.5000 L807.0000,6.5000 L808.0000,5.5000 L811.0000,5.5000 L812.0000,4.5000 L815.0000,4.5000 L816.0000,3.5000 L820.0000,3.5000 L821.0000,2.5000 L828.0000,2.5000 L829.0000,1.5000 L830.0000,2.5000 L831.0000,2.5000 L832.0000,1.5000 L840.0000,1.5000 L841.0000,0.5000 L847.0000,0.5000 L848.0000,-0.5000 Z M843.0000,180.5000 L842.0000,181.5000 L828.0000,181.5000 L827.0000,182.5000 L824.0000,182.5000 L823.0000,183.5000 L817.0000,183.5000 L816.0000,184.5000 L811.0000,184.5000 L810.0000,185.5000 L808.0000,185.5000 L807.0000,186.5000 L805.0000,186.5000 L804.0000,187.5000 L802.0000,187.5000 L801.0000,188.5000 L798.0000,188.5000 L797.0000,189.5000 L796.0000,189.5000 L795.0000,190.5000 L794.0000,190.5000 L789.0000,193.5000 L787.0000,193.5000 L786.0000,194.5000 L784.0000,194.5000 L781.0000,197.5000 L780.0000,197.5000 L776.0000,201.5000 L775.0000,201.5000 L771.0000,205.5000 L769.5000,206.0000 L769.5000,207.0000 L763.5000,213.0000 L763.5000,214.0000 L761.5000,216.0000 L761.5000,217.0000 L760.5000,218.0000 L760.5000,219.0000 L757.5000,224.0000 L757.5000,226.0000 L756.5000,227.0000 L756.5000,229.0000 L755.5000,230.0000 L755.5000,234.0000 L754.5000,235.0000 L754.5000,239.0000 L753.5000,240.0000 L753.5000,249.0000 L754.5000,250.0000 L754.5000,254.0000 L755.5000,255.0000 L755.5000,258.0000 L756.5000,259.0000 L756.5000,261.0000 L757.5000,262.0000 L757.5000,265.0000 L758.5000,266.0000 L758.5000,267.0000 L759.5000,268.0000 L760.5000,271.0000 L762.5000,273.0000 L762.5000,274.0000 L763.5000,275.0000 L761.0000,276.5000 L757.0000,276.5000 L756.0000,277.5000 L751.0000,277.5000 L750.0000,278.5000 L747.0000,278.5000 L746.0000,279.5000 L743.0000,279.5000 L742.0000,280.5000 L740.0000,280.5000 L739.0000,281.5000 L736.0000,281.5000 L735.0000,282.5000 L734.0000,282.5000 L733.0000,283.5000 L731.0000,283.5000 L730.0000,284.5000 L727.0000,284.5000 L726.0000,285.5000 L725.0000,285.5000 L724.0000,286.5000 L723.0000,286.5000 L722.0000,287.5000 L719.0000,288.5000 L717.0000,290.5000 L716.0000,290.5000 L714.0000,292.5000 L713.0000,292.5000 L711.5000,294.0000 L711.5000,295.0000 L707.5000,299.0000 L707.5000,300.0000 L706.5000,301.0000 L706.5000,304.0000 L705.5000,305.0000 L706.5000,306.0000 L706.5000,309.0000 L707.5000,310.0000 L707.5000,311.0000 L710.5000,314.0000 L710.5000,315.0000 L714.0000,318.5000 L717.0000,319.5000 L719.0000,321.5000 L720.0000,321.5000 L725.0000,324.5000 L727.0000,324.5000 L730.0000,326.5000 L733.0000,326.5000 L734.0000,327.5000 L736.0000,327.5000 L738.0000,329.5000 L741.0000,329.5000 L742.0000,330.5000 L745.0000,330.5000 L746.0000,331.5000 L748.0000,331.5000 L749.0000,332.5000 L753.0000,332.5000 L754.0000,333.5000 L761.0000,333.5000 L762.0000,334.5000 L765.0000,334.5000 L766.0000,335.5000 L771.0000,335.5000 L772.0000,336.5000 L788.0000,336.5000 L789.0000,337.5000 L797.0000,337.5000 L798.0000,338.5000 L810.0000,338.5000 L811.0000,337.5000 L821.0000,337.5000 L822.0000,336.5000 L836.0000,336.5000 L837.0000,335.5000 L840.0000,335.5000 L841.0000,334.5000 L849.0000,334.5000 L850.0000,333.5000 L856.0000,333.5000 L857.0000,332.5000 L860.0000,332.5000 L861.0000,331.5000 L863.0000,331.5000 L864.0000,330.5000 L866.0000,330.5000 L867.0000,329.5000 L870.0000,329.5000 L871.0000,328.5000 L873.0000,328.5000 L876.0000,326.5000 L878.0000,326.5000 L879.0000,325.5000 L881.0000,325.5000 L883.0000,323.5000 L884.0000,323.5000 L885.0000,322.5000 L888.0000,321.5000 L891.0000,318.5000 L892.0000,318.5000 L898.5000,312.0000 L898.5000,311.0000 L899.5000,310.0000 L899.5000,308.0000 L900.5000,307.0000 L900.5000,301.0000 L899.5000,300.0000 L899.5000,299.0000 L896.5000,296.0000 L896.5000,295.0000 L893.0000,291.5000 L892.0000,291.5000 L890.0000,289.5000 L889.0000,289.5000 L888.0000,288.5000 L885.0000,287.5000 L883.0000,285.5000 L882.0000,285.5000 L881.0000,284.5000 L879.0000,284.5000 L878.0000,283.5000 L875.0000,282.5000 L874.5000,281.0000 L877.0000,279.5000 L878.0000,279.5000 L880.0000,277.5000 L881.0000,277.5000 L884.0000,274.5000 L885.0000,274.5000 L888.0000,271.5000 L889.0000,271.5000 L891.0000,269.5000 L892.0000,269.5000 L896.0000,265.5000 L897.0000,265.5000 L898.5000,264.0000 L898.5000,263.0000 L900.0000,261.5000 L901.0000,261.5000 L905.5000,257.0000 L905.5000,256.0000 L908.5000,253.0000 L908.5000,252.0000 L914.5000,246.0000 L914.5000,245.0000 L916.5000,243.0000 L916.5000,242.0000 L917.5000,241.0000 L918.5000,238.0000 L920.5000,236.0000 L920.5000,235.0000 L922.5000,232.0000 L922.5000,230.0000 L923.5000,229.0000 L923.5000,228.0000 L925.5000,225.0000 L925.5000,223.0000 L927.5000,220.0000 L927.5000,218.0000 L928.5000,217.0000 L928.5000,215.0000 L929.5000,214.0000 L929.5000,211.0000 L931.5000,208.0000 L931.5000,203.0000 L932.5000,202.0000 L932.5000,199.0000 L933.5000,198.0000 L933.5000,194.0000 L934.5000,193.0000 L934.5000,190.0000 L935.5000,189.0000 L935.5000,185.0000 L936.5000,184.0000 L936.5000,183.0000 L935.0000,181.5000 L929.0000,181.5000 L928.0000,180.5000 L927.0000,181.5000 L926.0000,180.5000 L843.0000,180.5000 Z "/>
+<path d="M1502.0000,-0.5000 L1548.0000,-0.5000 L1549.0000,0.5000 L1551.0000,0.5000 L1552.0000,1.5000 L1553.0000,0.5000 L1554.0000,1.5000 L1561.0000,1.5000 L1562.0000,2.5000 L1568.0000,2.5000 L1569.0000,3.5000 L1571.0000,3.5000 L1572.0000,4.5000 L1574.0000,4.5000 L1575.0000,5.5000 L1579.0000,5.5000 L1582.0000,7.5000 L1584.0000,7.5000 L1585.0000,8.5000 L1588.0000,8.5000 L1589.0000,9.5000 L1590.0000,9.5000 L1593.0000,11.5000 L1595.0000,11.5000 L1596.0000,12.5000 L1599.0000,12.5000 L1601.0000,14.5000 L1602.0000,14.5000 L1603.0000,15.5000 L1605.0000,15.5000 L1610.0000,19.5000 L1612.0000,19.5000 L1614.0000,21.5000 L1615.0000,21.5000 L1620.0000,25.5000 L1622.0000,25.5000 L1623.0000,26.5000 L1624.0000,26.5000 L1628.0000,30.5000 L1629.0000,30.5000 L1631.0000,32.5000 L1634.0000,33.5000 L1646.0000,45.5000 L1647.0000,45.5000 L1652.5000,51.0000 L1652.5000,52.0000 L1654.0000,53.5000 L1655.0000,53.5000 L1656.5000,55.0000 L1656.5000,56.0000 L1659.5000,59.0000 L1659.5000,60.0000 L1661.5000,62.0000 L1661.5000,63.0000 L1663.5000,65.0000 L1663.5000,66.0000 L1665.5000,68.0000 L1665.5000,69.0000 L1668.5000,72.0000 L1669.5000,75.0000 L1671.5000,77.0000 L1671.5000,78.0000 L1672.5000,79.0000 L1673.5000,82.0000 L1675.5000,84.0000 L1675.5000,86.0000 L1676.5000,87.0000 L1677.5000,90.0000 L1679.5000,92.0000 L1679.5000,93.0000 L1680.5000,94.0000 L1680.5000,96.0000 L1683.5000,101.0000 L1683.5000,105.0000 L1684.5000,106.0000 L1684.5000,107.0000 L1685.5000,108.0000 L1685.5000,110.0000 L1686.5000,111.0000 L1686.5000,114.0000 L1687.5000,115.0000 L1687.5000,118.0000 L1689.5000,121.0000 L1689.5000,124.0000 L1690.5000,125.0000 L1690.5000,128.0000 L1691.5000,129.0000 L1691.5000,132.0000 L1692.5000,133.0000 L1692.5000,135.0000 L1693.5000,136.0000 L1693.5000,142.0000 L1694.5000,143.0000 L1694.5000,149.0000 L1695.5000,150.0000 L1695.5000,156.0000 L1696.5000,157.0000 L1696.5000,198.0000 L1695.5000,199.0000 L1695.5000,203.0000 L1694.0000,204.5000 L1428.0000,204.5000 L1427.5000,205.0000 L1427.5000,211.0000 L1428.5000,212.0000 L1428.5000,217.0000 L1429.5000,218.0000 L1429.5000,221.0000 L1431.5000,224.0000 L1431.5000,228.0000 L1432.5000,229.0000 L1432.5000,231.0000 L1433.5000,232.0000 L1433.5000,233.0000 L1434.5000,234.0000 L1434.5000,236.0000 L1435.5000,237.0000 L1435.5000,240.0000 L1436.5000,241.0000 L1436.5000,242.0000 L1437.5000,243.0000 L1438.5000,246.0000 L1442.5000,251.0000 L1443.5000,254.0000 L1446.5000,257.0000 L1446.5000,258.0000 L1449.5000,261.0000 L1449.5000,262.0000 L1460.0000,272.5000 L1461.0000,272.5000 L1463.0000,274.5000 L1464.0000,274.5000 L1467.0000,277.5000 L1468.0000,277.5000 L1472.0000,281.5000 L1473.0000,281.5000 L1474.0000,282.5000 L1476.0000,282.5000 L1477.0000,283.5000 L1478.0000,283.5000 L1480.0000,285.5000 L1482.0000,285.5000 L1485.0000,288.5000 L1488.0000,288.5000 L1491.0000,290.5000 L1493.0000,290.5000 L1494.0000,291.5000 L1496.0000,291.5000 L1497.0000,292.5000 L1500.0000,292.5000 L1501.0000,293.5000 L1503.0000,293.5000 L1504.0000,294.5000 L1509.0000,294.5000 L1510.0000,295.5000 L1513.0000,295.5000 L1514.0000,296.5000 L1554.0000,296.5000 L1555.0000,295.5000 L1560.0000,295.5000 L1561.0000,294.5000 L1565.0000,294.5000 L1566.0000,293.5000 L1568.0000,293.5000 L1569.0000,292.5000 L1571.0000,292.5000 L1572.0000,291.5000 L1574.0000,291.5000 L1575.0000,290.5000 L1576.0000,290.5000 L1577.0000,289.5000 L1579.0000,289.5000 L1580.0000,288.5000 L1581.0000,288.5000 L1582.0000,287.5000 L1583.0000,287.5000 L1584.0000,286.5000 L1585.0000,286.5000 L1586.0000,285.5000 L1589.0000,284.5000 L1591.0000,282.5000 L1592.0000,282.5000 L1593.0000,281.5000 L1596.0000,280.5000 L1599.0000,277.5000 L1600.0000,277.5000 L1602.0000,275.5000 L1603.0000,275.5000 L1606.0000,272.5000 L1607.0000,272.5000 L1613.0000,266.5000 L1614.0000,266.5000 L1618.5000,262.0000 L1618.5000,261.0000 L1624.5000,255.0000 L1624.5000,254.0000 L1631.0000,247.5000 L1632.0000,247.5000 L1636.0000,251.5000 L1637.0000,251.5000 L1644.0000,257.5000 L1646.0000,257.5000 L1650.0000,261.5000 L1651.0000,261.5000 L1654.0000,264.5000 L1655.0000,264.5000 L1658.0000,267.5000 L1659.0000,267.5000 L1666.0000,273.5000 L1669.0000,274.5000 L1676.0000,280.5000 L1678.0000,280.5000 L1680.5000,283.0000 L1679.5000,286.0000 L1676.5000,289.0000 L1676.5000,290.0000 L1672.5000,294.0000 L1672.5000,295.0000 L1668.5000,299.0000 L1668.5000,300.0000 L1662.5000,306.0000 L1662.5000,307.0000 L1654.0000,315.5000 L1653.0000,315.5000 L1649.0000,319.5000 L1648.0000,319.5000 L1643.0000,324.5000 L1642.0000,324.5000 L1640.0000,326.5000 L1639.0000,326.5000 L1634.0000,330.5000 L1631.0000,331.5000 L1628.0000,334.5000 L1627.0000,334.5000 L1626.0000,335.5000 L1623.0000,336.5000 L1621.0000,338.5000 L1619.0000,338.5000 L1618.0000,339.5000 L1617.0000,339.5000 L1615.0000,341.5000 L1613.0000,341.5000 L1610.0000,343.5000 L1608.0000,343.5000 L1607.0000,344.5000 L1606.0000,344.5000 L1605.0000,345.5000 L1603.0000,345.5000 L1600.0000,347.5000 L1597.0000,347.5000 L1594.0000,349.5000 L1592.0000,349.5000 L1591.0000,350.5000 L1588.0000,350.5000 L1587.0000,351.5000 L1584.0000,351.5000 L1583.0000,352.5000 L1581.0000,352.5000 L1580.0000,353.5000 L1575.0000,353.5000 L1574.0000,354.5000 L1570.0000,354.5000 L1569.0000,355.5000 L1563.0000,355.5000 L1562.0000,356.5000 L1559.0000,356.5000 L1558.0000,357.5000 L1541.0000,357.5000 L1540.0000,358.5000 L1537.0000,358.5000 L1536.0000,357.5000 L1534.0000,357.5000 L1533.0000,358.5000 L1531.0000,358.5000 L1530.0000,357.5000 L1505.0000,357.5000 L1504.0000,356.5000 L1501.0000,356.5000 L1500.0000,355.5000 L1494.0000,355.5000 L1493.0000,354.5000 L1491.0000,354.5000 L1490.0000,353.5000 L1484.0000,353.5000 L1483.0000,352.5000 L1481.0000,352.5000 L1480.0000,351.5000 L1477.0000,351.5000 L1476.0000,350.5000 L1473.0000,350.5000 L1472.0000,349.5000 L1468.0000,349.5000 L1467.0000,348.5000 L1465.0000,348.5000 L1462.0000,346.5000 L1460.0000,346.5000 L1459.0000,345.5000 L1457.0000,345.5000 L1454.0000,343.5000 L1451.0000,343.5000 L1449.0000,341.5000 L1447.0000,341.5000 L1445.0000,339.5000 L1442.0000,339.5000 L1439.0000,336.5000 L1437.0000,336.5000 L1436.0000,335.5000 L1435.0000,335.5000 L1430.0000,331.5000 L1427.0000,330.5000 L1422.0000,326.5000 L1421.0000,326.5000 L1420.0000,325.5000 L1419.0000,325.5000 L1417.0000,323.5000 L1416.0000,323.5000 L1410.0000,317.5000 L1407.0000,316.5000 L1404.5000,314.0000 L1404.5000,313.0000 L1403.0000,311.5000 L1402.0000,311.5000 L1399.5000,309.0000 L1399.5000,308.0000 L1398.0000,307.5000 L1395.5000,305.0000 L1395.5000,304.0000 L1390.5000,299.0000 L1390.5000,298.0000 L1386.5000,294.0000 L1386.5000,293.0000 L1385.0000,291.5000 L1383.5000,291.0000 L1383.5000,290.0000 L1381.5000,288.0000 L1381.5000,287.0000 L1377.5000,282.0000 L1376.5000,279.0000 L1374.5000,277.0000 L1373.5000,274.0000 L1370.5000,271.0000 L1370.5000,269.0000 L1369.5000,268.0000 L1369.5000,267.0000 L1366.5000,262.0000 L1366.5000,260.0000 L1364.5000,258.0000 L1364.5000,256.0000 L1363.5000,255.0000 L1363.5000,253.0000 L1360.5000,248.0000 L1360.5000,246.0000 L1359.5000,245.0000 L1359.5000,243.0000 L1357.5000,240.0000 L1357.5000,237.0000 L1356.5000,236.0000 L1356.5000,232.0000 L1355.5000,231.0000 L1355.5000,229.0000 L1354.5000,228.0000 L1354.5000,225.0000 L1353.5000,224.0000 L1353.5000,221.0000 L1352.5000,220.0000 L1352.5000,214.0000 L1351.5000,213.0000 L1351.5000,207.0000 L1350.5000,206.0000 L1350.5000,202.0000 L1349.5000,201.0000 L1349.5000,188.0000 L1348.5000,187.0000 L1348.5000,164.0000 L1349.5000,163.0000 L1349.5000,153.0000 L1350.5000,152.0000 L1350.5000,145.0000 L1351.5000,144.0000 L1351.5000,140.0000 L1352.5000,139.0000 L1352.5000,136.0000 L1353.5000,135.0000 L1353.5000,130.0000 L1354.5000,129.0000 L1354.5000,128.0000 L1355.5000,127.0000 L1355.5000,125.0000 L1356.5000,124.0000 L1356.5000,120.0000 L1358.5000,117.0000 L1358.5000,115.0000 L1359.5000,114.0000 L1359.5000,111.0000 L1360.5000,110.0000 L1360.5000,108.0000 L1363.5000,103.0000 L1363.5000,101.0000 L1364.5000,100.0000 L1364.5000,98.0000 L1366.5000,96.0000 L1366.5000,94.0000 L1367.5000,93.0000 L1367.5000,92.0000 L1368.5000,91.0000 L1368.5000,90.0000 L1369.5000,89.0000 L1370.5000,86.0000 L1372.5000,84.0000 L1372.5000,82.0000 L1376.5000,77.0000 L1376.5000,76.0000 L1377.5000,75.0000 L1377.5000,74.0000 L1379.5000,72.0000 L1379.5000,71.0000 L1382.5000,68.0000 L1382.5000,67.0000 L1387.5000,62.0000 L1387.5000,61.0000 L1390.5000,58.0000 L1390.5000,57.0000 L1394.5000,53.0000 L1394.5000,52.0000 L1399.0000,47.5000 L1400.0000,47.5000 L1407.0000,40.5000 L1408.0000,40.5000 L1414.0000,34.5000 L1415.0000,34.5000 L1422.0000,28.5000 L1425.0000,27.5000 L1430.0000,23.5000 L1431.0000,23.5000 L1432.0000,22.5000 L1434.0000,22.5000 L1436.0000,20.5000 L1437.0000,20.5000 L1438.0000,19.5000 L1439.0000,19.5000 L1440.0000,18.5000 L1441.0000,18.5000 L1442.0000,17.5000 L1443.0000,17.5000 L1444.0000,16.5000 L1445.0000,16.5000 L1446.0000,15.5000 L1447.0000,15.5000 L1452.0000,12.5000 L1454.0000,12.5000 L1455.0000,11.5000 L1457.0000,11.5000 L1460.0000,9.5000 L1462.0000,9.5000 L1463.0000,8.5000 L1465.0000,8.5000 L1468.0000,6.5000 L1471.0000,6.5000 L1472.0000,5.5000 L1475.0000,5.5000 L1476.0000,4.5000 L1479.0000,4.5000 L1480.0000,3.5000 L1483.0000,3.5000 L1484.0000,2.5000 L1487.0000,2.5000 L1488.0000,1.5000 L1498.0000,1.5000 L1499.0000,0.5000 L1501.0000,0.5000 L1502.0000,-0.5000 Z M1517.0000,58.5000 L1516.0000,59.5000 L1511.0000,59.5000 L1510.0000,60.5000 L1503.0000,60.5000 L1502.0000,61.5000 L1498.0000,61.5000 L1497.0000,62.5000 L1495.0000,62.5000 L1494.0000,63.5000 L1492.0000,63.5000 L1491.0000,64.5000 L1489.0000,64.5000 L1488.0000,65.5000 L1487.0000,65.5000 L1484.0000,67.5000 L1482.0000,67.5000 L1481.0000,68.5000 L1480.0000,68.5000 L1479.0000,69.5000 L1476.0000,70.5000 L1474.0000,72.5000 L1471.0000,73.5000 L1469.0000,75.5000 L1468.0000,75.5000 L1466.0000,77.5000 L1465.0000,77.5000 L1460.0000,82.5000 L1459.0000,82.5000 L1457.5000,84.0000 L1457.5000,85.0000 L1453.5000,89.0000 L1453.5000,90.0000 L1452.0000,90.5000 L1449.5000,93.0000 L1449.5000,94.0000 L1446.5000,97.0000 L1445.5000,100.0000 L1442.5000,103.0000 L1442.5000,104.0000 L1441.5000,105.0000 L1441.5000,106.0000 L1440.5000,107.0000 L1440.5000,108.0000 L1439.5000,109.0000 L1439.5000,110.0000 L1438.5000,111.0000 L1438.5000,112.0000 L1435.5000,117.0000 L1435.5000,119.0000 L1434.5000,120.0000 L1434.5000,122.0000 L1433.5000,123.0000 L1433.5000,124.0000 L1432.5000,125.0000 L1432.5000,127.0000 L1431.5000,128.0000 L1431.5000,132.0000 L1430.5000,133.0000 L1430.5000,135.0000 L1429.5000,136.0000 L1429.5000,138.0000 L1428.5000,139.0000 L1428.5000,142.0000 L1427.5000,143.0000 L1427.5000,149.0000 L1428.0000,149.5000 L1460.0000,149.5000 L1461.5000,151.0000 L1461.5000,176.0000 L1463.0000,177.5000 L1465.0000,177.5000 L1466.5000,176.0000 L1466.5000,163.0000 L1465.5000,162.0000 L1465.5000,154.0000 L1466.5000,153.0000 L1466.5000,150.0000 L1467.0000,149.5000 L1544.0000,149.5000 L1545.5000,151.0000 L1545.5000,181.0000 L1546.0000,181.5000 L1549.0000,181.5000 L1549.5000,181.0000 L1549.5000,151.0000 L1551.0000,149.5000 L1568.0000,149.5000 L1570.5000,151.0000 L1570.5000,155.0000 L1571.5000,156.0000 L1571.5000,189.0000 L1573.0000,190.5000 L1574.0000,190.5000 L1575.5000,189.0000 L1575.5000,170.0000 L1574.5000,169.0000 L1575.5000,168.0000 L1574.5000,167.0000 L1574.5000,166.0000 L1575.5000,165.0000 L1574.5000,164.0000 L1574.5000,157.0000 L1575.5000,156.0000 L1575.5000,150.0000 L1576.0000,149.5000 L1617.0000,149.5000 L1617.5000,149.0000 L1617.5000,148.0000 L1618.5000,147.0000 L1618.5000,145.0000 L1617.5000,144.0000 L1617.5000,140.0000 L1616.5000,139.0000 L1616.5000,135.0000 L1615.5000,134.0000 L1615.5000,131.0000 L1614.5000,130.0000 L1614.5000,126.0000 L1613.5000,125.0000 L1613.5000,124.0000 L1612.5000,123.0000 L1612.5000,121.0000 L1611.5000,120.0000 L1611.5000,117.0000 L1609.5000,115.0000 L1609.5000,114.0000 L1607.5000,111.0000 L1607.5000,109.0000 L1606.5000,108.0000 L1606.5000,107.0000 L1604.5000,105.0000 L1604.5000,104.0000 L1603.5000,103.0000 L1602.5000,100.0000 L1600.5000,98.0000 L1600.5000,97.0000 L1597.5000,94.0000 L1597.5000,93.0000 L1594.5000,90.0000 L1594.5000,89.0000 L1590.5000,85.0000 L1590.5000,84.0000 L1589.0000,82.5000 L1588.0000,82.5000 L1586.0000,80.5000 L1585.0000,80.5000 L1581.0000,76.5000 L1580.0000,76.5000 L1575.0000,72.5000 L1574.0000,72.5000 L1573.0000,71.5000 L1570.0000,70.5000 L1568.0000,68.5000 L1567.0000,68.5000 L1566.0000,67.5000 L1563.0000,67.5000 L1558.0000,64.5000 L1556.0000,64.5000 L1555.0000,63.5000 L1553.0000,63.5000 L1552.0000,62.5000 L1550.0000,62.5000 L1549.0000,61.5000 L1546.0000,61.5000 L1545.0000,60.5000 L1540.0000,60.5000 L1539.0000,59.5000 L1531.0000,59.5000 L1530.0000,58.5000 L1517.0000,58.5000 Z M1411.0000,91.5000 L1409.5000,93.0000 L1409.5000,178.0000 L1411.0000,179.5000 L1412.0000,179.5000 L1413.5000,178.0000 L1413.5000,94.0000 L1412.5000,93.0000 L1412.5000,92.0000 L1411.0000,91.5000 Z M1390.0000,184.5000 L1388.5000,187.0000 L1388.5000,249.0000 L1391.0000,251.5000 L1392.5000,250.0000 L1392.5000,188.0000 L1393.5000,187.0000 L1392.0000,184.5000 L1390.0000,184.5000 Z M1371.0000,127.5000 L1369.5000,129.0000 L1369.5000,201.0000 L1370.0000,201.5000 L1372.0000,201.5000 L1373.5000,200.0000 L1373.5000,180.0000 L1372.5000,179.0000 L1372.5000,147.0000 L1373.5000,146.0000 L1373.5000,130.0000 L1371.0000,127.5000 Z M1641.0000,118.5000 L1639.5000,120.0000 L1639.5000,177.0000 L1641.0000,178.5000 L1642.0000,178.5000 L1643.5000,177.0000 L1643.5000,120.0000 L1642.0000,118.5000 L1641.0000,118.5000 Z M1432.0000,31.5000 L1430.5000,33.0000 L1430.5000,86.0000 L1432.0000,87.5000 L1433.0000,87.5000 L1434.5000,86.0000 L1434.5000,33.0000 L1433.0000,31.5000 L1432.0000,31.5000 Z M1617.0000,39.5000 L1615.5000,42.0000 L1616.5000,43.0000 L1616.5000,97.0000 L1618.0000,98.5000 L1619.0000,98.5000 L1619.5000,98.0000 L1619.5000,40.0000 L1619.0000,39.5000 L1617.0000,39.5000 Z M1664.0000,93.5000 L1662.5000,95.0000 L1662.5000,138.0000 L1663.0000,138.5000 L1665.0000,138.5000 L1666.5000,137.0000 L1666.5000,96.0000 L1665.5000,95.0000 L1665.5000,94.0000 L1664.0000,93.5000 Z M1571.0000,9.5000 L1569.5000,12.0000 L1569.5000,50.0000 L1572.0000,52.5000 L1573.0000,52.5000 L1573.5000,52.0000 L1573.5000,10.0000 L1573.0000,9.5000 L1571.0000,9.5000 Z M1481.0000,10.5000 L1479.5000,12.0000 L1479.5000,47.0000 L1481.0000,49.5000 L1483.0000,49.5000 L1483.5000,49.0000 L1483.5000,12.0000 L1482.0000,10.5000 L1481.0000,10.5000 Z M1641.0000,64.5000 L1639.5000,67.0000 L1639.5000,97.0000 L1641.0000,98.5000 L1643.0000,98.5000 L1643.5000,98.0000 L1643.5000,66.0000 L1642.0000,64.5000 L1641.0000,64.5000 Z M1525.0000,14.5000 L1523.5000,16.0000 L1523.5000,41.0000 L1525.0000,42.5000 L1526.0000,42.5000 L1527.5000,41.0000 L1527.5000,16.0000 L1526.0000,14.5000 L1525.0000,14.5000 Z M1457.0000,32.5000 L1455.5000,34.0000 L1455.5000,60.0000 L1456.0000,60.5000 L1458.0000,60.5000 L1458.5000,60.0000 L1458.5000,33.0000 L1457.0000,32.5000 Z M1525.0000,175.5000 L1523.5000,177.0000 L1523.5000,195.0000 L1524.0000,195.5000 L1526.0000,195.5000 L1526.5000,195.0000 L1526.5000,177.0000 L1525.0000,175.5000 Z "/>
+<path d="M170.0000,-0.5000 L220.0000,-0.5000 L221.0000,0.5000 L225.0000,0.5000 L226.0000,1.5000 L235.0000,1.5000 L236.0000,2.5000 L241.0000,2.5000 L242.0000,3.5000 L246.0000,3.5000 L247.0000,4.5000 L250.0000,4.5000 L251.0000,5.5000 L253.0000,5.5000 L254.0000,6.5000 L258.0000,6.5000 L259.0000,7.5000 L261.0000,7.5000 L262.0000,8.5000 L264.0000,8.5000 L265.0000,9.5000 L267.0000,9.5000 L268.0000,10.5000 L270.0000,10.5000 L273.0000,12.5000 L276.0000,12.5000 L277.0000,13.5000 L279.0000,13.5000 L281.0000,15.5000 L282.0000,15.5000 L283.0000,16.5000 L286.0000,17.5000 L288.0000,19.5000 L290.0000,19.5000 L291.0000,20.5000 L292.0000,20.5000 L294.0000,22.5000 L297.0000,23.5000 L299.0000,25.5000 L300.0000,25.5000 L303.0000,28.5000 L304.0000,28.5000 L308.0000,32.5000 L309.0000,32.5000 L312.5000,36.0000 L312.5000,37.0000 L314.0000,37.5000 L315.5000,39.0000 L315.5000,40.0000 L320.5000,45.0000 L320.5000,46.0000 L322.5000,48.0000 L322.5000,49.0000 L326.5000,53.0000 L327.5000,56.0000 L329.5000,58.0000 L329.5000,60.0000 L330.5000,61.0000 L330.5000,62.0000 L333.5000,67.0000 L333.5000,69.0000 L334.5000,70.0000 L334.5000,71.0000 L335.5000,72.0000 L335.5000,74.0000 L337.5000,77.0000 L337.5000,80.0000 L338.5000,81.0000 L338.5000,83.0000 L339.5000,84.0000 L339.5000,87.0000 L340.5000,88.0000 L340.5000,93.0000 L341.5000,94.0000 L341.5000,98.0000 L342.5000,99.0000 L342.5000,138.0000 L341.5000,139.0000 L341.5000,144.0000 L340.5000,145.0000 L340.5000,154.0000 L339.5000,155.0000 L339.5000,160.0000 L338.5000,161.0000 L338.5000,169.0000 L337.5000,170.0000 L337.5000,173.0000 L336.5000,174.0000 L336.5000,182.0000 L335.5000,183.0000 L335.5000,185.0000 L334.5000,186.0000 L334.5000,191.0000 L333.5000,192.0000 L333.5000,199.0000 L332.5000,200.0000 L332.5000,208.0000 L331.5000,209.0000 L331.5000,211.0000 L330.5000,212.0000 L330.5000,218.0000 L329.5000,219.0000 L329.5000,223.0000 L328.0000,224.5000 L302.0000,224.5000 L299.5000,223.0000 L299.5000,221.0000 L298.5000,220.0000 L301.0000,216.5000 L310.0000,216.5000 L312.5000,214.0000 L312.5000,213.0000 L313.5000,212.0000 L313.5000,209.0000 L312.5000,208.0000 L312.5000,206.0000 L309.0000,203.5000 L287.0000,203.5000 L286.0000,202.5000 L275.0000,202.5000 L274.0000,203.5000 L273.0000,202.5000 L271.0000,202.5000 L270.0000,203.5000 L268.0000,203.5000 L267.0000,202.5000 L266.0000,203.5000 L265.0000,202.5000 L264.0000,203.5000 L263.0000,203.5000 L262.0000,202.5000 L258.0000,202.5000 L257.0000,203.5000 L255.5000,202.0000 L255.5000,201.0000 L257.5000,198.0000 L257.5000,193.0000 L258.5000,192.0000 L258.5000,189.0000 L259.5000,188.0000 L259.5000,182.0000 L259.0000,181.5000 L255.0000,181.5000 L254.0000,180.5000 L169.0000,180.5000 L168.0000,181.5000 L154.0000,181.5000 L153.0000,182.5000 L149.0000,182.5000 L148.0000,183.5000 L143.0000,183.5000 L142.0000,184.5000 L136.0000,184.5000 L135.0000,185.5000 L133.0000,185.5000 L132.0000,186.5000 L130.0000,186.5000 L129.0000,187.5000 L126.0000,187.5000 L123.0000,189.5000 L120.0000,189.5000 L115.0000,192.5000 L113.0000,192.5000 L112.0000,193.5000 L111.0000,193.5000 L110.0000,194.5000 L107.0000,195.5000 L105.0000,197.5000 L102.0000,198.5000 L100.0000,200.5000 L99.0000,200.5000 L96.0000,203.5000 L95.0000,203.5000 L89.5000,209.0000 L89.5000,210.0000 L85.5000,214.0000 L85.5000,215.0000 L84.5000,216.0000 L84.5000,218.0000 L83.5000,219.0000 L82.5000,222.0000 L80.0000,224.5000 L56.0000,224.5000 L55.0000,223.5000 L52.0000,223.5000 L50.5000,222.0000 L50.5000,218.0000 L52.0000,216.5000 L53.0000,216.5000 L54.0000,215.5000 L63.0000,215.5000 L65.5000,213.0000 L65.5000,208.0000 L64.5000,207.0000 L64.5000,206.0000 L62.0000,204.5000 L21.0000,204.5000 L20.0000,205.5000 L19.0000,204.5000 L11.0000,204.5000 L10.5000,204.0000 L10.5000,202.0000 L11.5000,201.0000 L11.5000,200.0000 L12.5000,199.0000 L13.5000,196.0000 L15.5000,194.0000 L16.5000,191.0000 L18.5000,189.0000 L19.5000,186.0000 L23.5000,182.0000 L23.5000,181.0000 L29.5000,175.0000 L29.5000,174.0000 L31.0000,173.5000 L41.0000,163.5000 L42.0000,163.5000 L46.0000,159.5000 L47.0000,159.5000 L49.0000,157.5000 L50.0000,157.5000 L53.0000,154.5000 L55.0000,154.5000 L56.0000,153.5000 L57.0000,153.5000 L59.0000,151.5000 L60.0000,151.5000 L61.0000,150.5000 L62.0000,150.5000 L63.0000,149.5000 L66.0000,148.5000 L68.0000,146.5000 L70.0000,146.5000 L75.0000,143.5000 L77.0000,143.5000 L78.0000,142.5000 L80.0000,142.5000 L85.0000,139.5000 L88.0000,139.5000 L89.0000,138.5000 L91.0000,138.5000 L92.0000,137.5000 L95.0000,137.5000 L97.0000,135.5000 L101.0000,135.5000 L104.0000,133.5000 L108.0000,133.5000 L109.0000,132.5000 L113.0000,132.5000 L114.0000,131.5000 L118.0000,131.5000 L119.0000,130.5000 L125.0000,130.5000 L126.0000,129.5000 L132.0000,129.5000 L133.0000,128.5000 L143.0000,128.5000 L144.0000,127.5000 L148.0000,127.5000 L149.0000,126.5000 L194.0000,126.5000 L195.0000,125.5000 L196.0000,125.5000 L197.0000,126.5000 L201.0000,126.5000 L202.0000,125.5000 L203.0000,126.5000 L204.0000,126.5000 L205.0000,125.5000 L231.0000,125.5000 L232.0000,126.5000 L254.0000,126.5000 L255.0000,125.5000 L268.0000,125.5000 L268.5000,125.0000 L268.5000,117.0000 L267.5000,116.0000 L267.5000,110.0000 L266.5000,109.0000 L266.5000,107.0000 L265.5000,106.0000 L265.5000,102.0000 L264.5000,101.0000 L264.5000,97.0000 L262.5000,95.0000 L262.5000,94.0000 L261.5000,93.0000 L261.5000,91.0000 L259.5000,89.0000 L259.5000,88.0000 L256.5000,85.0000 L256.5000,84.0000 L249.0000,76.5000 L248.0000,76.5000 L241.0000,70.5000 L240.0000,70.5000 L239.0000,69.5000 L238.0000,69.5000 L233.0000,66.5000 L230.0000,66.5000 L227.0000,64.5000 L225.0000,64.5000 L224.0000,63.5000 L222.0000,63.5000 L221.0000,62.5000 L218.0000,62.5000 L217.0000,61.5000 L212.0000,61.5000 L211.0000,60.5000 L206.0000,60.5000 L205.0000,59.5000 L168.0000,59.5000 L167.0000,60.5000 L162.0000,60.5000 L161.0000,61.5000 L152.0000,61.5000 L151.0000,62.5000 L149.0000,62.5000 L148.0000,63.5000 L142.0000,63.5000 L141.0000,64.5000 L138.0000,64.5000 L137.0000,65.5000 L134.0000,65.5000 L133.0000,66.5000 L131.0000,66.5000 L130.0000,67.5000 L127.0000,67.5000 L126.0000,68.5000 L124.0000,68.5000 L121.0000,70.5000 L118.0000,70.5000 L117.0000,71.5000 L115.0000,71.5000 L114.0000,72.5000 L113.0000,72.5000 L112.0000,73.5000 L110.0000,73.5000 L109.0000,74.5000 L108.0000,74.5000 L107.0000,75.5000 L106.0000,75.5000 L101.0000,78.5000 L99.0000,78.5000 L94.0000,81.5000 L92.0000,81.5000 L91.0000,82.5000 L90.0000,82.5000 L88.0000,84.5000 L87.0000,84.5000 L86.0000,85.5000 L85.0000,85.5000 L84.0000,86.5000 L83.0000,86.5000 L82.0000,87.5000 L81.0000,87.5000 L80.0000,88.5000 L79.0000,88.5000 L78.0000,89.5000 L77.0000,89.5000 L72.0000,92.5000 L70.0000,92.5000 L68.5000,91.0000 L67.5000,88.0000 L64.5000,85.0000 L64.5000,83.0000 L63.5000,82.0000 L63.5000,81.0000 L61.5000,79.0000 L60.5000,76.0000 L58.5000,74.0000 L58.5000,72.0000 L57.5000,71.0000 L57.5000,70.0000 L55.5000,68.0000 L55.5000,67.0000 L53.5000,65.0000 L52.5000,62.0000 L50.5000,60.0000 L50.5000,58.0000 L49.5000,57.0000 L49.5000,56.0000 L47.5000,54.0000 L47.5000,53.0000 L46.5000,52.0000 L46.5000,51.0000 L43.5000,46.0000 L43.5000,43.0000 L44.0000,42.5000 L45.0000,42.5000 L47.0000,40.5000 L48.0000,40.5000 L52.0000,36.5000 L53.0000,36.5000 L54.0000,35.5000 L56.0000,35.5000 L59.0000,32.5000 L61.0000,32.5000 L62.0000,31.5000 L63.0000,31.5000 L65.0000,29.5000 L67.0000,29.5000 L68.0000,28.5000 L69.0000,28.5000 L71.0000,26.5000 L73.0000,26.5000 L74.0000,25.5000 L75.0000,25.5000 L80.0000,22.5000 L82.0000,22.5000 L85.0000,20.5000 L87.0000,20.5000 L92.0000,17.5000 L94.0000,17.5000 L95.0000,16.5000 L96.0000,16.5000 L97.0000,15.5000 L99.0000,15.5000 L102.0000,13.5000 L105.0000,13.5000 L106.0000,12.5000 L108.0000,12.5000 L109.0000,11.5000 L111.0000,11.5000 L112.0000,10.5000 L114.0000,10.5000 L115.0000,9.5000 L117.0000,9.5000 L118.0000,8.5000 L121.0000,8.5000 L122.0000,7.5000 L125.0000,7.5000 L126.0000,6.5000 L130.0000,6.5000 L131.0000,5.5000 L136.0000,5.5000 L139.0000,3.5000 L143.0000,3.5000 L144.0000,2.5000 L155.0000,2.5000 L156.0000,1.5000 L164.0000,1.5000 L165.0000,0.5000 L169.0000,0.5000 L170.0000,-0.5000 Z "/>
+<path d="M1139.0000,7.5000 L1150.0000,7.5000 L1151.5000,9.0000 L1151.5000,11.0000 L1150.5000,12.0000 L1150.5000,18.0000 L1149.5000,19.0000 L1149.5000,24.0000 L1148.5000,25.0000 L1148.5000,30.0000 L1147.5000,31.0000 L1147.5000,37.0000 L1146.5000,38.0000 L1146.5000,42.0000 L1145.5000,43.0000 L1145.5000,49.0000 L1147.0000,50.5000 L1148.0000,50.5000 L1150.5000,47.0000 L1150.5000,41.0000 L1151.5000,40.0000 L1151.5000,36.0000 L1152.5000,35.0000 L1152.5000,30.0000 L1153.5000,29.0000 L1153.5000,22.0000 L1154.5000,21.0000 L1154.5000,16.0000 L1155.5000,15.0000 L1155.5000,12.0000 L1156.5000,11.0000 L1156.5000,9.0000 L1157.0000,8.5000 L1158.0000,8.5000 L1159.0000,7.5000 L1173.0000,7.5000 L1174.5000,9.0000 L1174.5000,10.0000 L1173.5000,11.0000 L1173.5000,17.0000 L1172.5000,18.0000 L1172.5000,22.0000 L1171.5000,23.0000 L1171.5000,30.0000 L1170.5000,31.0000 L1170.5000,36.0000 L1169.5000,37.0000 L1169.5000,39.0000 L1171.0000,40.5000 L1173.0000,40.5000 L1174.5000,39.0000 L1174.5000,33.0000 L1175.5000,32.0000 L1175.5000,30.0000 L1176.5000,29.0000 L1176.5000,24.0000 L1177.5000,23.0000 L1177.5000,16.0000 L1178.5000,15.0000 L1178.5000,12.0000 L1179.5000,11.0000 L1179.5000,9.0000 L1181.0000,7.5000 L1211.0000,7.5000 L1212.5000,9.0000 L1212.5000,15.0000 L1211.5000,16.0000 L1211.5000,21.0000 L1210.5000,22.0000 L1210.5000,25.0000 L1209.5000,26.0000 L1209.5000,32.0000 L1208.5000,33.0000 L1208.5000,36.0000 L1207.5000,37.0000 L1207.5000,43.0000 L1206.5000,44.0000 L1206.5000,49.0000 L1205.5000,50.0000 L1205.5000,54.0000 L1204.5000,55.0000 L1204.5000,60.0000 L1203.5000,61.0000 L1203.5000,66.0000 L1204.0000,66.5000 L1205.0000,66.5000 L1208.5000,63.0000 L1208.5000,62.0000 L1210.5000,60.0000 L1210.5000,59.0000 L1217.5000,52.0000 L1217.5000,51.0000 L1228.0000,40.5000 L1229.0000,40.5000 L1235.0000,34.5000 L1236.0000,34.5000 L1240.0000,30.5000 L1241.0000,30.5000 L1243.0000,28.5000 L1244.0000,28.5000 L1249.0000,23.5000 L1251.0000,23.5000 L1252.0000,22.5000 L1253.0000,22.5000 L1255.0000,20.5000 L1256.0000,20.5000 L1258.0000,18.5000 L1261.0000,17.5000 L1261.5000,18.0000 L1261.5000,22.0000 L1260.5000,23.0000 L1260.5000,28.0000 L1259.5000,29.0000 L1259.5000,36.0000 L1258.5000,37.0000 L1258.5000,42.0000 L1257.5000,43.0000 L1257.5000,48.0000 L1256.5000,49.0000 L1256.5000,56.0000 L1255.5000,57.0000 L1255.5000,61.0000 L1254.5000,62.0000 L1254.5000,67.0000 L1253.5000,68.0000 L1253.5000,73.0000 L1252.5000,74.0000 L1252.5000,80.0000 L1251.5000,81.0000 L1251.5000,84.0000 L1249.0000,86.5000 L1248.0000,86.5000 L1245.0000,89.5000 L1244.0000,89.5000 L1242.0000,91.5000 L1241.0000,91.5000 L1232.0000,99.5000 L1230.5000,99.0000 L1230.5000,96.0000 L1231.5000,95.0000 L1231.5000,89.0000 L1232.5000,88.0000 L1232.5000,81.0000 L1233.5000,80.0000 L1233.5000,76.0000 L1234.5000,75.0000 L1234.5000,70.0000 L1235.5000,69.0000 L1235.5000,63.0000 L1236.5000,62.0000 L1236.5000,57.0000 L1235.0000,55.5000 L1234.0000,55.5000 L1232.5000,57.0000 L1232.5000,60.0000 L1231.5000,61.0000 L1231.5000,66.0000 L1230.5000,67.0000 L1230.5000,72.0000 L1229.5000,73.0000 L1229.5000,77.0000 L1228.5000,78.0000 L1228.5000,84.0000 L1227.5000,85.0000 L1227.5000,91.0000 L1226.5000,92.0000 L1226.5000,95.0000 L1225.5000,96.0000 L1225.5000,102.0000 L1224.5000,103.0000 L1224.5000,107.0000 L1222.5000,109.0000 L1222.5000,110.0000 L1219.5000,113.0000 L1219.5000,114.0000 L1215.5000,118.0000 L1214.5000,121.0000 L1211.5000,124.0000 L1211.5000,125.0000 L1209.5000,127.0000 L1209.5000,128.0000 L1208.5000,129.0000 L1208.5000,130.0000 L1207.5000,131.0000 L1207.5000,132.0000 L1206.5000,133.0000 L1205.5000,136.0000 L1202.5000,139.0000 L1202.5000,140.0000 L1200.5000,143.0000 L1200.5000,145.0000 L1199.5000,146.0000 L1199.5000,147.0000 L1196.5000,152.0000 L1196.5000,154.0000 L1195.5000,155.0000 L1195.5000,156.0000 L1194.5000,157.0000 L1194.5000,158.0000 L1191.5000,163.0000 L1191.5000,166.0000 L1190.5000,167.0000 L1190.5000,169.0000 L1189.5000,170.0000 L1189.5000,172.0000 L1188.5000,173.0000 L1188.5000,176.0000 L1186.5000,179.0000 L1186.5000,184.0000 L1184.5000,187.0000 L1184.5000,191.0000 L1183.5000,192.0000 L1183.5000,197.0000 L1182.5000,198.0000 L1182.5000,203.0000 L1181.5000,204.0000 L1181.5000,208.0000 L1180.5000,209.0000 L1180.5000,213.0000 L1179.5000,214.0000 L1179.5000,219.0000 L1178.5000,220.0000 L1178.5000,225.0000 L1177.5000,226.0000 L1177.5000,232.0000 L1176.5000,233.0000 L1176.5000,238.0000 L1175.5000,239.0000 L1175.5000,244.0000 L1174.5000,245.0000 L1174.5000,249.0000 L1173.5000,250.0000 L1173.5000,257.0000 L1172.5000,258.0000 L1172.5000,261.0000 L1171.5000,262.0000 L1171.5000,266.0000 L1170.5000,267.0000 L1170.5000,272.0000 L1169.5000,273.0000 L1169.5000,280.0000 L1168.5000,281.0000 L1168.5000,285.0000 L1167.5000,286.0000 L1167.5000,292.0000 L1166.5000,293.0000 L1166.5000,296.0000 L1165.5000,297.0000 L1165.5000,305.0000 L1164.5000,306.0000 L1164.5000,308.0000 L1163.5000,309.0000 L1163.5000,318.0000 L1162.5000,319.0000 L1162.5000,322.0000 L1161.5000,323.0000 L1161.5000,328.0000 L1160.5000,329.0000 L1160.5000,333.0000 L1159.5000,334.0000 L1159.5000,339.0000 L1158.5000,340.0000 L1158.5000,345.0000 L1157.5000,346.0000 L1157.5000,350.0000 L1156.0000,351.5000 L1145.0000,351.5000 L1143.5000,350.0000 L1144.5000,349.0000 L1144.5000,345.0000 L1145.5000,344.0000 L1145.5000,339.0000 L1146.5000,338.0000 L1146.5000,331.0000 L1146.0000,330.5000 L1144.0000,330.5000 L1142.5000,332.0000 L1142.5000,335.0000 L1141.5000,336.0000 L1141.5000,341.0000 L1140.5000,342.0000 L1140.5000,347.0000 L1139.5000,348.0000 L1139.5000,351.0000 L1139.0000,351.5000 L1122.0000,351.5000 L1121.5000,351.0000 L1121.5000,348.0000 L1122.5000,347.0000 L1122.5000,342.0000 L1123.5000,341.0000 L1123.5000,337.0000 L1124.5000,336.0000 L1124.5000,330.0000 L1125.5000,329.0000 L1125.5000,323.0000 L1126.5000,322.0000 L1126.5000,315.0000 L1126.0000,314.5000 L1124.0000,314.5000 L1122.5000,316.0000 L1122.5000,318.0000 L1121.5000,319.0000 L1121.5000,326.0000 L1120.5000,327.0000 L1120.5000,331.0000 L1119.5000,332.0000 L1119.5000,336.0000 L1118.5000,337.0000 L1118.5000,343.0000 L1117.5000,344.0000 L1117.5000,350.0000 L1116.0000,351.5000 L1100.0000,351.5000 L1098.5000,350.0000 L1099.5000,349.0000 L1099.5000,345.0000 L1100.5000,344.0000 L1100.5000,340.0000 L1101.5000,339.0000 L1101.5000,331.0000 L1101.0000,330.5000 L1099.0000,330.5000 L1097.5000,332.0000 L1097.5000,336.0000 L1096.5000,337.0000 L1096.5000,342.0000 L1095.5000,343.0000 L1095.5000,347.0000 L1094.5000,348.0000 L1094.5000,351.0000 L1094.0000,351.5000 L1077.0000,351.5000 L1076.5000,351.0000 L1076.5000,345.0000 L1077.5000,344.0000 L1077.5000,339.0000 L1078.5000,338.0000 L1078.5000,333.0000 L1079.5000,332.0000 L1079.5000,328.0000 L1080.5000,327.0000 L1080.5000,322.0000 L1081.5000,321.0000 L1081.5000,316.0000 L1082.5000,315.0000 L1082.5000,311.0000 L1083.5000,310.0000 L1083.5000,305.0000 L1084.5000,304.0000 L1084.5000,298.0000 L1085.5000,297.0000 L1085.5000,292.0000 L1086.5000,291.0000 L1086.5000,287.0000 L1087.5000,286.0000 L1087.5000,280.0000 L1088.5000,279.0000 L1088.5000,276.0000 L1089.5000,275.0000 L1089.5000,269.0000 L1090.5000,268.0000 L1090.5000,264.0000 L1091.5000,263.0000 L1091.5000,258.0000 L1092.5000,257.0000 L1092.5000,255.0000 L1093.5000,254.0000 L1093.5000,250.0000 L1094.5000,249.0000 L1094.5000,242.0000 L1095.5000,241.0000 L1095.5000,238.0000 L1096.5000,237.0000 L1096.5000,230.0000 L1097.5000,229.0000 L1097.5000,226.0000 L1098.5000,225.0000 L1098.5000,217.0000 L1099.5000,216.0000 L1099.5000,213.0000 L1100.5000,212.0000 L1100.5000,205.0000 L1101.5000,204.0000 L1101.5000,202.0000 L1102.5000,201.0000 L1102.5000,194.0000 L1103.5000,193.0000 L1103.5000,191.0000 L1104.5000,190.0000 L1104.5000,182.0000 L1105.5000,181.0000 L1105.5000,176.0000 L1106.5000,175.0000 L1106.5000,170.0000 L1107.5000,169.0000 L1107.5000,165.0000 L1108.5000,164.0000 L1108.5000,158.0000 L1109.5000,157.0000 L1109.5000,152.0000 L1110.5000,151.0000 L1110.5000,147.0000 L1111.5000,146.0000 L1111.5000,142.0000 L1112.5000,141.0000 L1112.5000,135.0000 L1113.5000,134.0000 L1113.5000,130.0000 L1114.5000,129.0000 L1114.5000,125.0000 L1115.5000,124.0000 L1115.5000,120.0000 L1116.5000,119.0000 L1116.5000,113.0000 L1117.5000,112.0000 L1117.5000,107.0000 L1118.5000,106.0000 L1118.5000,101.0000 L1119.5000,100.0000 L1119.5000,94.0000 L1120.5000,93.0000 L1120.5000,90.0000 L1121.5000,89.0000 L1121.5000,82.0000 L1122.5000,81.0000 L1122.5000,77.0000 L1123.5000,76.0000 L1123.5000,71.0000 L1124.5000,70.0000 L1124.5000,67.0000 L1125.5000,66.0000 L1125.5000,60.0000 L1126.5000,59.0000 L1126.5000,53.0000 L1127.5000,52.0000 L1127.5000,49.0000 L1128.5000,48.0000 L1128.5000,43.0000 L1129.5000,42.0000 L1129.5000,36.0000 L1130.5000,35.0000 L1130.5000,30.0000 L1131.5000,29.0000 L1131.5000,25.0000 L1132.5000,24.0000 L1132.5000,18.0000 L1133.5000,17.0000 L1133.5000,14.0000 L1134.5000,13.0000 L1134.5000,9.0000 L1135.0000,8.5000 L1138.0000,8.5000 L1139.0000,7.5000 Z M1148.0000,175.5000 L1145.5000,178.0000 L1145.5000,184.0000 L1144.5000,185.0000 L1144.5000,187.0000 L1143.5000,188.0000 L1143.5000,195.0000 L1142.5000,196.0000 L1142.5000,200.0000 L1141.5000,201.0000 L1141.5000,207.0000 L1140.5000,208.0000 L1140.5000,212.0000 L1139.5000,213.0000 L1139.5000,219.0000 L1138.5000,220.0000 L1138.5000,223.0000 L1137.5000,224.0000 L1137.5000,230.0000 L1136.5000,231.0000 L1136.5000,235.0000 L1135.5000,236.0000 L1135.5000,242.0000 L1134.5000,243.0000 L1134.5000,248.0000 L1133.5000,249.0000 L1133.5000,254.0000 L1132.5000,255.0000 L1132.5000,260.0000 L1131.5000,261.0000 L1131.5000,268.0000 L1130.5000,269.0000 L1130.5000,273.0000 L1129.5000,274.0000 L1129.5000,278.0000 L1131.0000,279.5000 L1132.0000,279.5000 L1134.5000,276.0000 L1134.5000,272.0000 L1135.5000,271.0000 L1135.5000,265.0000 L1136.5000,264.0000 L1136.5000,258.0000 L1137.5000,257.0000 L1137.5000,254.0000 L1138.5000,253.0000 L1138.5000,247.0000 L1139.5000,246.0000 L1139.5000,239.0000 L1140.5000,238.0000 L1140.5000,234.0000 L1141.5000,233.0000 L1141.5000,228.0000 L1142.5000,227.0000 L1142.5000,222.0000 L1143.5000,221.0000 L1143.5000,216.0000 L1144.5000,215.0000 L1144.5000,213.0000 L1145.5000,212.0000 L1145.5000,205.0000 L1146.5000,204.0000 L1146.5000,199.0000 L1147.5000,198.0000 L1147.5000,193.0000 L1148.5000,192.0000 L1148.5000,187.0000 L1149.5000,186.0000 L1149.5000,180.0000 L1150.5000,179.0000 L1150.5000,178.0000 L1148.0000,175.5000 Z M1110.0000,264.5000 L1108.5000,266.0000 L1108.5000,272.0000 L1107.5000,273.0000 L1107.5000,276.0000 L1106.5000,277.0000 L1106.5000,281.0000 L1105.5000,282.0000 L1105.5000,287.0000 L1104.5000,288.0000 L1104.5000,292.0000 L1103.5000,293.0000 L1103.5000,299.0000 L1102.5000,300.0000 L1102.5000,305.0000 L1101.5000,306.0000 L1101.5000,312.0000 L1100.5000,313.0000 L1100.5000,319.0000 L1101.0000,319.5000 L1103.0000,319.5000 L1104.5000,318.0000 L1104.5000,315.0000 L1105.5000,314.0000 L1105.5000,308.0000 L1106.5000,307.0000 L1106.5000,303.0000 L1107.5000,302.0000 L1107.5000,297.0000 L1108.5000,296.0000 L1108.5000,291.0000 L1109.5000,290.0000 L1109.5000,285.0000 L1110.5000,284.0000 L1110.5000,280.0000 L1111.5000,279.0000 L1111.5000,273.0000 L1112.5000,272.0000 L1112.5000,265.0000 L1112.0000,264.5000 L1110.0000,264.5000 Z M1146.0000,59.5000 L1142.5000,63.0000 L1142.5000,69.0000 L1141.5000,70.0000 L1141.5000,75.0000 L1140.5000,76.0000 L1140.5000,80.0000 L1139.5000,81.0000 L1139.5000,85.0000 L1138.5000,86.0000 L1138.5000,92.0000 L1137.5000,93.0000 L1137.5000,98.0000 L1136.5000,99.0000 L1136.5000,103.0000 L1135.5000,104.0000 L1135.5000,111.0000 L1137.0000,112.5000 L1138.0000,112.5000 L1139.5000,111.0000 L1139.5000,107.0000 L1140.5000,106.0000 L1140.5000,102.0000 L1141.5000,101.0000 L1141.5000,97.0000 L1142.5000,96.0000 L1142.5000,90.0000 L1143.5000,89.0000 L1143.5000,82.0000 L1144.5000,81.0000 L1144.5000,79.0000 L1145.5000,78.0000 L1145.5000,73.0000 L1146.5000,72.0000 L1146.5000,66.0000 L1147.5000,65.0000 L1147.5000,62.0000 L1146.0000,59.5000 Z M1165.0000,208.5000 L1163.5000,210.0000 L1163.5000,212.0000 L1162.5000,213.0000 L1162.5000,217.0000 L1161.5000,218.0000 L1161.5000,222.0000 L1160.5000,223.0000 L1160.5000,229.0000 L1159.5000,230.0000 L1159.5000,234.0000 L1158.5000,235.0000 L1158.5000,239.0000 L1157.5000,240.0000 L1157.5000,246.0000 L1156.5000,247.0000 L1156.5000,252.0000 L1158.0000,253.5000 L1159.0000,253.5000 L1160.5000,252.0000 L1160.5000,250.0000 L1161.5000,249.0000 L1161.5000,246.0000 L1162.5000,245.0000 L1162.5000,238.0000 L1163.5000,237.0000 L1163.5000,232.0000 L1164.5000,231.0000 L1164.5000,226.0000 L1165.5000,225.0000 L1165.5000,220.0000 L1166.5000,219.0000 L1166.5000,213.0000 L1167.5000,212.0000 L1167.5000,210.0000 L1166.0000,208.5000 L1165.0000,208.5000 Z M1175.0000,147.5000 L1173.5000,149.0000 L1173.5000,152.0000 L1172.5000,153.0000 L1172.5000,158.0000 L1171.5000,159.0000 L1171.5000,164.0000 L1170.5000,165.0000 L1170.5000,170.0000 L1169.5000,171.0000 L1169.5000,176.0000 L1168.5000,177.0000 L1168.5000,182.0000 L1170.0000,183.5000 L1171.0000,183.5000 L1172.5000,182.0000 L1172.5000,180.0000 L1173.5000,179.0000 L1173.5000,175.0000 L1174.5000,174.0000 L1174.5000,169.0000 L1175.5000,168.0000 L1175.5000,163.0000 L1176.5000,162.0000 L1176.5000,157.0000 L1177.5000,156.0000 L1177.5000,148.0000 L1177.0000,147.5000 L1175.0000,147.5000 Z M1121.0000,199.5000 L1119.5000,202.0000 L1119.5000,205.0000 L1118.5000,206.0000 L1118.5000,212.0000 L1117.5000,213.0000 L1117.5000,219.0000 L1116.5000,220.0000 L1116.5000,223.0000 L1115.5000,224.0000 L1115.5000,231.0000 L1117.0000,232.5000 L1118.0000,232.5000 L1119.5000,231.0000 L1119.5000,227.0000 L1120.5000,226.0000 L1120.5000,222.0000 L1121.5000,221.0000 L1121.5000,215.0000 L1122.5000,214.0000 L1122.5000,209.0000 L1123.5000,208.0000 L1123.5000,201.0000 L1122.0000,199.5000 L1121.0000,199.5000 Z M1207.0000,80.5000 L1205.5000,82.0000 L1205.5000,84.0000 L1204.5000,85.0000 L1204.5000,90.0000 L1203.5000,91.0000 L1203.5000,96.0000 L1202.5000,97.0000 L1202.5000,105.0000 L1204.0000,106.5000 L1206.5000,104.0000 L1206.5000,101.0000 L1207.5000,100.0000 L1207.5000,95.0000 L1208.5000,94.0000 L1208.5000,88.0000 L1209.5000,87.0000 L1209.5000,82.0000 L1208.0000,80.5000 L1207.0000,80.5000 Z "/>
+<path d="M635.0000,1.5000 L662.0000,1.5000 L663.0000,2.5000 L673.0000,2.5000 L676.5000,5.0000 L676.5000,9.0000 L675.5000,10.0000 L675.5000,12.0000 L674.5000,13.0000 L674.5000,17.0000 L673.5000,18.0000 L673.5000,22.0000 L672.5000,23.0000 L672.5000,24.0000 L671.5000,25.0000 L671.5000,27.0000 L670.5000,28.0000 L670.5000,32.0000 L669.5000,33.0000 L669.5000,36.0000 L668.5000,37.0000 L668.5000,42.0000 L666.5000,45.0000 L666.5000,49.0000 L665.5000,50.0000 L665.5000,53.0000 L664.5000,54.0000 L664.5000,56.0000 L663.5000,57.0000 L663.5000,59.0000 L662.5000,60.0000 L662.5000,63.0000 L661.5000,64.0000 L661.5000,66.0000 L660.5000,67.0000 L660.5000,71.0000 L659.5000,72.0000 L659.5000,74.0000 L658.0000,75.5000 L655.0000,75.5000 L652.0000,73.5000 L650.0000,73.5000 L649.0000,72.5000 L647.0000,72.5000 L646.0000,71.5000 L636.0000,71.5000 L635.0000,70.5000 L611.0000,70.5000 L610.0000,71.5000 L606.0000,71.5000 L605.0000,72.5000 L603.0000,72.5000 L602.0000,73.5000 L599.0000,73.5000 L596.0000,75.5000 L593.0000,75.5000 L592.0000,76.5000 L590.0000,76.5000 L588.0000,78.5000 L586.0000,78.5000 L585.0000,79.5000 L583.0000,79.5000 L581.0000,81.5000 L580.0000,81.5000 L579.0000,82.5000 L578.0000,82.5000 L577.0000,83.5000 L576.0000,83.5000 L575.0000,84.5000 L572.0000,85.5000 L569.0000,88.5000 L568.0000,88.5000 L565.0000,91.5000 L564.0000,91.5000 L560.0000,95.5000 L559.0000,95.5000 L558.5000,97.0000 L552.0000,103.5000 L550.5000,104.0000 L550.5000,105.0000 L544.5000,111.0000 L544.5000,112.0000 L538.5000,119.0000 L538.5000,120.0000 L536.5000,122.0000 L536.5000,123.0000 L533.5000,126.0000 L533.5000,128.0000 L532.5000,129.0000 L532.5000,130.0000 L530.5000,132.0000 L530.5000,133.0000 L529.5000,134.0000 L528.5000,137.0000 L526.5000,139.0000 L526.5000,140.0000 L525.5000,141.0000 L525.5000,143.0000 L523.5000,145.0000 L523.5000,146.0000 L522.5000,147.0000 L522.5000,149.0000 L519.5000,154.0000 L519.5000,156.0000 L517.5000,158.0000 L517.5000,160.0000 L515.5000,163.0000 L515.5000,166.0000 L514.5000,167.0000 L514.5000,169.0000 L512.5000,172.0000 L512.5000,177.0000 L511.5000,178.0000 L511.5000,180.0000 L510.5000,181.0000 L510.5000,184.0000 L509.5000,185.0000 L509.5000,190.0000 L508.5000,191.0000 L508.5000,194.0000 L507.5000,195.0000 L507.5000,202.0000 L506.5000,203.0000 L506.5000,205.0000 L505.5000,206.0000 L505.5000,211.0000 L504.5000,212.0000 L504.5000,216.0000 L503.5000,217.0000 L503.5000,222.0000 L502.5000,223.0000 L502.5000,227.0000 L501.5000,228.0000 L501.5000,233.0000 L500.5000,234.0000 L500.5000,239.0000 L499.5000,240.0000 L499.5000,246.0000 L498.5000,247.0000 L498.5000,251.0000 L496.0000,253.5000 L493.0000,253.5000 L492.0000,252.5000 L491.0000,252.5000 L490.0000,253.5000 L468.0000,253.5000 L467.0000,254.5000 L464.0000,254.5000 L463.0000,255.5000 L452.0000,255.5000 L451.0000,256.5000 L446.0000,256.5000 L445.0000,257.5000 L439.0000,257.5000 L436.0000,259.5000 L431.0000,259.5000 L430.0000,260.5000 L427.0000,260.5000 L426.0000,261.5000 L424.0000,261.5000 L423.0000,262.5000 L421.0000,262.5000 L420.0000,263.5000 L418.0000,263.5000 L417.0000,264.5000 L416.0000,264.5000 L415.5000,264.0000 L415.5000,260.0000 L416.5000,259.0000 L416.5000,251.0000 L417.5000,250.0000 L417.5000,247.0000 L418.5000,246.0000 L418.5000,244.0000 L419.5000,243.0000 L419.5000,236.0000 L420.5000,235.0000 L420.5000,230.0000 L421.5000,229.0000 L421.5000,223.0000 L422.5000,222.0000 L422.5000,220.0000 L423.5000,219.0000 L423.5000,214.0000 L424.5000,213.0000 L424.5000,208.0000 L425.5000,207.0000 L425.5000,203.0000 L426.5000,202.0000 L426.5000,197.0000 L427.5000,196.0000 L427.5000,190.0000 L428.5000,189.0000 L428.5000,186.0000 L429.5000,185.0000 L429.5000,180.0000 L430.5000,179.0000 L430.5000,175.0000 L431.5000,174.0000 L431.5000,168.0000 L432.5000,167.0000 L432.5000,162.0000 L433.5000,161.0000 L433.5000,156.0000 L434.5000,155.0000 L434.5000,151.0000 L435.5000,150.0000 L435.5000,147.0000 L436.5000,146.0000 L436.5000,139.0000 L437.5000,138.0000 L437.5000,134.0000 L438.5000,133.0000 L438.5000,129.0000 L439.5000,128.0000 L439.5000,122.0000 L440.5000,121.0000 L440.5000,117.0000 L441.5000,116.0000 L441.5000,110.0000 L442.5000,109.0000 L442.5000,105.0000 L443.5000,104.0000 L443.5000,98.0000 L444.5000,97.0000 L444.5000,92.0000 L445.5000,91.0000 L445.5000,87.0000 L446.5000,86.0000 L446.5000,83.0000 L447.5000,82.0000 L447.5000,76.0000 L448.5000,75.0000 L448.5000,72.0000 L449.5000,71.0000 L449.5000,66.0000 L450.5000,65.0000 L450.5000,61.0000 L451.5000,60.0000 L451.5000,54.0000 L452.5000,53.0000 L452.5000,49.0000 L453.5000,48.0000 L453.5000,42.0000 L454.5000,41.0000 L454.5000,37.0000 L455.5000,36.0000 L455.5000,30.0000 L456.5000,29.0000 L456.5000,27.0000 L457.5000,26.0000 L457.5000,19.0000 L458.5000,18.0000 L458.5000,15.0000 L459.5000,14.0000 L459.5000,10.0000 L461.0000,8.5000 L463.0000,8.5000 L464.0000,7.5000 L533.0000,7.5000 L534.5000,9.0000 L534.5000,11.0000 L533.5000,12.0000 L533.5000,18.0000 L532.5000,19.0000 L532.5000,23.0000 L531.5000,24.0000 L531.5000,28.0000 L530.5000,29.0000 L530.5000,34.0000 L529.5000,35.0000 L529.5000,40.0000 L528.5000,41.0000 L528.5000,46.0000 L527.5000,47.0000 L527.5000,49.0000 L526.5000,50.0000 L526.5000,55.0000 L525.5000,56.0000 L525.5000,61.0000 L524.5000,62.0000 L524.5000,67.0000 L526.0000,67.5000 L529.5000,64.0000 L529.5000,63.0000 L534.5000,58.0000 L534.5000,57.0000 L540.5000,51.0000 L540.5000,50.0000 L550.0000,40.5000 L551.0000,40.5000 L557.0000,34.5000 L558.0000,34.5000 L562.0000,30.5000 L563.0000,30.5000 L570.0000,24.5000 L571.0000,24.5000 L572.0000,23.5000 L575.0000,22.5000 L577.0000,20.5000 L578.0000,20.5000 L579.0000,19.5000 L582.0000,18.5000 L584.0000,16.5000 L585.0000,16.5000 L586.0000,15.5000 L589.0000,14.5000 L591.0000,12.5000 L593.0000,12.5000 L594.0000,11.5000 L596.0000,11.5000 L597.0000,10.5000 L599.0000,10.5000 L602.0000,8.5000 L605.0000,8.5000 L608.0000,6.5000 L611.0000,6.5000 L612.0000,5.5000 L615.0000,5.5000 L618.0000,3.5000 L623.0000,3.5000 L624.0000,2.5000 L634.0000,2.5000 L635.0000,1.5000 Z "/>
+<path d="M266.0000,237.5000 L326.0000,237.5000 L326.5000,238.0000 L326.5000,243.0000 L325.5000,244.0000 L325.5000,248.0000 L324.5000,249.0000 L324.5000,255.0000 L323.5000,256.0000 L323.5000,259.0000 L322.5000,260.0000 L322.5000,267.0000 L321.5000,268.0000 L321.5000,272.0000 L320.5000,273.0000 L320.5000,278.0000 L319.0000,279.5000 L247.0000,279.5000 L246.0000,280.5000 L243.0000,280.5000 L241.5000,283.0000 L241.5000,286.0000 L245.0000,289.5000 L254.0000,289.5000 L256.5000,292.0000 L256.5000,296.0000 L254.0000,298.5000 L209.0000,298.5000 L206.5000,301.0000 L206.5000,306.0000 L209.0000,308.5000 L229.0000,308.5000 L231.5000,311.0000 L231.5000,314.0000 L230.0000,315.5000 L229.0000,315.5000 L228.0000,316.5000 L174.0000,316.5000 L172.0000,318.5000 L171.0000,318.5000 L169.5000,321.0000 L169.5000,323.0000 L170.5000,324.0000 L170.5000,325.0000 L174.0000,327.5000 L213.0000,327.5000 L213.5000,329.0000 L211.0000,331.5000 L210.0000,331.5000 L206.0000,335.5000 L205.0000,335.5000 L204.0000,336.5000 L203.0000,336.5000 L201.0000,338.5000 L200.0000,338.5000 L199.0000,339.5000 L198.0000,339.5000 L197.0000,340.5000 L194.0000,341.5000 L192.0000,343.5000 L190.0000,343.5000 L189.0000,344.5000 L188.0000,344.5000 L187.0000,345.5000 L185.0000,345.5000 L180.0000,348.5000 L178.0000,348.5000 L177.0000,349.5000 L175.0000,349.5000 L174.0000,350.5000 L172.0000,350.5000 L171.0000,351.5000 L168.0000,351.5000 L167.0000,352.5000 L165.0000,352.5000 L164.0000,353.5000 L160.0000,353.5000 L159.0000,354.5000 L157.0000,354.5000 L156.0000,355.5000 L152.0000,355.5000 L151.0000,356.5000 L145.0000,356.5000 L144.0000,357.5000 L139.0000,357.5000 L138.0000,358.5000 L116.0000,358.5000 L114.0000,356.5000 L111.0000,358.5000 L105.0000,358.5000 L104.0000,357.5000 L97.0000,357.5000 L96.0000,356.5000 L91.0000,356.5000 L90.0000,355.5000 L86.0000,355.5000 L85.0000,354.5000 L83.0000,354.5000 L82.0000,353.5000 L79.0000,353.5000 L78.0000,352.5000 L75.0000,352.5000 L73.0000,350.5000 L69.0000,350.5000 L68.0000,349.5000 L66.0000,349.5000 L65.5000,349.0000 L65.5000,348.0000 L64.5000,347.0000 L64.5000,340.0000 L62.0000,337.5000 L61.0000,337.5000 L60.0000,336.5000 L58.5000,337.0000 L62.5000,341.0000 L62.5000,343.0000 L63.5000,344.0000 L63.5000,345.0000 L61.0000,347.5000 L60.0000,346.5000 L59.0000,346.5000 L58.0000,345.5000 L57.0000,345.5000 L56.0000,344.5000 L55.0000,344.5000 L54.0000,343.5000 L51.0000,342.5000 L49.0000,340.5000 L46.0000,339.5000 L44.0000,337.5000 L43.0000,337.5000 L41.0000,335.5000 L40.0000,335.5000 L36.0000,331.5000 L35.0000,331.5000 L33.5000,330.0000 L33.5000,329.0000 L32.0000,328.5000 L22.5000,319.0000 L22.5000,317.0000 L23.0000,316.5000 L96.0000,316.5000 L98.5000,319.0000 L98.5000,321.0000 L99.5000,322.0000 L98.5000,323.0000 L98.5000,324.0000 L96.0000,325.5000 L77.0000,325.5000 L74.5000,328.0000 L75.0000,329.5000 L76.0000,328.5000 L81.0000,328.5000 L82.0000,327.5000 L84.0000,327.5000 L85.0000,328.5000 L89.0000,328.5000 L90.0000,327.5000 L91.0000,328.5000 L94.0000,328.5000 L95.0000,327.5000 L97.0000,327.5000 L97.5000,326.0000 L99.0000,325.5000 L100.5000,324.0000 L100.5000,318.0000 L98.0000,315.5000 L97.0000,315.5000 L96.0000,314.5000 L21.0000,314.5000 L20.0000,315.5000 L18.5000,314.0000 L18.5000,313.0000 L15.5000,310.0000 L15.5000,309.0000 L14.5000,308.0000 L16.0000,306.5000 L125.0000,306.5000 L127.5000,309.0000 L127.5000,311.0000 L126.5000,312.0000 L127.5000,313.0000 L126.0000,314.5000 L119.0000,314.5000 L118.0000,315.5000 L117.0000,315.5000 L114.5000,318.0000 L114.5000,319.0000 L113.5000,320.0000 L113.5000,323.0000 L115.5000,325.0000 L115.5000,326.0000 L118.0000,327.5000 L150.0000,327.5000 L152.5000,330.0000 L152.5000,333.0000 L150.0000,335.5000 L88.0000,335.5000 L87.0000,336.5000 L83.0000,336.5000 L82.0000,335.5000 L81.5000,336.0000 L81.5000,337.0000 L83.0000,339.5000 L84.0000,339.5000 L85.0000,338.5000 L87.0000,338.5000 L87.5000,339.0000 L85.5000,340.0000 L85.5000,345.0000 L86.5000,346.0000 L86.5000,347.0000 L89.0000,349.5000 L110.0000,349.5000 L112.5000,351.0000 L112.5000,353.0000 L114.0000,354.5000 L115.5000,353.0000 L115.5000,352.0000 L113.0000,349.5000 L112.0000,349.5000 L111.0000,348.5000 L91.0000,348.5000 L88.5000,346.0000 L88.5000,342.0000 L89.5000,341.0000 L89.5000,340.0000 L92.0000,338.5000 L150.0000,338.5000 L154.5000,334.0000 L154.5000,329.0000 L151.0000,325.5000 L119.0000,325.5000 L118.0000,324.5000 L117.0000,324.5000 L115.5000,323.0000 L115.5000,319.0000 L118.0000,316.5000 L126.0000,316.5000 L127.0000,315.5000 L128.0000,315.5000 L130.5000,312.0000 L129.5000,311.0000 L129.5000,308.0000 L126.0000,304.5000 L91.0000,304.5000 L90.0000,305.5000 L89.0000,304.5000 L84.0000,304.5000 L83.0000,305.5000 L82.0000,304.5000 L70.0000,304.5000 L69.0000,305.5000 L67.0000,305.5000 L66.0000,304.5000 L65.0000,305.5000 L60.0000,305.5000 L58.5000,304.0000 L58.5000,300.0000 L59.5000,299.0000 L59.5000,298.0000 L57.5000,296.0000 L57.5000,295.0000 L57.0000,294.5000 L46.0000,294.5000 L43.5000,291.0000 L43.5000,289.0000 L46.0000,286.5000 L100.0000,286.5000 L103.0000,289.5000 L104.0000,289.5000 L106.0000,291.5000 L109.0000,291.5000 L111.0000,293.5000 L114.0000,293.5000 L115.0000,294.5000 L117.0000,294.5000 L118.0000,295.5000 L120.0000,295.5000 L121.0000,296.5000 L126.0000,296.5000 L127.0000,297.5000 L154.0000,297.5000 L155.0000,296.5000 L157.0000,296.5000 L158.0000,295.5000 L164.0000,295.5000 L165.0000,294.5000 L168.0000,294.5000 L169.0000,293.5000 L172.0000,293.5000 L175.0000,291.5000 L178.0000,291.5000 L179.0000,290.5000 L181.0000,290.5000 L184.0000,288.5000 L186.0000,288.5000 L188.0000,286.5000 L189.0000,286.5000 L190.0000,285.5000 L192.0000,285.5000 L193.0000,284.5000 L194.0000,284.5000 L196.0000,282.5000 L199.0000,281.5000 L201.0000,279.5000 L202.0000,279.5000 L204.0000,277.5000 L205.0000,277.5000 L207.0000,275.5000 L208.0000,275.5000 L211.0000,272.5000 L214.0000,271.5000 L215.0000,269.5000 L216.0000,269.5000 L219.0000,266.5000 L220.0000,266.5000 L225.0000,261.5000 L273.0000,261.5000 L274.0000,260.5000 L275.0000,260.5000 L278.5000,257.0000 L278.5000,250.0000 L277.0000,248.5000 L276.0000,248.5000 L274.0000,246.5000 L267.0000,246.5000 L264.5000,244.0000 L264.5000,239.0000 L266.0000,237.5000 Z "/>
+<path d="M1318.0000,0.5000 L1332.0000,0.5000 L1333.0000,1.5000 L1344.0000,1.5000 L1345.0000,2.5000 L1351.0000,2.5000 L1353.5000,4.0000 L1353.5000,9.0000 L1352.5000,10.0000 L1352.5000,12.0000 L1351.5000,13.0000 L1351.5000,17.0000 L1350.5000,18.0000 L1350.5000,20.0000 L1349.5000,21.0000 L1349.5000,23.0000 L1348.5000,24.0000 L1348.5000,29.0000 L1347.5000,30.0000 L1347.5000,32.0000 L1346.5000,33.0000 L1346.5000,36.0000 L1345.5000,37.0000 L1345.5000,41.0000 L1344.5000,42.0000 L1344.5000,44.0000 L1343.5000,45.0000 L1343.5000,49.0000 L1342.5000,50.0000 L1342.5000,52.0000 L1341.5000,53.0000 L1341.5000,56.0000 L1340.5000,57.0000 L1340.5000,60.0000 L1338.5000,63.0000 L1338.5000,66.0000 L1337.5000,67.0000 L1337.5000,69.0000 L1336.5000,70.0000 L1336.5000,74.0000 L1334.0000,75.5000 L1333.0000,74.5000 L1329.0000,74.5000 L1327.5000,73.0000 L1327.5000,66.0000 L1328.5000,65.0000 L1328.5000,59.0000 L1329.5000,58.0000 L1329.5000,53.0000 L1330.5000,52.0000 L1330.5000,49.0000 L1331.5000,48.0000 L1331.5000,43.0000 L1332.5000,42.0000 L1332.5000,34.0000 L1333.5000,33.0000 L1333.5000,29.0000 L1333.0000,28.5000 L1330.0000,28.5000 L1328.5000,31.0000 L1328.5000,37.0000 L1327.5000,38.0000 L1327.5000,43.0000 L1326.5000,44.0000 L1326.5000,49.0000 L1325.5000,50.0000 L1325.5000,56.0000 L1324.5000,57.0000 L1324.5000,62.0000 L1323.5000,63.0000 L1323.5000,68.0000 L1322.5000,69.0000 L1322.5000,71.0000 L1322.0000,71.5000 L1312.0000,71.5000 L1311.0000,70.5000 L1290.0000,70.5000 L1289.0000,71.5000 L1281.0000,71.5000 L1280.0000,72.5000 L1278.0000,72.5000 L1275.0000,74.5000 L1273.0000,74.5000 L1272.0000,75.5000 L1270.0000,75.5000 L1269.0000,76.5000 L1267.0000,76.5000 L1262.0000,79.5000 L1260.0000,79.5000 L1259.0000,80.5000 L1257.0000,80.5000 L1256.5000,80.0000 L1256.5000,78.0000 L1257.5000,77.0000 L1257.5000,73.0000 L1258.5000,72.0000 L1258.5000,67.0000 L1259.5000,66.0000 L1259.5000,60.0000 L1260.5000,59.0000 L1260.5000,53.0000 L1261.5000,52.0000 L1261.5000,47.0000 L1262.5000,46.0000 L1262.5000,41.0000 L1263.5000,40.0000 L1263.5000,34.0000 L1264.5000,33.0000 L1264.5000,29.0000 L1265.5000,28.0000 L1265.5000,23.0000 L1266.5000,22.0000 L1266.5000,15.0000 L1268.0000,13.5000 L1269.0000,13.5000 L1272.0000,11.5000 L1274.0000,11.5000 L1277.0000,9.5000 L1279.0000,9.5000 L1280.0000,8.5000 L1281.0000,8.5000 L1282.0000,7.5000 L1284.0000,7.5000 L1285.0000,6.5000 L1286.5000,8.0000 L1286.5000,10.0000 L1285.5000,11.0000 L1285.5000,17.0000 L1284.5000,18.0000 L1284.5000,25.0000 L1285.0000,25.5000 L1287.0000,25.5000 L1288.5000,24.0000 L1288.5000,22.0000 L1289.5000,21.0000 L1289.5000,17.0000 L1290.5000,16.0000 L1290.5000,12.0000 L1291.5000,11.0000 L1291.5000,6.0000 L1293.0000,4.5000 L1295.0000,4.5000 L1296.0000,3.5000 L1299.0000,3.5000 L1300.0000,2.5000 L1305.0000,2.5000 L1306.0000,1.5000 L1310.0000,1.5000 L1311.5000,3.0000 L1310.5000,4.0000 L1310.5000,6.0000 L1309.5000,7.0000 L1309.5000,12.0000 L1308.5000,13.0000 L1308.5000,18.0000 L1307.5000,19.0000 L1307.5000,24.0000 L1306.5000,25.0000 L1306.5000,30.0000 L1305.5000,31.0000 L1305.5000,36.0000 L1304.5000,37.0000 L1304.5000,43.0000 L1303.5000,44.0000 L1303.5000,49.0000 L1305.0000,50.5000 L1306.0000,50.5000 L1307.5000,48.0000 L1307.5000,46.0000 L1308.5000,45.0000 L1308.5000,41.0000 L1309.5000,40.0000 L1309.5000,35.0000 L1310.5000,34.0000 L1310.5000,29.0000 L1311.5000,28.0000 L1311.5000,23.0000 L1312.5000,22.0000 L1312.5000,18.0000 L1313.5000,17.0000 L1313.5000,12.0000 L1314.5000,11.0000 L1314.5000,6.0000 L1315.5000,5.0000 L1315.5000,2.0000 L1318.0000,0.5000 Z "/>
+<path d="M1125.0000,377.5000 L1126.5000,378.0000 L1127.5000,381.0000 L1129.5000,383.0000 L1129.5000,384.0000 L1130.5000,385.0000 L1130.5000,386.0000 L1131.5000,387.0000 L1132.5000,390.0000 L1134.5000,392.0000 L1134.5000,393.0000 L1135.5000,394.0000 L1135.5000,395.0000 L1137.5000,397.0000 L1137.5000,398.0000 L1138.5000,399.0000 L1139.5000,402.0000 L1141.5000,404.0000 L1141.5000,405.0000 L1142.5000,406.0000 L1142.5000,407.0000 L1143.5000,408.0000 L1144.5000,411.0000 L1146.5000,413.0000 L1146.5000,415.0000 L1148.5000,417.0000 L1149.5000,420.0000 L1151.5000,422.0000 L1151.5000,423.0000 L1152.5000,424.0000 L1152.5000,425.0000 L1155.5000,430.0000 L1155.5000,432.0000 L1157.5000,435.0000 L1157.5000,437.0000 L1158.5000,438.0000 L1158.5000,442.0000 L1159.5000,443.0000 L1159.5000,453.0000 L1158.5000,454.0000 L1158.5000,457.0000 L1156.5000,460.0000 L1156.5000,462.0000 L1155.5000,463.0000 L1155.5000,464.0000 L1153.5000,466.0000 L1153.5000,467.0000 L1151.5000,469.0000 L1151.5000,470.0000 L1150.0000,470.5000 L1146.0000,474.5000 L1145.0000,474.5000 L1142.0000,477.5000 L1141.0000,477.5000 L1138.0000,479.5000 L1136.0000,479.5000 L1135.0000,480.5000 L1130.0000,480.5000 L1129.0000,481.5000 L1123.0000,481.5000 L1122.0000,480.5000 L1116.0000,480.5000 L1115.0000,479.5000 L1112.0000,479.5000 L1110.0000,477.5000 L1109.0000,477.5000 L1108.0000,476.5000 L1107.0000,476.5000 L1105.0000,474.5000 L1104.0000,474.5000 L1097.5000,468.0000 L1097.5000,467.0000 L1095.5000,465.0000 L1095.5000,464.0000 L1093.5000,461.0000 L1093.5000,459.0000 L1092.5000,458.0000 L1092.5000,456.0000 L1091.5000,455.0000 L1091.5000,451.0000 L1090.5000,450.0000 L1090.5000,449.0000 L1091.5000,448.0000 L1091.5000,439.0000 L1092.5000,438.0000 L1092.5000,435.0000 L1094.5000,432.0000 L1094.5000,430.0000 L1096.5000,428.0000 L1096.5000,427.0000 L1097.5000,426.0000 L1097.5000,424.0000 L1098.5000,423.0000 L1099.5000,420.0000 L1101.5000,418.0000 L1101.5000,417.0000 L1102.5000,416.0000 L1102.5000,415.0000 L1103.5000,414.0000 L1103.5000,413.0000 L1104.5000,412.0000 L1105.5000,409.0000 L1107.5000,407.0000 L1107.5000,406.0000 L1111.5000,401.0000 L1111.5000,400.0000 L1112.5000,399.0000 L1113.5000,396.0000 L1115.5000,394.0000 L1115.5000,393.0000 L1116.5000,392.0000 L1117.5000,389.0000 L1119.5000,387.0000 L1120.5000,384.0000 L1122.5000,382.0000 L1123.5000,379.0000 L1125.0000,377.5000 Z M1103.0000,434.5000 L1100.5000,438.0000 L1100.5000,441.0000 L1099.5000,442.0000 L1099.5000,448.0000 L1100.5000,449.0000 L1100.5000,453.0000 L1102.5000,456.0000 L1102.5000,458.0000 L1103.5000,459.0000 L1103.5000,460.0000 L1111.0000,467.5000 L1114.0000,468.5000 L1116.0000,470.5000 L1122.0000,470.5000 L1122.5000,470.0000 L1121.0000,468.5000 L1120.0000,468.5000 L1117.0000,465.5000 L1115.5000,465.0000 L1115.5000,464.0000 L1110.5000,459.0000 L1110.5000,458.0000 L1108.5000,456.0000 L1108.5000,455.0000 L1107.5000,454.0000 L1107.5000,452.0000 L1106.5000,451.0000 L1106.5000,449.0000 L1105.5000,448.0000 L1105.5000,443.0000 L1104.5000,442.0000 L1104.5000,435.0000 L1103.0000,434.5000 Z "/>
+<path d="M460.0000,377.5000 L461.5000,379.0000 L461.5000,380.0000 L463.5000,382.0000 L463.5000,383.0000 L465.5000,385.0000 L465.5000,387.0000 L467.5000,389.0000 L468.5000,392.0000 L470.5000,394.0000 L471.5000,397.0000 L473.5000,399.0000 L473.5000,401.0000 L474.5000,402.0000 L474.5000,403.0000 L476.5000,405.0000 L476.5000,406.0000 L478.5000,408.0000 L478.5000,410.0000 L480.5000,412.0000 L481.5000,415.0000 L484.5000,418.0000 L484.5000,420.0000 L485.5000,421.0000 L485.5000,422.0000 L486.5000,423.0000 L486.5000,424.0000 L487.5000,425.0000 L487.5000,426.0000 L488.5000,427.0000 L488.5000,428.0000 L491.5000,433.0000 L491.5000,435.0000 L492.5000,436.0000 L492.5000,437.0000 L493.5000,438.0000 L493.5000,440.0000 L494.5000,441.0000 L494.5000,453.0000 L493.5000,454.0000 L493.5000,456.0000 L492.5000,457.0000 L492.5000,459.0000 L491.5000,460.0000 L491.5000,461.0000 L490.5000,462.0000 L489.5000,465.0000 L487.5000,467.0000 L487.5000,468.0000 L483.0000,472.5000 L482.0000,472.5000 L479.0000,475.5000 L478.0000,475.5000 L476.0000,477.5000 L475.0000,477.5000 L470.0000,480.5000 L466.0000,480.5000 L465.0000,481.5000 L454.0000,481.5000 L453.0000,480.5000 L450.0000,480.5000 L449.0000,479.5000 L447.0000,479.5000 L446.0000,478.5000 L445.0000,478.5000 L440.0000,474.5000 L437.0000,473.5000 L435.5000,472.0000 L435.5000,471.0000 L434.0000,470.5000 L432.5000,469.0000 L432.5000,468.0000 L431.5000,467.0000 L430.5000,464.0000 L428.5000,462.0000 L428.5000,460.0000 L426.5000,457.0000 L426.5000,454.0000 L425.5000,453.0000 L425.5000,444.0000 L426.5000,443.0000 L426.5000,438.0000 L427.5000,437.0000 L427.5000,435.0000 L429.5000,433.0000 L429.5000,431.0000 L430.5000,430.0000 L430.5000,429.0000 L431.5000,428.0000 L431.5000,427.0000 L432.5000,426.0000 L432.5000,425.0000 L433.5000,424.0000 L433.5000,423.0000 L434.5000,422.0000 L434.5000,421.0000 L435.5000,420.0000 L436.5000,417.0000 L439.5000,414.0000 L439.5000,413.0000 L440.5000,412.0000 L440.5000,411.0000 L441.5000,410.0000 L441.5000,409.0000 L442.5000,408.0000 L443.5000,405.0000 L445.5000,403.0000 L445.5000,402.0000 L446.5000,401.0000 L446.5000,400.0000 L447.5000,399.0000 L448.5000,396.0000 L450.5000,394.0000 L451.5000,391.0000 L453.5000,389.0000 L453.5000,388.0000 L454.5000,387.0000 L454.5000,386.0000 L455.5000,385.0000 L455.5000,384.0000 L456.5000,383.0000 L457.5000,380.0000 L460.0000,377.5000 Z M439.0000,434.5000 L436.5000,438.0000 L436.5000,452.0000 L437.5000,453.0000 L437.5000,456.0000 L438.5000,457.0000 L439.5000,460.0000 L442.5000,463.0000 L442.5000,464.0000 L445.0000,466.5000 L446.0000,466.5000 L451.0000,470.5000 L453.0000,470.5000 L454.0000,471.5000 L456.0000,471.5000 L456.5000,470.0000 L455.0000,469.5000 L453.5000,468.0000 L453.5000,467.0000 L452.0000,466.5000 L447.5000,462.0000 L447.5000,461.0000 L445.5000,459.0000 L445.5000,458.0000 L443.5000,456.0000 L443.5000,455.0000 L442.5000,454.0000 L442.5000,452.0000 L441.5000,451.0000 L441.5000,448.0000 L440.5000,447.0000 L440.5000,435.0000 L439.0000,434.5000 Z "/>
+<path d="M761.0000,279.5000 L767.0000,279.5000 L768.0000,280.5000 L769.0000,280.5000 L771.5000,283.0000 L771.5000,284.0000 L771.0000,284.5000 L768.0000,284.5000 L767.0000,285.5000 L764.0000,285.5000 L763.0000,286.5000 L760.0000,286.5000 L759.0000,287.5000 L756.0000,287.5000 L755.0000,288.5000 L753.0000,288.5000 L752.0000,289.5000 L750.0000,289.5000 L748.0000,291.5000 L745.0000,292.5000 L739.5000,298.0000 L739.5000,299.0000 L738.5000,300.0000 L738.5000,306.0000 L739.5000,307.0000 L739.5000,308.0000 L744.0000,312.5000 L745.0000,312.5000 L747.0000,314.5000 L748.0000,314.5000 L749.0000,315.5000 L750.0000,315.5000 L755.0000,318.5000 L758.0000,318.5000 L759.0000,319.5000 L761.0000,319.5000 L762.0000,320.5000 L764.0000,320.5000 L765.0000,321.5000 L769.0000,321.5000 L770.0000,322.5000 L775.0000,322.5000 L776.0000,323.5000 L785.0000,323.5000 L786.0000,324.5000 L797.0000,324.5000 L798.0000,325.5000 L812.0000,325.5000 L813.0000,324.5000 L827.0000,324.5000 L828.0000,323.5000 L833.0000,323.5000 L834.0000,322.5000 L838.0000,322.5000 L839.0000,321.5000 L844.0000,321.5000 L845.0000,320.5000 L847.0000,320.5000 L848.0000,319.5000 L850.0000,319.5000 L851.0000,318.5000 L854.0000,318.5000 L856.0000,316.5000 L858.0000,316.5000 L861.0000,313.5000 L862.0000,313.5000 L864.0000,311.5000 L865.0000,311.5000 L865.5000,310.0000 L867.5000,308.0000 L867.5000,307.0000 L868.5000,306.0000 L868.5000,300.0000 L867.5000,299.0000 L867.5000,298.0000 L863.0000,293.5000 L862.0000,293.5000 L860.0000,291.5000 L858.5000,291.0000 L858.5000,290.0000 L861.0000,287.5000 L862.0000,287.5000 L865.0000,285.5000 L872.0000,285.5000 L875.0000,287.5000 L877.0000,287.5000 L878.0000,288.5000 L880.0000,288.5000 L881.0000,289.5000 L882.0000,289.5000 L884.0000,291.5000 L886.0000,291.5000 L887.0000,292.5000 L888.0000,292.5000 L890.0000,294.5000 L891.0000,294.5000 L891.5000,296.0000 L893.0000,297.5000 L894.5000,298.0000 L894.5000,299.0000 L895.5000,300.0000 L895.5000,303.0000 L896.5000,304.0000 L896.5000,306.0000 L895.5000,307.0000 L895.5000,309.0000 L894.5000,310.0000 L894.5000,311.0000 L893.0000,312.5000 L892.0000,312.5000 L891.5000,314.0000 L890.0000,315.5000 L889.0000,315.5000 L886.0000,318.5000 L884.0000,318.5000 L883.0000,319.5000 L882.0000,319.5000 L880.0000,321.5000 L878.0000,321.5000 L875.0000,323.5000 L873.0000,323.5000 L872.0000,324.5000 L870.0000,324.5000 L869.0000,325.5000 L866.0000,325.5000 L863.0000,327.5000 L859.0000,327.5000 L858.0000,328.5000 L853.0000,328.5000 L852.0000,329.5000 L847.0000,329.5000 L846.0000,330.5000 L842.0000,330.5000 L841.0000,331.5000 L834.0000,331.5000 L833.0000,332.5000 L822.0000,332.5000 L821.0000,333.5000 L788.0000,333.5000 L787.0000,332.5000 L775.0000,332.5000 L774.0000,331.5000 L766.0000,331.5000 L765.0000,330.5000 L760.0000,330.5000 L759.0000,329.5000 L754.0000,329.5000 L753.0000,328.5000 L750.0000,328.5000 L749.0000,327.5000 L746.0000,327.5000 L745.0000,326.5000 L743.0000,326.5000 L742.0000,325.5000 L739.0000,325.5000 L738.0000,324.5000 L735.0000,324.5000 L730.0000,321.5000 L728.0000,321.5000 L726.0000,319.5000 L724.0000,319.5000 L723.0000,318.5000 L720.0000,317.5000 L718.0000,315.5000 L717.0000,315.5000 L711.5000,310.0000 L711.5000,309.0000 L710.5000,308.0000 L710.5000,302.0000 L711.5000,301.0000 L711.5000,300.0000 L717.0000,294.5000 L718.0000,294.5000 L721.0000,291.5000 L723.0000,291.5000 L724.0000,290.5000 L725.0000,290.5000 L730.0000,287.5000 L732.0000,287.5000 L733.0000,286.5000 L735.0000,286.5000 L736.0000,285.5000 L738.0000,285.5000 L739.0000,284.5000 L742.0000,284.5000 L743.0000,283.5000 L746.0000,283.5000 L749.0000,281.5000 L754.0000,281.5000 L755.0000,280.5000 L760.0000,280.5000 L761.0000,279.5000 Z "/>
+<path d="M6.0000,215.5000 L28.0000,215.5000 L30.5000,218.0000 L30.5000,222.0000 L29.0000,223.5000 L27.0000,223.5000 L26.0000,224.5000 L18.0000,224.5000 L15.5000,227.0000 L14.5000,230.0000 L15.5000,231.0000 L15.5000,232.0000 L18.0000,234.5000 L78.0000,234.5000 L78.5000,235.0000 L78.5000,242.0000 L77.5000,243.0000 L77.5000,245.0000 L78.5000,246.0000 L78.5000,254.0000 L79.5000,255.0000 L79.5000,256.0000 L78.0000,257.5000 L43.0000,257.5000 L40.5000,260.0000 L40.5000,262.0000 L41.5000,263.0000 L41.5000,265.0000 L43.0000,266.5000 L44.0000,266.5000 L45.0000,267.5000 L60.0000,267.5000 L61.5000,269.0000 L61.5000,274.0000 L58.0000,276.5000 L55.0000,276.5000 L54.0000,275.5000 L52.0000,275.5000 L51.0000,276.5000 L5.0000,276.5000 L4.0000,275.5000 L3.0000,275.5000 L1.5000,274.0000 L1.5000,267.0000 L-0.5000,264.0000 L-0.5000,242.0000 L0.5000,241.0000 L0.5000,236.0000 L1.5000,235.0000 L1.5000,228.0000 L2.5000,227.0000 L2.5000,225.0000 L3.5000,224.0000 L3.5000,222.0000 L4.5000,221.0000 L4.5000,218.0000 L6.0000,215.5000 Z "/>
+<path d="M409.0000,307.5000 L412.0000,309.5000 L415.0000,309.5000 L418.0000,311.5000 L420.0000,311.5000 L421.0000,312.5000 L423.0000,312.5000 L424.0000,313.5000 L425.0000,313.5000 L426.0000,314.5000 L428.0000,314.5000 L429.0000,315.5000 L430.0000,314.5000 L431.0000,315.5000 L434.0000,315.5000 L435.0000,316.5000 L440.0000,316.5000 L443.0000,318.5000 L447.0000,318.5000 L448.0000,319.5000 L461.0000,319.5000 L462.0000,320.5000 L482.0000,320.5000 L483.0000,319.5000 L484.0000,319.5000 L485.5000,321.0000 L485.5000,324.0000 L484.5000,325.0000 L484.5000,333.0000 L483.5000,334.0000 L483.5000,337.0000 L482.5000,338.0000 L482.5000,342.0000 L481.5000,343.0000 L481.5000,349.0000 L480.5000,350.0000 L480.5000,351.0000 L480.0000,351.5000 L401.0000,351.5000 L400.5000,351.0000 L400.5000,349.0000 L401.5000,348.0000 L401.5000,341.0000 L402.5000,340.0000 L402.5000,336.0000 L403.5000,335.0000 L403.5000,329.0000 L404.5000,328.0000 L404.5000,325.0000 L405.5000,324.0000 L405.5000,317.0000 L406.5000,316.0000 L406.5000,313.0000 L407.5000,312.0000 L407.5000,310.0000 L409.0000,307.5000 Z "/>
+<path d="M255.0000,206.5000 L309.0000,206.5000 L310.5000,208.0000 L310.5000,212.0000 L309.0000,213.5000 L302.0000,213.5000 L301.0000,214.5000 L299.0000,214.5000 L297.5000,216.0000 L297.5000,224.0000 L300.0000,226.5000 L302.0000,226.5000 L303.0000,227.5000 L304.0000,226.5000 L315.0000,226.5000 L316.0000,227.5000 L325.0000,227.5000 L326.0000,226.5000 L328.5000,229.0000 L328.5000,233.0000 L327.0000,235.5000 L264.0000,235.5000 L261.5000,239.0000 L261.5000,245.0000 L265.0000,248.5000 L266.0000,248.5000 L267.0000,249.5000 L273.0000,249.5000 L274.0000,250.5000 L275.0000,250.5000 L276.5000,253.0000 L276.5000,257.0000 L276.0000,257.5000 L272.0000,257.5000 L271.0000,258.5000 L230.0000,258.5000 L229.5000,258.0000 L229.5000,256.0000 L232.5000,253.0000 L232.5000,252.0000 L234.0000,250.5000 L235.0000,250.5000 L236.0000,249.5000 L237.0000,250.5000 L238.0000,249.5000 L242.0000,249.5000 L243.0000,248.5000 L244.0000,248.5000 L244.5000,247.0000 L246.5000,245.0000 L246.5000,241.0000 L245.0000,239.5000 L244.5000,240.0000 L244.5000,244.0000 L242.0000,246.5000 L238.0000,246.5000 L237.5000,246.0000 L239.5000,244.0000 L239.5000,243.0000 L240.5000,242.0000 L240.5000,240.0000 L242.0000,239.5000 L243.5000,238.0000 L243.5000,235.0000 L244.5000,234.0000 L244.5000,232.0000 L248.5000,226.0000 L248.5000,224.0000 L250.5000,221.0000 L250.5000,219.0000 L252.0000,216.5000 L279.0000,216.5000 L281.5000,219.0000 L281.5000,223.0000 L279.0000,224.5000 L260.0000,224.5000 L258.5000,226.0000 L259.0000,227.5000 L279.0000,227.5000 L280.0000,226.5000 L281.0000,226.5000 L283.5000,224.0000 L283.5000,223.0000 L284.5000,222.0000 L284.5000,218.0000 L283.5000,217.0000 L283.5000,216.0000 L282.0000,214.5000 L280.0000,214.5000 L279.0000,213.5000 L257.0000,213.5000 L254.0000,215.5000 L253.5000,215.0000 L253.5000,210.0000 L254.5000,209.0000 L254.5000,207.0000 L255.0000,206.5000 Z "/>
+<path d="M479.0000,256.5000 L495.0000,256.5000 L496.5000,258.0000 L496.5000,261.0000 L495.0000,263.5000 L482.0000,263.5000 L481.0000,262.5000 L475.0000,262.5000 L474.0000,263.5000 L469.0000,263.5000 L468.0000,264.5000 L465.0000,264.5000 L464.0000,265.5000 L458.0000,265.5000 L457.0000,266.5000 L450.0000,266.5000 L449.0000,267.5000 L445.0000,267.5000 L444.0000,268.5000 L442.0000,268.5000 L441.0000,269.5000 L439.0000,269.5000 L438.0000,270.5000 L436.0000,270.5000 L435.0000,271.5000 L434.0000,271.5000 L433.0000,272.5000 L432.0000,272.5000 L431.0000,273.5000 L428.0000,274.5000 L426.0000,276.5000 L425.0000,276.5000 L421.5000,280.0000 L421.5000,281.0000 L420.5000,282.0000 L420.5000,284.0000 L419.5000,285.0000 L419.5000,287.0000 L420.5000,288.0000 L420.5000,290.0000 L422.5000,292.0000 L422.5000,293.0000 L424.0000,294.5000 L425.0000,294.5000 L428.0000,297.5000 L429.0000,297.5000 L430.0000,298.5000 L431.0000,298.5000 L436.0000,301.5000 L438.0000,301.5000 L439.0000,302.5000 L442.0000,302.5000 L443.0000,303.5000 L445.0000,303.5000 L446.0000,304.5000 L449.0000,304.5000 L450.0000,305.5000 L457.0000,305.5000 L458.0000,306.5000 L463.0000,306.5000 L464.0000,307.5000 L472.0000,307.5000 L473.0000,308.5000 L487.0000,308.5000 L487.5000,309.0000 L487.5000,314.0000 L485.0000,316.5000 L472.0000,316.5000 L471.0000,315.5000 L457.0000,315.5000 L456.0000,314.5000 L444.0000,314.5000 L443.0000,313.5000 L440.0000,313.5000 L439.0000,312.5000 L434.0000,312.5000 L433.0000,311.5000 L431.0000,311.5000 L430.0000,310.5000 L427.0000,310.5000 L426.0000,309.5000 L424.0000,309.5000 L423.0000,308.5000 L421.0000,308.5000 L420.0000,307.5000 L416.0000,307.5000 L413.0000,305.5000 L411.0000,305.5000 L408.5000,303.0000 L408.5000,302.0000 L409.5000,301.0000 L409.5000,297.0000 L410.5000,296.0000 L410.5000,291.0000 L411.5000,290.0000 L411.5000,285.0000 L412.5000,284.0000 L412.5000,280.0000 L413.5000,279.0000 L413.5000,273.0000 L414.5000,272.0000 L414.5000,271.0000 L417.0000,268.5000 L418.0000,268.5000 L419.0000,267.5000 L421.0000,267.5000 L422.0000,266.5000 L424.0000,266.5000 L427.0000,264.5000 L430.0000,264.5000 L431.0000,263.5000 L434.0000,263.5000 L435.0000,262.5000 L438.0000,262.5000 L439.0000,261.5000 L443.0000,261.5000 L444.0000,260.5000 L451.0000,260.5000 L452.0000,259.5000 L458.0000,259.5000 L459.0000,258.5000 L464.0000,258.5000 L465.0000,257.5000 L478.0000,257.5000 L479.0000,256.5000 Z "/>
+<path d="M772.0000,287.5000 L778.0000,287.5000 L781.0000,290.5000 L782.5000,291.0000 L782.0000,291.5000 L780.0000,291.5000 L779.0000,292.5000 L777.0000,292.5000 L776.0000,293.5000 L773.0000,293.5000 L772.0000,294.5000 L771.0000,294.5000 L770.0000,295.5000 L767.0000,296.5000 L764.5000,299.0000 L764.5000,300.0000 L763.5000,301.0000 L763.5000,304.0000 L765.5000,306.0000 L766.0000,307.5000 L767.0000,307.5000 L770.0000,309.5000 L772.0000,309.5000 L773.0000,310.5000 L776.0000,310.5000 L777.0000,311.5000 L780.0000,311.5000 L781.0000,312.5000 L785.0000,312.5000 L786.0000,313.5000 L791.0000,313.5000 L792.0000,314.5000 L816.0000,314.5000 L817.0000,313.5000 L822.0000,313.5000 L823.0000,312.5000 L828.0000,312.5000 L829.0000,311.5000 L832.0000,311.5000 L837.0000,308.5000 L839.0000,308.5000 L842.5000,305.0000 L842.5000,300.0000 L840.0000,297.5000 L838.5000,297.0000 L838.5000,295.0000 L839.0000,294.5000 L841.0000,294.5000 L842.0000,293.5000 L846.0000,293.5000 L847.0000,292.5000 L853.0000,292.5000 L854.0000,293.5000 L856.0000,293.5000 L857.0000,294.5000 L860.0000,295.5000 L863.5000,299.0000 L863.5000,300.0000 L864.5000,301.0000 L864.5000,305.0000 L863.5000,306.0000 L863.5000,307.0000 L860.0000,310.5000 L859.0000,310.5000 L856.0000,313.5000 L854.0000,313.5000 L853.0000,314.5000 L850.0000,314.5000 L849.0000,315.5000 L846.0000,315.5000 L845.0000,316.5000 L843.0000,316.5000 L842.0000,317.5000 L839.0000,317.5000 L838.0000,318.5000 L834.0000,318.5000 L833.0000,319.5000 L825.0000,319.5000 L824.0000,320.5000 L811.0000,320.5000 L810.0000,321.5000 L797.0000,321.5000 L796.0000,320.5000 L783.0000,320.5000 L782.0000,319.5000 L776.0000,319.5000 L775.0000,318.5000 L770.0000,318.5000 L769.0000,317.5000 L766.0000,317.5000 L765.0000,316.5000 L763.0000,316.5000 L762.0000,315.5000 L759.0000,315.5000 L758.0000,314.5000 L756.0000,314.5000 L753.0000,312.5000 L751.0000,312.5000 L750.0000,311.5000 L749.0000,311.5000 L747.0000,309.5000 L746.0000,309.5000 L742.5000,306.0000 L741.5000,303.0000 L742.5000,302.0000 L743.5000,299.0000 L745.0000,298.5000 L748.0000,295.5000 L749.0000,295.5000 L750.0000,294.5000 L751.0000,294.5000 L756.0000,291.5000 L759.0000,291.5000 L760.0000,290.5000 L763.0000,290.5000 L764.0000,289.5000 L766.0000,289.5000 L767.0000,288.5000 L771.0000,288.5000 L772.0000,287.5000 Z "/>
+<path d="M474.0000,266.5000 L494.0000,266.5000 L494.5000,267.0000 L494.5000,271.0000 L493.0000,272.5000 L470.0000,272.5000 L469.0000,273.5000 L464.0000,273.5000 L463.0000,274.5000 L459.0000,274.5000 L458.0000,275.5000 L456.0000,275.5000 L453.0000,277.5000 L451.0000,277.5000 L446.5000,282.0000 L446.5000,287.0000 L451.0000,291.5000 L452.0000,291.5000 L455.0000,293.5000 L457.0000,293.5000 L458.0000,294.5000 L462.0000,294.5000 L463.0000,295.5000 L469.0000,295.5000 L470.0000,296.5000 L478.0000,296.5000 L479.0000,297.5000 L484.0000,297.5000 L485.0000,296.5000 L488.0000,296.5000 L489.5000,298.0000 L489.5000,300.0000 L488.5000,301.0000 L488.5000,304.0000 L488.0000,304.5000 L471.0000,304.5000 L470.0000,303.5000 L462.0000,303.5000 L461.0000,302.5000 L455.0000,302.5000 L454.0000,301.5000 L448.0000,301.5000 L447.0000,300.5000 L445.0000,300.5000 L444.0000,299.5000 L442.0000,299.5000 L441.0000,298.5000 L439.0000,298.5000 L438.0000,297.5000 L436.0000,297.5000 L434.0000,295.5000 L433.0000,295.5000 L432.0000,294.5000 L431.0000,294.5000 L429.0000,292.5000 L428.0000,292.5000 L424.5000,289.0000 L424.5000,288.0000 L423.5000,287.0000 L424.5000,286.0000 L424.5000,283.0000 L430.0000,277.5000 L432.0000,277.5000 L437.0000,274.5000 L439.0000,274.5000 L440.0000,273.5000 L442.0000,273.5000 L443.0000,272.5000 L445.0000,272.5000 L446.0000,271.5000 L449.0000,271.5000 L450.0000,270.5000 L453.0000,270.5000 L454.0000,269.5000 L458.0000,269.5000 L459.0000,268.5000 L464.0000,268.5000 L465.0000,267.5000 L473.0000,267.5000 L474.0000,266.5000 Z "/>
+<path d="M287.0000,289.5000 L318.0000,289.5000 L318.5000,290.0000 L318.5000,295.0000 L317.5000,296.0000 L317.5000,302.0000 L316.5000,303.0000 L316.5000,305.0000 L315.5000,306.0000 L315.5000,315.0000 L314.0000,316.5000 L256.0000,316.5000 L253.5000,315.0000 L253.5000,314.0000 L252.5000,313.0000 L253.5000,312.0000 L253.5000,311.0000 L255.0000,309.5000 L257.0000,309.5000 L258.0000,308.5000 L291.0000,308.5000 L293.5000,306.0000 L293.5000,302.0000 L291.0000,299.5000 L290.0000,299.5000 L289.0000,298.5000 L284.0000,298.5000 L282.5000,297.0000 L282.5000,292.0000 L284.0000,290.5000 L286.0000,290.5000 L287.0000,289.5000 Z "/>
+<path d="M784.0000,294.5000 L798.0000,294.5000 L799.0000,295.5000 L803.0000,295.5000 L804.0000,296.5000 L831.0000,296.5000 L832.0000,297.5000 L834.0000,297.5000 L835.0000,298.5000 L838.0000,299.5000 L839.5000,301.0000 L839.5000,302.0000 L837.0000,304.5000 L835.0000,304.5000 L834.0000,305.5000 L832.0000,305.5000 L829.0000,307.5000 L827.0000,307.5000 L826.0000,308.5000 L823.0000,308.5000 L822.0000,309.5000 L816.0000,309.5000 L815.0000,310.5000 L795.0000,310.5000 L794.0000,309.5000 L786.0000,309.5000 L785.0000,308.5000 L781.0000,308.5000 L780.0000,307.5000 L776.0000,307.5000 L773.0000,305.5000 L771.0000,305.5000 L767.5000,302.0000 L771.0000,298.5000 L772.0000,298.5000 L773.0000,297.5000 L775.0000,297.5000 L778.0000,295.5000 L783.0000,295.5000 L784.0000,294.5000 Z "/>
+<path d="M288.0000,327.5000 L312.0000,327.5000 L312.5000,328.0000 L312.5000,333.0000 L311.5000,334.0000 L311.5000,336.0000 L310.5000,337.0000 L310.5000,340.0000 L309.5000,341.0000 L309.5000,348.0000 L307.0000,351.5000 L241.0000,351.5000 L240.5000,351.0000 L240.5000,348.0000 L243.0000,345.5000 L299.0000,345.5000 L300.0000,344.5000 L301.0000,344.5000 L302.5000,342.0000 L302.5000,339.0000 L300.0000,336.5000 L299.0000,336.5000 L298.0000,335.5000 L288.0000,335.5000 L285.5000,333.0000 L285.5000,330.0000 L288.0000,327.5000 Z "/>
+<path d="M476.0000,275.5000 L492.0000,275.5000 L493.5000,277.0000 L493.5000,279.0000 L492.5000,280.0000 L492.5000,284.0000 L491.5000,285.0000 L491.5000,291.0000 L489.0000,294.5000 L482.0000,294.5000 L481.0000,293.5000 L477.0000,293.5000 L476.0000,292.5000 L470.0000,292.5000 L469.0000,291.5000 L463.0000,291.5000 L462.0000,290.5000 L458.0000,290.5000 L457.0000,289.5000 L455.0000,289.5000 L454.0000,288.5000 L451.0000,287.5000 L449.5000,285.0000 L449.5000,284.0000 L452.0000,281.5000 L453.0000,281.5000 L458.0000,278.5000 L460.0000,278.5000 L461.0000,277.5000 L466.0000,277.5000 L467.0000,276.5000 L475.0000,276.5000 L476.0000,275.5000 Z "/>
+<path d="M1492.0000,86.5000 L1494.0000,86.5000 L1495.5000,88.0000 L1495.5000,133.0000 L1495.0000,133.5000 L1492.0000,133.5000 L1491.5000,133.0000 L1491.5000,121.0000 L1490.5000,120.0000 L1490.5000,116.0000 L1491.5000,115.0000 L1490.5000,114.0000 L1490.5000,88.0000 L1492.0000,86.5000 Z "/>
+<path d="M1573.0000,96.5000 L1575.0000,96.5000 L1575.5000,97.0000 L1575.5000,149.0000 L1575.0000,149.5000 L1572.0000,149.5000 L1571.5000,149.0000 L1571.5000,98.0000 L1573.0000,96.5000 Z "/>
+<path d="M1463.0000,110.5000 L1464.0000,110.5000 L1466.5000,113.0000 L1466.5000,149.0000 L1466.0000,149.5000 L1462.0000,149.5000 L1461.5000,149.0000 L1461.5000,113.0000 L1463.0000,110.5000 Z "/>
+<path d="M1547.0000,105.5000 L1549.0000,105.5000 L1549.5000,106.0000 L1549.5000,149.0000 L1549.0000,149.5000 L1547.0000,149.5000 L1546.5000,149.0000 L1546.5000,106.0000 L1547.0000,105.5000 Z "/>
+<path d="M1522.0000,71.5000 L1524.0000,71.5000 L1525.5000,74.0000 L1524.5000,75.0000 L1524.5000,112.0000 L1524.0000,112.5000 L1522.0000,112.5000 L1521.5000,112.0000 L1521.5000,72.0000 L1522.0000,71.5000 Z "/>
+<path d="M245.0000,327.5000 L256.0000,327.5000 L258.5000,330.0000 L258.5000,333.0000 L256.0000,335.5000 L244.0000,335.5000 L242.5000,334.0000 L242.5000,330.0000 L245.0000,327.5000 Z "/>
+<path d="M6.0000,286.5000 L19.0000,286.5000 L21.5000,289.0000 L21.5000,291.0000 L19.0000,294.5000 L8.0000,294.5000 L6.5000,292.0000 L6.5000,290.0000 L5.5000,289.0000 L5.5000,287.0000 L6.0000,286.5000 Z "/>
+<path d="M80.0000,267.5000 L82.0000,267.5000 L83.5000,269.0000 L83.5000,270.0000 L85.5000,272.0000 L85.5000,273.0000 L86.5000,274.0000 L86.0000,275.5000 L80.0000,275.5000 L78.5000,274.0000 L78.5000,269.0000 L80.0000,267.5000 Z "/>
+</g></svg>
+    <div class="div"></div>
+    <div class="sub">STUDIO<small>KEYMAP FORGE</small></div>
+  </div>
+  <div class="readouts">
+    <div class="cell">UNIT<b>ARARE</b></div>
+    <div class="cell">KEYS<b>47 / BLE SPLIT</b></div>
+    <div class="cell">FW<b id="fwrev">main</b></div>
+  </div>
+  <div class="arrbar" title="キーマップが想定するホスト側のキーボード配列。切替えると全レイヤーの記号キーを変換します">
+    <span class="arrlab">配列</span>
+    <div class="mode-tg arr-tg" id="arrtg">
+      <button data-a="us">US</button><button data-a="jis">JIS</button>
+    </div>
+  </div>
+  <a class="gh" href="https://github.com/amearare54/zmk-config-arare" target="_blank" rel="noopener">GitHub ↗</a>
+</header>
+
+<div class="panel linkbar" id="linkbar"></div>
+
+<div class="layerbar" id="layerbar"></div>
+
+<div class="main">
+  <div class="panel board-panel">
+    <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+    <div class="board-meta">
+      <span>PHYSICAL LAYOUT · 1:1 FROM PCB</span>
+      <span id="hoverinfo"></span>
+      <span>SAT / PDS / LAT</span>
+    </div>
+    <svg class="board" id="board" viewBox="-20 -30 1360 530" aria-label="arareキーボードレイアウト"></svg>
+  </div>
+
+  <div class="panel insp" id="insp">
+    <div class="empty"><span class="big">arare</span>キーをクリックすると<br>ここで割当を編集できます</div>
+  </div>
+</div>
+
+<div class="deck" id="deck">
+  <div class="deck-head">
+    <h2>⚙ DEVICE <span style="color:var(--accent)">TUNING</span></h2>
+    <div class="profilebar" id="profilebar"></div>
+    <div class="mode-tg" id="modetg">
+      <button data-m="basic">かんたん</button><button data-m="adv">上級</button>
+    </div>
+  </div>
+  <div class="dev-grid">
+    <div class="panel dev" id="dev-tb"></div>
+    <div class="panel dev" id="dev-enc"></div>
+    <div class="panel dev" id="dev-joy"></div>
+    <div class="panel dev" id="dev-mt"></div>
+    <div class="panel dev" id="dev-devices"></div>
+    <div class="panel dev" id="dev-combo"></div>
+    <div class="panel dev" id="dev-hud"></div>
+  </div>
+</div>
+
+<div class="panel forge">
+  <div class="forge-head">
+    <h2>⚒ <span>FORGE</span> — keymap を鋳出す</h2>
+    <div class="stats" id="forgestats"></div>
+    <div class="btnrow">
+      <button class="btn primary" id="copybtn">keymap をコピー</button>
+      <button class="btn ghost" id="openedit">GitHubで貼り付け先を開く ↗</button>
+      <button class="btn plain" id="resetbtn">初期配置に戻す</button>
+    </div>
+  </div>
+  <div class="ftabs" id="ftabs"></div>
+  <pre class="out" id="out"></pre>
+  <div class="steps">
+    <div class="step"><div class="n">01 · COPY</div><b>ファイルをコピー</b><p>タブでファイルを選び、コピー。変更したファイルだけでOK。</p></div>
+    <div class="step"><div class="n">02 · COMMIT</div><b>GitHub に貼る</b><p>「GitHubで貼り付け先を開く」→ 全置換して Commit（タブごとに対応ページが開きます）。</p></div>
+    <div class="step"><div class="n">03 · BUILD</div><b>Actions が UF2 を生成</b><p><a href="https://github.com/amearare54/zmk-config-arare/actions" target="_blank" rel="noopener">Actions</a> の Artifacts から firmware をDL。</p></div>
+    <div class="step"><div class="n">04 · FLASH</div><b>XIAO に書き込み</b><p>リセット2度押し→現れたドライブへ UF2 をコピー。実機微調整は <a href="https://studio.dya.cormoran.works/" target="_blank" rel="noopener">DYA Studio</a> でも。</p></div>
+  </div>
+</div>
+
+<footer>
+  <span>ARARE STUDIO · PERSONAL USE ONLY</span>
+  <span>RAIN · HAZE · RIPPLE · HAIL</span>
+  <span>CONNECTION : GOOD — COMMS OPEN</span>
+</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= data: 実基板由来 ================= */
+const KEYS=[ /* [sw, x, y, w, h, rot, rx, ry] 単位=centi-keyunit(17mm/100) */
+["SW5",11,68],["SW3",111,43],["SW1",211,18],["SW2",311,36],["SW4",411,43],
+["SW24",803,43],["SW23",903,36],["SW22",1003,18],["SW25",1103,43],["SW26",1203,68],
+["SW10",11,168],["SW8",111,143],["SW6",211,118],["SW7",311,136],["SW9",411,143],
+["ENC1",511,170],["ENC2",703,170],
+["SW29",803,143],["SW28",903,136],["SW27",1003,118],["SW30",1103,143],["SW31",1203,168],
+["SW15",11,268],["SW13",111,243],["SW11",211,218],["SW12",311,236],["SW14",411,243],
+["SW16",511,268],["SW36",703,268],
+["SW34",803,243],["SW33",903,236],["SW32",1003,218],["SW35",1103,243],["SW37",1203,268],
+["SW19",11,368],["SW18",111,343],["SW17",211,318],["SW20",311,365],
+["SW21",427,370,100,100,8.21,477,420],
+["SW46",540,393,100,100,18.07,590,443],
+["SW39",675,393,100,100,-18.07,725,443],
+["SW40",788,370,100,100,-8.21,838,420],
+["SW38",1203,368],
+["SW41",0,-6,60,60],["SW42",70,-6,60,60],["SW43",1185,-6,60,60],["SW44",1255,-6,60,60]
+];
+const ROWS=[10,12,12,9,4]; // keymap整形用の行割り
+const SHIPPED={
+ name:["Base","Sym","Num"],
+ layers:[
+  ["&kp Q","&kp W","&kp E","&kp R","&kp T","&kp Y","&kp U","&kp I","&kp O","&kp P",
+   "&kp A","&kp S","&kp D","&kp F","&kp G","&kp LS(LG(V))","&mkp LCLK","&kp H","&kp J","&kp K","&kp L","&kp MINUS",
+   "&mt LSHFT Z","&kp X","&kp C","&kp V","&kp B","&mo 2","&mkp RCLK","&kp N","&kp M","&kp COMMA","&kp DOT","&kp AT",
+   "&kp LANG2","&mt LALT LCTRL","&kp LGUI","&mo 1","&kp SPACE","&mkp LCLK","&kp ENTER","&kp BSPC","&kp LANG1",
+   "&sys_reset","&studio_unlock","&studio_unlock","&sys_reset"],
+  ["&kp ESC","&trans","&trans","&trans","&trans","&kp LPAR","&kp RPAR","&kp EXCL","&kp QMARK","&kp EQUAL",
+   "&kp TAB","&trans","&trans","&trans","&trans","&trans","&trans","&kp LBKT","&kp RBKT","&kp HASH","&kp PRCNT","&kp FSLH",
+   "&trans","&trans","&trans","&trans","&trans","&trans","&kp DQT","&kp SEMI","&kp COLON","&kp AMPS","&kp SQT","&kp UNDER",
+   "&kp CAPS","&trans","&trans","&trans","&trans","&trans","&kp GLOBE","&kp DEL","&kp ASTRK",
+   "&trans","&trans","&trans","&trans"],
+  ["&trans","&trans","&trans","&trans","&trans","&trans","&trans","&kp N7","&kp N8","&kp N9",
+   "&trans","&trans","&trans","&trans","&trans","&trans","&trans","&kp UP","&trans","&kp N4","&kp N5","&kp N6",
+   "&trans","&trans","&trans","&trans","&trans","&trans","&kp LEFT","&kp DOWN","&kp RIGHT","&kp N1","&kp N2","&kp N3",
+   "&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&kp N0",
+   "&trans","&trans","&trans","&trans"]
+ ],
+ sensors:["&inc_dec_kp C_VOL_UP C_VOL_DN","&inc_dec_kp PG_UP PG_DN"]
+};
+const ENC_OPTS=[
+ ["&inc_dec_kp C_VOL_UP C_VOL_DN","音量 +/−"],
+ ["&inc_dec_kp PG_UP PG_DN","ページ ↑/↓"],
+ ["&inc_dec_kp UP DOWN","矢印 ↑/↓"],
+ ["&inc_dec_kp RIGHT LEFT","矢印 →/←"],
+ ["&inc_dec_kp C_BRI_UP C_BRI_DN","輝度 +/−"],
+ ["&inc_dec_kp C_NEXT C_PREV","曲送り/戻し"],
+ ["&inc_dec_kp LG(Z) LS(LG(Z))","⌘Z / ⇧⌘Z"],
+ ["&inc_dec_kp LG(C) LG(V)","コピー / ペースト"],
+ ["&inc_dec_kp LG(X) LG(V)","カット / ペースト"],
+ ["&inc_dec_kp TAB LS(TAB)","Tab / ⇧Tab"]
+];
+const SPD=[[1,4,"0.25×"],[1,2,"0.5×"],[3,4,"0.75×"],[1,1,"1.0×"],[5,4,"1.25×"],[3,2,"1.5×"],[2,1,"2.0×"],[3,1,"3.0×"]];
+const TRIG=[6,8,10,12,15,20,24];
+const DEV_DEFAULT={
+ tb:{cpi:800,rot:0,invx:false,invy:false,spd:3,scrollOn:false,scrollLayer:1,scrollDiv:8,natural:true,
+     autoOn:false,autoLayer:1,autoMs:800,autoIdle:300,snipeOn:false,snipeLayer:2,snipeDiv:3,awake:false},
+ enc:{trig:10,steps1:12,steps2:12},
+ joy:{mode:"mouse",speed:5,dead:10,invy:false},
+ mt:{term:200,ltTerm:200},
+ accel:{on:false,preset:"mid",sens:1200,maxf:3000,thr:500,smax:3500,exp:2}
+};
+const GROUPS=["tb","enc","joy","mt","accel"];
+const ACCEL_PRESETS={weak:{sens:1000,maxf:2000,thr:600,smax:3500,exp:2},mid:{sens:1200,maxf:3000,thr:500,smax:3500,exp:2},strong:{sens:1300,maxf:4000,thr:400,smax:3000,exp:3}};
+const DEVS_DEFAULT=[0,1,2,3,4].map(()=>({name:"",layer:0,jis:false}));
+/* US→JIS 記号変換（QMK公式 keymap_japanese.h 互換） */
+const JIS_MAP={AT:"LBKT",CARET:"EQUAL",AMPS:"LS(N6)",ASTRK:"LS(SQT)",LPAR:"LS(N8)",RPAR:"LS(N9)",
+ UNDER:"LS(INT1)",PLUS:"LS(SEMI)",EQUAL:"LS(MINUS)",LBKT:"RBKT",RBKT:"NUHS",LBRC:"LS(RBKT)",RBRC:"LS(NUHS)",
+ BSLH:"INT1",PIPE:"LS(INT3)",COLON:"SQT",SQT:"LS(N7)",DQT:"LS(N2)",GRAVE:"LS(LBKT)",TILDE:"LS(EQUAL)"};
+const INV_JIS={}; for(const k in JIS_MAP)INV_JIS[JIS_MAP[k]]=k;
+function jisKey(n){return JIS_MAP[n]||n;}
+function usKey(n){return INV_JIS[n]||n;}
+function jisTranslate(b){let m;
+ if((m=b.match(/^&kp (.+)$/)))return "&kp "+jisKey(m[1]);
+ if((m=b.match(/^&mt (\S+) (.+)$/)))return `&mt ${m[1]} ${jisKey(m[2])}`;
+ if((m=b.match(/^&lt (\d+) (.+)$/)))return `&lt ${m[1]} ${jisKey(m[2])}`;
+ return b;}
+function usTranslate(b){let m;
+ if((m=b.match(/^&kp (.+)$/)))return "&kp "+usKey(m[1]);
+ if((m=b.match(/^&mt (\S+) (.+)$/)))return `&mt ${m[1]} ${usKey(m[2])}`;
+ if((m=b.match(/^&lt (\d+) (.+)$/)))return `&lt ${m[1]} ${usKey(m[2])}`;
+ return b;}
+const JOY_PUSH=[["左クリック","&mkp LCLK"],["右クリック","&mkp RCLK"],["中クリック","&mkp MCLK"],["Enter","&kp ENTER"],["Space","&kp SPACE"],["Esc","&kp ESC"]];
+const TB_PRESETS=[
+ ["標準","バランスの取れた既定値",{spd:3,cpi:800,scrollOn:false,snipeOn:false,autoOn:false}],
+ ["ゆっくり正確","カーソル遅め＋L2で超低速",{spd:2,cpi:800,snipeOn:true,snipeLayer:2,snipeDiv:3}],
+ ["スピード","カーソル速め・高解像度",{spd:5,cpi:1200}],
+ ["スクロール重視","L1でボールがホイールに",{scrollOn:true,scrollLayer:1,scrollDiv:8,natural:true}]
+];
+
+/* ================= 凡例 ================= */
+const GLYPH={MINUS:"-",EQUAL:"=",COMMA:",",DOT:".",AT:"@",FSLH:"/",BSLH:"\\",SEMI:";",COLON:":",SQT:"'",DQT:"\"",
+ GRAVE:"`",TILDE:"~",LBKT:"[",RBKT:"]",LPAR:"(",RPAR:")",LBRC:"{",RBRC:"}",EXCL:"!",QMARK:"?",HASH:"#",PRCNT:"%",
+ CARET:"^",AMPS:"&",ASTRK:"*",UNDER:"_",PLUS:"+",PIPE:"|",DLLR:"$",
+ SPACE:"SPC",ENTER:"⏎",BSPC:"⌫",TAB:"⇥",ESC:"ESC",DEL:"DEL",CAPS:"CAPS",
+ LANG1:"かな",LANG2:"英数",GLOBE:"🌐",
+ UP:"↑",DOWN:"↓",LEFT:"←",RIGHT:"→",HOME:"HOME",END:"END",PG_UP:"P↑",PG_DN:"P↓",
+ LSHFT:"⇧",RSHFT:"⇧",LCTRL:"⌃",RCTRL:"⌃",LALT:"⌥",RALT:"⌥",LGUI:"⌘",RGUI:"⌘",
+ N0:"0",N1:"1",N2:"2",N3:"3",N4:"4",N5:"5",N6:"6",N7:"7",N8:"8",N9:"9",
+ INT1:"ろ",INT2:"かな",INT3:"¥",INT4:"変換",INT5:"無変換",NUHS:"]",
+ C_VOL_UP:"VOL+",C_VOL_DN:"VOL−",C_MUTE:"MUTE",C_PP:"⏯",C_NEXT:"⏭",C_PREV:"⏮",C_BRI_UP:"BRI+",C_BRI_DN:"BRI−"};
+const MODG={LS:"⇧",LC:"⌃",LA:"⌥",LG:"⌘",RS:"⇧",RC:"⌃",RA:"⌥",RG:"⌘"};
+const layName=n=>"L"+n;
+function keyGlyph(code){
+  if(arr==="jis"&&INV_JIS[code])code=INV_JIS[code]; // JISモード中は「JISホストで実際に出る記号」を表示
+  let mods="",m;
+  while((m=code.match(/^(LS|LC|LA|LG|RS|RC|RA|RG)\((.+)\)$/))){ mods+=MODG[m[1]]; code=m[2]; }
+  return mods+(GLYPH[code]||code);
+}
+function legend(b){
+  if(b==="&trans")return"▽";
+  if(b==="&none")return"✕";
+  if(b==="&sys_reset")return"RST";
+  if(b==="&bootloader")return"BOOT";
+  if(b==="&studio_unlock")return"UNLK";
+  if(b==="&bt BT_CLR")return"BT×";
+  let m;
+  if((m=b.match(/^&bt BT_SEL (\d)$/)))return"BT"+(+m[1]+1);
+  if(b==="&bt BT_NXT")return"BT→";
+  if(b==="&bt BT_PRV")return"BT←";
+  if(b==="&out OUT_USB")return"USB";
+  if(b==="&out OUT_BLE")return"BLE";
+  if(b==="&out OUT_TOG")return"OUT⇄";
+  if((m=b.match(/^&bt_dev(\d)$/)))return"▸"+((devs&&devs[+m[1]]&&devs[+m[1]].name)||("DEV"+(+m[1]+1)));
+  if((m=b.match(/^&kp (.+)$/)))return keyGlyph(m[1]);
+  if((m=b.match(/^&mt (\S+) (.+)$/)))return keyGlyph(m[1])+"/"+keyGlyph(m[2]);
+  if((m=b.match(/^&lt (\d+) (.+)$/)))return layName(+m[1])+"/"+keyGlyph(m[2]);
+  if((m=b.match(/^&mo (\d+)$/)))return"→"+layName(+m[1]);
+  if((m=b.match(/^&tog (\d+)$/)))return"⇄"+layName(+m[1]);
+  if((m=b.match(/^&mkp (\w+)$/)))return{LCLK:"CLK·L",RCLK:"CLK·R",MCLK:"CLK·M"}[m[1]]||m[1];
+  return b.replace(/^&/,"");
+}
+
+/* ================= state ================= */
+let km, enc, encL, dev, devs, combos, mode="basic", layer=0, sel=-1, arr="us";
+function load(){
+  km=JSON.parse(JSON.stringify(SHIPPED.layers)); enc=[...SHIPPED.sensors];
+  dev=JSON.parse(JSON.stringify(DEV_DEFAULT)); encL={};
+  devs=JSON.parse(JSON.stringify(DEVS_DEFAULT)); combos=[]; arr="us";
+  try{
+    const d=JSON.parse(localStorage.getItem("arare-studio-draft"));
+    if(d && d.km && d.km.length>=1 && d.km.length<=10 && d.km.every(l=>l.length===47)){
+      km=d.km; enc=d.enc||enc; encL=d.encL||{}; mode=d.mode||"basic";
+      if(d.dev)for(const g of GROUPS)if(d.dev[g])Object.assign(dev[g],d.dev[g]);
+      if(d.devs&&d.devs.length===5)devs=d.devs;
+      if(Array.isArray(d.combos))combos=d.combos;
+      if(d.arr==="jis")arr="jis";
+    }
+  }catch(e){}
+}
+function save(){ try{localStorage.setItem("arare-studio-draft",JSON.stringify({km,enc,encL,dev,devs,combos,mode,arr}));}catch(e){} }
+/* ===== Undo / Redo ===== */
+let hist=[], redoStack=[];
+function snapState(){return JSON.stringify({km,enc,encL,dev,devs,combos,arr});}
+function pushHist(){hist.push(snapState()); if(hist.length>80)hist.shift(); redoStack.length=0;}
+function applyState(s){
+  const d=JSON.parse(s);
+  km=d.km; enc=d.enc; encL=d.encL||{}; combos=d.combos||[];
+  devs=(d.devs&&d.devs.length===5)?d.devs:JSON.parse(JSON.stringify(DEVS_DEFAULT));
+  dev=JSON.parse(JSON.stringify(DEV_DEFAULT));
+  for(const g of GROUPS)if(d.dev&&d.dev[g])Object.assign(dev[g],d.dev[g]);
+  arr=d.arr==="jis"?"jis":"us";
+  if(layer>=km.length)layer=km.length-1; if(sel>=47)sel=-1;
+  save(); renderArrTg(); renderLayerbar(); renderDeck(); renderInsp(); refreshKeys();
+}
+function undo(){
+  if(LIVE.on){ if(window.liveUndo)window.liveUndo(); return; }
+  if(!hist.length){toast("戻せる操作がありません");return;}
+  redoStack.push(snapState()); applyState(hist.pop()); toast("1つ戻しました ↶");
+}
+function redo(){
+  if(LIVE.on)return;
+  if(!redoStack.length){toast("やり直せる操作がありません");return;}
+  hist.push(snapState()); applyState(redoStack.pop()); toast("やり直しました ↷");
+}
+window.addEventListener("keydown",e=>{
+  const tag=(e.target.tagName||"").toLowerCase();
+  if(tag==="input"||tag==="textarea"||tag==="select")return;
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="z"){e.preventDefault(); e.shiftKey?redo():undo();}
+});
+/* LIVE接続状態（エンジンは末尾のmoduleスクリプト） */
+const LIVE={on:false,layers:[],names:[],layerIds:[],dirty:new Set(),unsaved:false,device:"",transport:"",locked:true};
+function curKm(){return LIVE.on?LIVE.layers:km;}
+function editCount(){
+  let n=0;
+  for(let l=0;l<km.length;l++)for(let i=0;i<47;i++){
+    const ref=l<SHIPPED.layers.length?SHIPPED.layers[l][i]:"&trans";
+    if(km[l][i]!==ref)n++;
+  }
+  if(km.length!==SHIPPED.layers.length)n+=Math.abs(km.length-SHIPPED.layers.length);
+  for(let s=0;s<2;s++)if(enc[s]!==SHIPPED.sensors[s])n++;
+  n+=Object.keys(encL).length;
+  for(const g in DEV_DEFAULT)for(const k in DEV_DEFAULT[g])if(dev[g][k]!==DEV_DEFAULT[g][k])n++;
+  n+=combos.length;
+  n+=devs.filter(d=>d.name||d.layer!==0||d.jis).length;
+  return n;
+}
+load();
+
+/* ================= board render ================= */
+const NS="http://www.w3.org/2000/svg";
+const board=document.getElementById("board");
+function el(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;}
+function drawDecor(){
+  // トラックボール(右)・ジョイスティック(左)・エンコーダリング・照準
+  const g=el("g",{});
+  const tb=el("circle",{cx:990,cy:415,r:62,class:"deco deco-accent","stroke-dasharray":"4 5"});
+  g.append(tb);
+  g.append(el("circle",{cx:990,cy:415,r:38,class:"deco"}));
+  const tbl=el("text",{x:990,y:420,class:"deco-label","text-anchor":"middle"});tbl.textContent="TRACKBALL";g.append(tbl);
+  g.append(el("circle",{cx:561,cy:220,r:34,class:"deco"}));
+  g.append(el("circle",{cx:753,cy:220,r:34,class:"deco deco-accent"}));
+  const j=el("circle",{cx:590,cy:443,r:30,class:"deco","stroke-dasharray":"2 4"});g.append(j);
+  const jl=el("text",{x:566,y:490,class:"deco-label"});jl.textContent="JOY";g.append(jl);
+  // 中央の分割線と照準
+  g.append(el("line",{x1:658,y1:-10,x2:658,y2:120,class:"deco"}));
+  g.append(el("path",{d:"M646 132 l12 14 l12 -14",class:"deco"}));
+  board.append(g);
+}
+function drawKeys(){
+  const defs=el("defs",{});
+  defs.innerHTML='<linearGradient id="capgrad" x1="0" y1="0" x2="0" y2="1">'
+    +'<stop offset="0" stop-color="#ffffff"/><stop offset="0.55" stop-color="#f5f6fa"/><stop offset="1" stop-color="#ebedf5"/></linearGradient>'
+    +'<linearGradient id="capsel" x1="0" y1="0" x2="0" y2="1">'
+    +'<stop offset="0" stop-color="#8b7cf4"/><stop offset="1" stop-color="#5646d6"/></linearGradient>';
+  board.append(defs);
+  KEYS.forEach((k,i)=>{
+    const [sw,x,y,w=100,h=100,rot=0,rx,ry]=k;
+    const g=el("g",{class:"key","data-i":i,tabindex:0,role:"button"});
+    if(rot)g.setAttribute("transform",`rotate(${rot} ${rx} ${ry})`);
+    const r=el("rect",{class:"cap",x:x+3,y:y+3,width:w-6,height:h-6,rx:w<80?10:13});
+    g.append(r);
+    const t=el("text",{x:x+w/2,y:y+h/2+5,"text-anchor":"middle","font-size":w<80?13:16});
+    g.append(t);
+    const s=el("text",{class:"mini",x:x+w-9,y:y+h-9,"text-anchor":"end","font-size":7.5});
+    s.textContent=sw; g.append(s);
+    g.addEventListener("click",()=>select(i));
+    g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();select(i);}});
+    g.addEventListener("mouseenter",()=>{
+      document.getElementById("hoverinfo").textContent=
+        `${sw} · POS ${String(i).padStart(2,"0")} · X${x} Y${y}${rot?` · ROT ${rot}°`:""}`;
+    });
+    g.addEventListener("mouseleave",()=>{document.getElementById("hoverinfo").textContent="";});
+    board.append(g);
+  });
+}
+function refreshKeys(){
+  board.querySelectorAll(".key").forEach(g=>{
+    const i=+g.dataset.i;
+    const t=g.querySelector("text");
+    t.textContent=legend((curKm()[layer]||[])[i]||"&trans");
+    const long=t.textContent.length;
+    t.setAttribute("font-size",(KEYS[i][3]||100)<80?11:(long>4?11:long>2?13:16));
+    g.classList.toggle("sel",i===sel);
+    g.classList.toggle("combo-pick",!!(comboCapture&&comboCapture.keys.includes(i)));
+    if(LIVE.on){ g.classList.toggle("edited",LIVE.dirty.has(layer+":"+i)); }
+    else{
+      const ref=layer<SHIPPED.layers.length?SHIPPED.layers[layer][i]:"&trans";
+      g.classList.toggle("edited",km[layer][i]!==ref);
+    }
+  });
+  const hint=document.getElementById("edithint");
+  if(hint)hint.textContent=LIVE.on
+    ?`● LIVE — 変更は即キーボードへ${LIVE.unsaved?"（未保存あり）":""}`
+    :`EDITS ${editCount()} · DRAFT ${editCount()?"SAVED":"—"}`;
+  renderOut();
+}
+drawDecor(); drawKeys();
+
+/* ================= inspector ================= */
+const PICK={
+ "文字":"QWERTYUIOPASDFGHJKLZXCVBNM".split("").map(c=>[c,c]),
+ "数字":["N1","N2","N3","N4","N5","N6","N7","N8","N9","N0"].map(c=>[GLYPH[c],c]),
+ "記号":["MINUS","EQUAL","LBKT","RBKT","BSLH","SEMI","SQT","GRAVE","COMMA","DOT","FSLH","AT","HASH","PRCNT","CARET","AMPS","ASTRK","LPAR","RPAR","UNDER","PLUS","EXCL","QMARK","DQT","COLON","TILDE","PIPE","DLLR"].map(c=>[GLYPH[c],c]),
+ "制御":["SPACE","ENTER","BSPC","TAB","ESC","DEL","CAPS","LANG1","LANG2","GLOBE"].map(c=>[GLYPH[c],c]),
+ "ナビ":["UP","DOWN","LEFT","RIGHT","HOME","END","PG_UP","PG_DN"].map(c=>[GLYPH[c],c]),
+ "Fキー":Array.from({length:12},(_,i)=>["F"+(i+1),"F"+(i+1)]),
+ "モッド":["LSHFT","LCTRL","LALT","LGUI"].map(c=>[GLYPH[c]+" "+c,c]),
+ "メディア":["C_VOL_UP","C_VOL_DN","C_MUTE","C_PP","C_NEXT","C_PREV","C_BRI_UP","C_BRI_DN"].map(c=>[GLYPH[c],c]),
+ "JIS":["INT4","INT5","INT2","INT1","INT3","NUHS"].map(c=>[GLYPH[c],c])
+};
+function deviceSpecials(){const a=[];devs.forEach((d,n)=>{if(d.name)a.push(["▸"+d.name,"&bt_dev"+n]);});return a;}
+function tactReco(){
+  const a=[];
+  devs.forEach((d,n)=>{if(d.name)a.push(["▸ "+d.name+"に切替","&bt_dev"+n]);});
+  if(!a.length)a.push(["BT接続先1","&bt BT_SEL 0"],["BT接続先2","&bt BT_SEL 1"],["BT接続先3","&bt BT_SEL 2"]);
+  a.push(["BT次へ","&bt BT_NXT"],["BTペア解除","&bt BT_CLR"],
+    ["アプリ用 F13","&kp F13"],["アプリ用 F14","&kp F14"],["アプリ用 F15","&kp F15"],
+    ["RESET","&sys_reset"],["UNLOCK","&studio_unlock"]);
+  return a;
+}
+const SPECIAL=[["▽ 透過","&trans"],["✕ 無効","&none"],["CLK·L","&mkp LCLK"],["CLK·R","&mkp RCLK"],["CLK·M","&mkp MCLK"],
+ ["BT接続先1","&bt BT_SEL 0"],["BT接続先2","&bt BT_SEL 1"],["BT接続先3","&bt BT_SEL 2"],["BT次へ","&bt BT_NXT"],
+ ["出力→USB","&out OUT_USB"],["出力→BLE","&out OUT_BLE"],["出力⇄切替","&out OUT_TOG"],
+ ["RESET","&sys_reset"],["BOOT","&bootloader"],["UNLOCK","&studio_unlock"],["BT消去","&bt BT_CLR"]];
+const TACT_RECO=[["BT接続先1","&bt BT_SEL 0"],["BT接続先2","&bt BT_SEL 1"],["BT接続先3","&bt BT_SEL 2"],["BT次へ","&bt BT_NXT"],["BTペア解除","&bt BT_CLR"],
+ ["アプリ用 F13","&kp F13"],["アプリ用 F14","&kp F14"],["アプリ用 F15","&kp F15"],["RESET","&sys_reset"],["UNLOCK","&studio_unlock"]];
+function layerSpecials(){
+  const a=[], L=LIVE.on?LIVE.layers.length:km.length;
+  for(let n=1;n<L;n++){a.push(["→"+layName(n),"&mo "+n]);a.push(["⇄"+layName(n),"&tog "+n]);}
+  return a;
+}
+let pickTab="文字", modState={LS:false,LC:false,LA:false,LG:false}, holdSel="none";
+
+let comboCapture=null;
+function select(i){
+  if(comboCapture){
+    const k=comboCapture.keys.indexOf(i);
+    k>=0?comboCapture.keys.splice(k,1):comboCapture.keys.push(i);
+    refreshKeys(); renderDeck(); return;
+  }
+  sel=i; renderInsp(); refreshKeys();
+}
+function setBinding(b){
+  if(LIVE.on){ if(window.liveSetBinding)window.liveSetBinding(layer,sel,b); return; }
+  pushHist(); km[layer][sel]=b; save(); renderInsp(); refreshKeys();
+}
+function applyKp(code){
+  if(arr==="jis")code=jisKey(code); // JISモード中は選んだ記号がJISホストでそのまま出るコードに変換
+  let c=code;
+  if(modState.LG)c=`LG(${c})`; if(modState.LA)c=`LA(${c})`; if(modState.LC)c=`LC(${c})`; if(modState.LS)c=`LS(${c})`;
+  if(holdSel==="none") setBinding(`&kp ${c}`);
+  else if(holdSel.startsWith("lt")) setBinding(`&lt ${holdSel.slice(2)} ${code}`);
+  else setBinding(`&mt ${holdSel} ${code}`);
+}
+function renderInsp(){
+  const box=document.getElementById("insp");
+  if(sel<0){box.innerHTML='<div class="empty"><span class="big">arare</span>キーをクリックすると<br>ここで割当を編集できます</div>';return;}
+  const k=KEYS[sel];
+  box.innerHTML=`
+    <h2>KEY EDIT <span class="pos">${k[0]} · POS ${String(sel).padStart(2,"0")} · ${LIVE.on?(LIVE.names[layer]||layName(layer))+" ●LIVE":layName(layer)}</span></h2>
+    <div class="insp-cols">
+    <div>
+      <div class="bind-now" id="bindnow"></div>
+      <div class="sec">同時修飾（タップに付与）</div>
+      <div class="modrow" id="modrow">
+        ${["LS","LC","LA","LG"].map(m=>`<button class="mod${modState[m]?" on":""}" data-m="${m}">${MODG[m]}</button>`).join("")}
+      </div>
+      <div class="sec">ホールド動作（Mod-Tap / Layer-Tap）</div>
+      <select id="holdsel">
+        <option value="none">なし（通常タップ）</option>
+        <option value="LSHFT">⇧ ホールドでShift</option>
+        <option value="LCTRL">⌃ ホールドでCtrl</option>
+        <option value="LALT">⌥ ホールドでOption</option>
+        <option value="LGUI">⌘ ホールドでCmd</option>
+        ${km.map((_,n)=>n?`<option value="lt${n}">ホールドで ${layName(n)} レイヤー</option>`:"").join("")}
+      </select>
+      <div class="sec">RAW（ZMK記法を直接入力）</div>
+      <input type="text" id="rawin" spellcheck="false" placeholder="&kp LS(LG(V)) など">
+    </div>
+    <div>
+      <div class="sec" style="margin-top:0">タップするキー</div>
+      <div class="kb-tabs" id="kbtabs">${Object.keys(PICK).map(t=>`<button class="kb-tab${t===pickTab?" on":""}" data-t="${t}">${t}</button>`).join("")}</div>
+      <div class="kb-grid" id="kbgrid"></div>
+    </div>
+    <div>
+      ${sel>=43?`<div class="sec" style="margin-top:0">タクトSW おすすめ割当</div>
+      <div class="kb-grid">${tactReco().map(([l,b])=>`<button class="kb-key" data-b="${b}" style="grid-column:span 2">${l}</button>`).join("")}</div>
+      <div class="desc" style="margin:6px 0 0;font-size:10.5px;color:var(--mute);line-height:1.55">BT＝接続先の切替。アプリ起動は F13〜F15 を割当て、Mac側でそのキーにアプリを紐づけます。<b>UNLOCKは1つ残すのがおすすめ</b>。</div>`:""}
+      <div class="sec"${sel>=43?"":' style="margin-top:0"'}>特殊割当（そのままセット）</div>
+      <div class="kb-grid">${[...deviceSpecials(),...SPECIAL,...layerSpecials()].map(([l,b])=>`<button class="kb-key" data-b="${b}" style="grid-column:span 2">${l}</button>`).join("")}</div>
+    </div>
+    </div>`;
+  box.querySelector("#bindnow").textContent=(curKm()[layer][sel]||"&trans")+"   →  "+legend(curKm()[layer][sel]||"&trans");
+  box.querySelector("#holdsel").value=holdSel;
+  box.querySelector("#holdsel").addEventListener("change",e=>{holdSel=e.target.value;});
+  box.querySelectorAll("#modrow .mod").forEach(b=>b.addEventListener("click",()=>{
+    modState[b.dataset.m]=!modState[b.dataset.m]; b.classList.toggle("on");
+  }));
+  box.querySelectorAll("#kbtabs .kb-tab").forEach(b=>b.addEventListener("click",()=>{pickTab=b.dataset.t;renderInsp();}));
+  const grid=box.querySelector("#kbgrid");
+  grid.innerHTML=PICK[pickTab].map(([l,c])=>`<button class="kb-key" data-c="${c}">${l}</button>`).join("");
+  grid.querySelectorAll(".kb-key").forEach(b=>b.addEventListener("click",()=>applyKp(b.dataset.c)));
+  box.querySelectorAll("[data-b]").forEach(b=>b.addEventListener("click",()=>setBinding(b.dataset.b)));
+  const raw=box.querySelector("#rawin");
+  raw.value=curKm()[layer][sel]||"&trans";
+  raw.addEventListener("change",()=>{const v=raw.value.trim(); if(v.startsWith("&"))setBinding(v); else toast("ZMKの割当は & で始まります");});
+}
+
+/* ================= layers（番号制・追加可能） ================= */
+function renderLayerbar(){
+  const bar=document.getElementById("layerbar");
+  if(LIVE.on){
+    bar.innerHTML=LIVE.layers.map((_,n)=>`<button class="chip${n===layer?" on":""}" data-l="${n}">${LIVE.names[n]||layName(n)}</button>`).join("")
+      +'<span class="livechip">● LIVE</span><span class="hint" id="edithint"></span>';
+    bar.querySelectorAll(".chip[data-l]").forEach(c=>c.addEventListener("click",()=>{
+      layer=+c.dataset.l; renderLayerbar(); renderInsp(); refreshKeys();
+    }));
+    return;
+  }
+  bar.innerHTML=km.map((_,n)=>`<button class="chip${n===layer?" on":""}" data-l="${n}">${layName(n)}</button>`).join("")
+    +'<div class="rail-util">'
+    +(km.length<10?'<button class="chip util" id="addlayer" title="レイヤーを追加">＋</button>':"")
+    +(km.length>1?'<button class="chip util" id="dellayer" title="最後のレイヤーを削除">－</button>':"")
+    +(km.length<10?'<button class="chip util" id="duplayer" title="表示中のレイヤーを複製">⧉</button>':"")
+    +(km.length<10&&arr!=="jis"?'<button class="chip util" id="jislayer" title="表示中のレイヤーをJIS配列用に変換して複製">JIS</button>':"")
+    +'<button class="chip util" id="resetinit" title="初期配置に戻す（確認あり）">⟲</button>'
+    +'<button class="chip util" id="undobtn" title="元に戻す（⌘Z）">↶</button>'
+    +'<button class="chip util" id="redobtn" title="やり直す（⇧⌘Z）">↷</button>'
+    +'</div><span class="hint" id="edithint"></span>';
+  bar.querySelectorAll(".chip[data-l]").forEach(c=>c.addEventListener("click",()=>{
+    layer=+c.dataset.l; renderLayerbar(); renderInsp(); refreshKeys();
+  }));
+  const add=bar.querySelector("#addlayer");
+  if(add)add.addEventListener("click",()=>{
+    pushHist(); km.push(Array(47).fill("&trans")); layer=km.length-1; save();
+    renderLayerbar(); renderInsp(); renderDeck(); refreshKeys(); toast(layName(layer)+" を追加しました（全キー ▽透過）");
+  });
+  const del=bar.querySelector("#dellayer");
+  if(del)del.addEventListener("click",()=>{
+    pushHist(); km.pop(); if(layer>=km.length)layer=km.length-1;
+    for(const k of Object.keys(encL))if(+k>=km.length)delete encL[k];
+    ["scrollLayer","autoLayer","snipeLayer"].forEach(f=>{if(dev.tb[f]>=km.length)dev.tb[f]=Math.max(1,km.length-1);});
+    save();
+    renderLayerbar(); renderInsp(); renderDeck(); refreshKeys(); toast("最後のレイヤーを削除しました");
+  });
+  const dup=bar.querySelector("#duplayer");
+  if(dup)dup.addEventListener("click",()=>{
+    pushHist(); km.push(km[layer].slice()); const src=layer; layer=km.length-1; save();
+    renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
+    toast(layName(src)+" を複製して "+layName(layer)+" を作りました");
+  });
+  const jis=bar.querySelector("#jislayer");
+  if(jis)jis.addEventListener("click",()=>{
+    pushHist(); km.push(km[layer].map(jisTranslate)); const src=layer; layer=km.length-1; save();
+    renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
+    toast(layName(src)+" をJIS配列用に変換して "+layName(layer)+" を作りました（記号キーを変換）");
+  });
+  bar.querySelector("#resetinit").addEventListener("click",confirmReset);
+  bar.querySelector("#undobtn").addEventListener("click",undo);
+  bar.querySelector("#redobtn").addEventListener("click",redo);
+}
+renderLayerbar();
+
+/* ================= 配列（US⇄JIS）の切替 — ヘッダーの menu bar から ================= */
+function renderArrTg(){
+  document.querySelectorAll("#arrtg button").forEach(b=>b.classList.toggle("on",b.dataset.a===arr));
+}
+function switchArr(v){
+  if(v===arr)return;
+  if(LIVE.on){toast("LIVE接続中は配列を切替できません（切断してから切替えてください）");return;}
+  pushHist();
+  const tr=v==="jis"?jisTranslate:usTranslate;
+  km=km.map(l=>l.map(tr));
+  arr=v; save();
+  renderArrTg(); renderLayerbar(); renderDeck(); renderInsp(); refreshKeys();
+  toast(v==="jis"
+    ?"JIS配列モードに切替えました（全レイヤーの記号キーをJISホスト向けに変換。表示は出力される記号のまま）"
+    :"US配列モードに切替えました（記号キーをUSホスト向けに戻しました）");
+}
+document.querySelectorAll("#arrtg button").forEach(b=>b.addEventListener("click",()=>switchArr(b.dataset.a)));
+renderArrTg();
+
+/* ================= 設定デッキ（かんたん/上級・プロファイル） ================= */
+function gp(path){const [g,k]=path.split(".");return dev[g][k];}
+function sp(path,v){const [g,k]=path.split(".");dev[g][k]=v;}
+function rowH(lab,small,ctl,cls){return `<div class="row${cls?" "+cls:""}"><div class="lab">${lab}${small?`<small>${small}</small>`:""}</div><div class="ctl">${ctl}</div></div>`}
+function swH(path){return `<button class="sw${gp(path)?" on":""}" data-tg="${path}" role="switch" aria-checked="${gp(path)}" aria-label="${path}"></button>`}
+function rgH(path,min,max,step,fmt){const v=gp(path);return `<input type="range" data-rg="${path}" min="${min}" max="${max}" step="${step}" value="${v}"><span class="val" data-vf="${path}">${fmt(v)}</span>`}
+function segH(path,opts){const v=gp(path);return `<span class="seg">${opts.map(([val,l])=>`<button data-sg="${path}" data-v="${val}" class="${String(v)===String(val)?"on":""}">${l}</button>`).join("")}</span>`}
+function layerSelH(path){const v=gp(path);let o="";for(let n=1;n<km.length;n++)o+=`<option value="${n}"${n===v?" selected":""}>${layName(n)}</option>`;return `<select data-sl="${path}" data-num="1">${o||'<option value="1">L1(要追加)</option>'}</select>`}
+function encSelH(attr,val,extra){let o=(extra||"")+ENC_OPTS.map(([v,l])=>`<option value="${v}"${v===val?" selected":""}>${l}</option>`).join("");
+  if(val&&!ENC_OPTS.some(([v])=>v===val))o+=`<option value="${val}" selected>${val}</option>`;
+  return `<select ${attr}>${o}</select>`}
+
+const FMT_SPD=i=>SPD[i][2], FMT_MS=v=>v+"ms", FMT_PCT=v=>v+"%", FMT_RAW=v=>v, FMT_TRIG=i=>TRIG[i]+"/回転";
+
+function renderDeck(){
+  const deck=document.getElementById("deck");
+  deck.classList.toggle("advmode",mode==="adv");
+  document.querySelectorAll("#modetg button").forEach(b=>b.classList.toggle("on",(b.dataset.m==="adv")===(mode==="adv")));
+  const t=dev.tb;
+  /* --- トラックボール --- */
+  document.getElementById("dev-tb").innerHTML=`
+    <h3>TRACKBALL <small>PAW3222 · 右手</small></h3>
+    <div class="desc">カーソルの速さ・向き・スクロールのしかた。まずはプリセットからどうぞ。</div>
+    <div class="presets basiconly">${TB_PRESETS.map((p,i)=>`<button class="preset" data-pre="${i}"><b>${p[0]}</b><span>${p[1]}</span></button>`).join("")}</div>
+    ${rowH("ポインタ速度","カーソルが動く速さ",rgH("tb.spd",0,SPD.length-1,1,FMT_SPD))}
+    ${rowH("加速度","速く回すほどカーソルが遠くへ飛ぶ",swH("accel.on"))}
+    ${dev.accel.on?rowH("　┗ 強さ","",segH("accel.preset",[["weak","弱"],["mid","中"],["strong","強"]])):""}
+    ${dev.accel.on?rowH("　┗ 基本感度","1000=1.0×",rgH("accel.sens",1000,2000,50,FMT_RAW),"adv"):""}
+    ${dev.accel.on?rowH("　┗ 最大倍率","加速の上限（1000=1.0×）",rgH("accel.maxf",1500,5000,100,FMT_RAW),"adv"):""}
+    ${dev.accel.on?rowH("　┗ 加速開始速度","counts/sec",rgH("accel.thr",100,1500,50,FMT_RAW),"adv"):""}
+    ${dev.accel.on?rowH("　┗ 最大到達速度","counts/sec",rgH("accel.smax",1500,6000,100,FMT_RAW),"adv"):""}
+    ${dev.accel.on?rowH("　┗ カーブ指数","1=直線 〜 5=急峻",rgH("accel.exp",1,5,1,FMT_RAW),"adv"):""}
+    ${rowH("スクロールモード","選んだレイヤーの間はボールがホイールになる",swH("tb.scrollOn"))}
+    ${t.scrollOn?rowH("　┗ スクロールレイヤー","",layerSelH("tb.scrollLayer")):""}
+    ${t.scrollOn?rowH("　┗ スクロール速度","",segH("tb.scrollDiv",[[4,"速"],[8,"中"],[12,"遅"]])):""}
+    ${t.scrollOn?rowH("　┗ ナチュラル方向","Macのトラックパッドと同じ向き",swH("tb.natural")):""}
+    ${t.scrollOn?`<div class="desc" style="margin:4px 0 0">慣性スクロール（なめらかに滑り続ける）はPC側アプリの領分です。Macなら <a href="https://github.com/noah-nuebling/mac-mouse-fix" target="_blank" rel="noopener">Mac Mouse Fix</a> 併用が定石。</div>`:""}
+    ${rowH("CPI（解像度）","センサーの読み取り解像度",rgH("tb.cpi",400,1600,100,FMT_RAW),"adv")}
+    ${rowH("取付向き補正","90°単位。組立後に実機で合わせる",segH("tb.rot",[[0,"0°"],[90,"90°"],[180,"180°"],[270,"270°"]]),"adv")}
+    ${rowH("X反転 / Y反転","",swH("tb.invx")+swH("tb.invy"),"adv")}
+    ${rowH("オートマウス","ボールを動かすと一時的に指定レイヤーへ",swH("tb.autoOn"),"adv")}
+    ${t.autoOn?rowH("　┗ レイヤー / 復帰時間","",layerSelH("tb.autoLayer")+rgH("tb.autoMs",300,2000,100,FMT_MS),"adv"):""}
+    ${t.autoOn?rowH("　┗ 誤発動防止","打鍵直後は発動しない猶予",rgH("tb.autoIdle",0,750,50,FMT_MS),"adv"):""}
+    ${rowH("スナイプモード","指定レイヤーの間だけ超低速で精密操作",swH("tb.snipeOn"),"adv")}
+    ${t.snipeOn?rowH("　┗ レイヤー / 減速率","",layerSelH("tb.snipeLayer")+segH("tb.snipeDiv",[[2,"1/2"],[3,"1/3"],[4,"1/4"]]),"adv"):""}
+    ${rowH("応答優先（force-awake）","反応は速くなるが電池消費が増える",swH("tb.awake"),"adv")}`;
+  /* --- エンコーダ --- */
+  let mat="";
+  if(km.length>1){
+    mat=`<table class="encmat adv"><tr><th>レイヤー別</th><th>ENC1</th><th>ENC2</th></tr>`;
+    for(let n=1;n<km.length;n++){
+      const pair=encL[n];
+      const ex=`<option value=""${pair?"":" selected"}>— L0と同じ —</option>`;
+      mat+=`<tr><td style="font-family:var(--mono)">${layName(n)}</td>
+        <td>${encSelH(`data-em="${n}:0"`,pair?pair[0]:"",ex)}</td>
+        <td>${encSelH(`data-em="${n}:1"`,pair?pair[1]:"",ex)}</td></tr>`;
+    }
+    mat+=`</table>`;
+  }
+  document.getElementById("dev-enc").innerHTML=`
+    <h3>ENCODER <small>EC12（左） / CKW12（右）</small></h3>
+    <div class="desc">回転に割り当てる操作。上級ではレイヤーごとの割当と感度も。</div>
+    ${rowH("ENC1（左）の回転","",encSelH('data-e0="1"',enc[0]))}
+    ${rowH("ENC2（右）の回転","",encSelH('data-e1="1"',enc[1]))}
+    ${rowH("感度","1回転あたりの反応回数",rgH("enc.trig",0,TRIG.length-1,1,FMT_TRIG),"adv")}
+    ${rowH("ENC1 自由入力","&inc_dec_kp 上回し 下回し",`<input type="text" data-encraw="0" value="${enc[0].replace(/"/g,"&quot;")}" style="width:200px;font-family:var(--mono);font-size:10px">`,"adv")}
+    ${rowH("ENC2 自由入力","例: &inc_dec_kp LG(C) LG(V)",`<input type="text" data-encraw="1" value="${enc[1].replace(/"/g,"&quot;")}" style="width:200px;font-family:var(--mono);font-size:10px">`,"adv")}
+    ${mat}`;
+  /* 感度sliderはTRIGのindexで持ちたいが値はtrig実値 → 表示用に変換 */
+  const trigRange=document.querySelector('[data-rg="enc.trig"]');
+  if(trigRange){trigRange.value=Math.max(0,TRIG.indexOf(dev.enc.trig)); const vf=document.querySelector('[data-vf="enc.trig"]'); if(vf)vf.textContent=dev.enc.trig+"/回転";}
+  /* --- ジョイスティック --- */
+  const cur=km[0][39];
+  const joyEx=JOY_PUSH.some(([,v])=>v===cur)?"":`<option value="${cur}" selected>${legend(cur)}（現在）</option>`;
+  document.getElementById("dev-joy").innerHTML=`
+    <h3>JOYSTICK <small>NS40-T · 左手</small></h3>
+    <div class="desc">押込ボタンはすぐ使えます。アナログ部はファームウェア実装待ち（設定は保存され、チューニングLに予約として書き出されます）。</div>
+    ${rowH("押込ボタン","スティックを押し込んだとき",`<select data-joypush="1">${joyEx}${JOY_PUSH.map(([l,v])=>`<option value="${v}"${v===cur?" selected":""}>${l}</option>`).join("")}</select>`)}
+    <div class="row"><div class="lab">アナログ操作 <span class="badge">PREVIEW</span><small>フェーズ2で有効化</small></div><div class="ctl">${segH("joy.mode",[["mouse","マウス"],["scroll","スクロール"],["arrows","矢印"]])}</div></div>
+    ${rowH("速さ","",rgH("joy.speed",1,10,1,FMT_RAW))}
+    ${rowH("デッドゾーン","中央の遊び。手ブレで動かない範囲",rgH("joy.dead",0,30,1,FMT_PCT))}
+    ${rowH("上下反転","",swH("joy.invy"))}`;
+  /* --- Mod-Tap / Layer-Tap --- */
+  document.getElementById("dev-mt").innerHTML=`
+    <h3>MOD-TAP <small>長押し判定</small></h3>
+    <div class="desc">「タップで文字・長押しで修飾キー」の切替時間。誤爆するなら長め、もたつくなら短めに。</div>
+    ${rowH("Mod-Tap 判定時間","この時間より長く押すと⇧⌃⌥⌘側になる",rgH("mt.term",120,350,10,FMT_MS))}
+    ${rowH("Layer-Tap 判定時間","ホールドでレイヤー系の判定時間",rgH("mt.ltTerm",120,350,10,FMT_MS),"adv")}`;
+  /* --- 接続（CONNECTIONS: 接続先の管理・切り替え） --- */
+  const layOpts=(cur)=>km.map((_,n)=>`<option value="${n}"${n===cur?" selected":""}>${layName(n)}</option>`).join("");
+  const devKeyRefs=(n)=>{const out=[];km.forEach((l,li)=>l.forEach((b,i)=>{if(b==="&bt_dev"+n)out.push(layName(li)+"·"+KEYS[i][0]);}));return out;};
+  const connCards=devs.map((d,n)=>{
+    const refs=devKeyRefs(n);
+    return `<div class="conn-card${d.name||refs.length?"":" idle"}">
+      <div class="cc-head">
+        <span class="cc-num">${n+1}</span>
+        <input type="text" data-devname="${n}" value="${d.name.replace(/"/g,"&quot;")}" placeholder="例: MacBook Pro">
+      </div>
+      <div class="cc-row"><span>キーマップ</span><select data-devlayer="${n}">${layOpts(d.layer)}</select></div>
+      <div class="cc-row"><span>配列</span><select data-devjis="${n}"><option value="us"${d.jis?"":" selected"}>US</option><option value="jis"${d.jis?" selected":""}>JIS</option></select></div>
+      <div class="cc-row"><span>切替キー</span><span class="cc-keys">${refs.length?refs.map(r=>`<code>${r}</code>`).join(" "):'<em>未割当</em>'}</span></div>
+      <button class="btn plain mini cc-assign" data-assigndev="${n}">選択中のキーに切替キーを割当</button>
+    </div>`;}).join("");
+  document.getElementById("dev-devices").innerHTML=`
+    <h3>接続 <small>CONNECTIONS — 接続先の管理と切り替え</small></h3>
+    <div class="conn-status">
+      <div class="cs-cell"><span>アクティブな接続</span><b>${LIVE.on?`${LIVE.device}（${LIVE.transport}）`:"未接続"}</b></div>
+      <div class="cs-cell"><span>現在の配列</span><b>${arr==="jis"?"JIS":"US"}</b></div>
+      <div class="cs-cell"><span>出力優先度</span><b>USB &gt; BLE（ZMK標準）</b></div>
+    </div>
+    <div class="desc">接続先（BTプロファイル1〜5）ごとに名前・キーマップ・配列を設定できます。「切替キー」を割当てると、実機でそのキーを押すだけで<b>接続先とキーマップが同時に切替わります</b>（Mac⇄Windows⇄iPad等）。JISの接続先には「JIS⧉」で作った変換レイヤーを割当ててください。</div>
+    <div class="conn-grid">${connCards}</div>
+    <div class="cc-row" style="margin-top:10px;border-top:1px dashed var(--line);padding-top:10px">
+      <span>出力先（USB⇄BLE）の手動切替</span>
+      <span class="cc-keys">
+        <button class="btn plain mini" data-assignout="&amp;out OUT_USB">USBへ</button>
+        <button class="btn plain mini" data-assignout="&amp;out OUT_BLE">BLEへ</button>
+        <button class="btn plain mini" data-assignout="&amp;out OUT_TOG">⇄切替</button>
+      </span>
+    </div>
+    <div class="desc" style="margin:4px 0 0">USBとBLEを同時接続しているときはUSBが優先されます。上のボタンで<b>選択中のキー</b>に出力先切替を割当てると、キー1つでBLE側へ送るよう強制できます。</div>`;
+  /* --- COMBO（同時押し） --- */
+  const comboRows=combos.map((c,i)=>`<div class="row">
+      <div class="lab">${c.keys.map(k=>legend((km[0]||[])[k]||"&trans")).join(" + ")}<small>POS ${c.keys.join(",")}</small></div>
+      <div class="ctl">
+        <input type="text" data-combobind="${i}" value="${c.binding.replace(/"/g,"&quot;")}" style="width:130px;padding:5px 7px;font-size:10.5px;font-family:var(--mono)">
+        <select data-combotime="${i}" class="adv"><option value="30"${c.timeout===30?" selected":""}>30ms</option><option value="50"${(!c.timeout||c.timeout===50)?" selected":""}>50ms</option><option value="80"${c.timeout===80?" selected":""}>80ms</option></select>
+        <button class="kb-key" data-combodel="${i}">×</button>
+      </div>
+    </div>`).join("");
+  document.getElementById("dev-combo").innerHTML=`
+    <h3>COMBO <small>同時押し</small></h3>
+    <div class="desc">2キー以上の同時押しに動作を割当（例: I+O → ESC）。動作欄はZMK記法で編集できます。</div>
+    ${comboRows||'<div class="desc">まだコンボはありません。</div>'}
+    ${comboCapture
+      ?`<div class="row"><div class="lab">キーを選択中… <b>${comboCapture.keys.length}個</b><small>上のボードでキーをクリック（もう一度で解除）</small></div>
+         <div class="ctl"><button class="btn primary mini" id="combodone">確定</button><button class="btn plain mini" id="combocancel">キャンセル</button></div></div>`
+      :'<button class="btn ghost mini" id="comboadd" style="margin-top:8px">＋ ボードでキーを選んで追加</button>'}`;
+  const ca=document.getElementById("comboadd");
+  if(ca)ca.addEventListener("click",()=>{comboCapture={keys:[]}; renderDeck(); refreshKeys(); toast("ボード上でコンボにするキーをクリックしてください");});
+  const cd=document.getElementById("combodone");
+  if(cd)cd.addEventListener("click",()=>{
+    if(comboCapture.keys.length<2){toast("2キー以上選んでください");return;}
+    pushHist(); combos.push({keys:[...comboCapture.keys].sort((a,b)=>a-b),binding:"&kp ESC",timeout:50});
+    comboCapture=null; save(); renderDeck(); refreshKeys(); renderOut();
+    toast("コンボを追加しました。動作（&kp ESC）を編集してください");
+  });
+  const cc=document.getElementById("combocancel");
+  if(cc)cc.addEventListener("click",()=>{comboCapture=null; renderDeck(); refreshKeys();});
+  document.querySelectorAll("[data-combodel]").forEach(b=>b.addEventListener("click",()=>{
+    pushHist(); combos.splice(+b.dataset.combodel,1); save(); renderDeck(); refreshKeys(); renderOut();
+  }));
+  renderProfiles();
+  hudRender();
+}
+
+/* ================= ArareHUD（メニューバー常駐アプリ）との連携 =================
+ * ArareHUD が 127.0.0.1:47800 に立てる制御サーバへ問い合わせ、
+ * メニューバーのアイコン表示をこの画面から切り替える。
+ * ローカルアプリへの接続は配信元が限られるため、公開ページ／localhost でのみ有効。 */
+const HUD_BASE="http://127.0.0.1:47800";
+const HUD_HOST_OK=["amearare54.github.io","localhost","127.0.0.1"].includes(location.hostname);
+const hud={status:"idle",menuBar:false,layerName:"",err:""};
+
+async function hudFetch(path,opt){
+  const ac=new AbortController();
+  const timer=setTimeout(()=>ac.abort(),1500);
+  try{
+    const r=await fetch(HUD_BASE+path,Object.assign({signal:ac.signal,cache:"no-store"},opt||{}));
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    return await r.json();
+  } finally { clearTimeout(timer); }
+}
+function hudApply(d){
+  hud.status="ok"; hud.menuBar=!!d.menuBar; hud.layerName=d.layerName||""; hud.err="";
+}
+async function hudProbe(silent){
+  if(!HUD_HOST_OK){hud.status="unsupported"; hudRender(); return;}
+  hud.status="probing"; hudRender();
+  try{ hudApply(await hudFetch("/state")); }
+  catch(e){ hud.status="down"; hud.err=String(e&&e.message||e); }
+  hudRender();
+  if(!silent&&hud.status==="down")toast("ArareHUD が見つかりません。アプリを起動してから再検出してください");
+}
+async function hudSetMenuBar(v){
+  try{
+    hudApply(await hudFetch("/menubar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({visible:v})}));
+    hudRender();
+    toast(v?"ArareHUD をメニューバーに表示しました":"ArareHUD をメニューバーから隠しました（この画面か、アプリを開き直すと戻せます）");
+  }catch(e){
+    hud.status="down"; hudRender();
+    toast("切り替えに失敗しました: "+(e&&e.message||e));
+  }
+}
+function hudRender(){
+  const el=document.getElementById("dev-hud");
+  if(!el)return;
+  const head=`<h3>ARARE HUD <small>レイヤーオーバーレイ</small></h3>
+    <div class="desc">キーボードの現在のレイヤー（Base / Sym / Num）を画面に重ねて表示する常駐アプリです。メニューバーのアイコンを出すかどうかをここで選べます。</div>`;
+  let body;
+  const openBtn=`<a class="btn ghost mini" href="${HUD_BASE}/" target="_blank" rel="noopener">HUDの設定を開く ↗</a>`;
+  if(hud.status==="unsupported"){
+    body=`<div class="row"><div class="lab">この画面からは直接操作できません<small>ローカルアプリへの接続が許可されていない配信元です</small></div>
+      <div class="ctl">${openBtn}</div></div>`;
+  }else if(hud.status==="ok"){
+    body=`<div class="row"><div class="lab"><span class="dot live" style="display:inline-block;margin-right:6px"></span>ArareHUD に接続済み<small>現在のレイヤー: ${hud.layerName||"—"}</small></div>
+        <div class="ctl"><button class="btn plain mini" data-hudprobe="1">再検出</button></div></div>
+      <div class="row"><div class="lab">メニューバーに表示<small>オフにするとアイコンが消えます（ここか、ArareHUD.app を開き直すと戻ります）</small></div>
+        <div class="ctl"><button class="sw${hud.menuBar?" on":""}" data-hudtg="1" role="switch" aria-checked="${hud.menuBar}" aria-label="メニューバーに表示"></button></div></div>`;
+  }else if(hud.status==="probing"){
+    body=`<div class="row"><div class="lab"><span class="dot"></span> 検出中…</div><div class="ctl"></div></div>`;
+  }else{
+    body=`<div class="row"><div class="lab"><span class="dot" style="display:inline-block;margin-right:6px"></span>ここからは接続できませんでした<small>ArareHUD が起動していないか、このブラウザがローカル接続を遮断しています</small></div>
+        <div class="ctl"><button class="btn plain mini" data-hudprobe="1">再検出</button>${openBtn}</div></div>
+      <div class="desc" style="margin:6px 0 0">「HUDの設定を開く」は ArareHUD 自身が配信するページなので、ブラウザの制限を受けずに切り替えられます。<br>
+        起動していない場合: <code style="font-family:var(--mono)">open ~/arare/tools/layer-hud/ArareHUD.app</code></div>`;
+  }
+  el.innerHTML=head+body;
+}
+
+/* デッキのイベント（委譲） */
+document.getElementById("deck").addEventListener("click",e=>{
+  if(e.target.closest("[data-hudtg]")){hudSetMenuBar(!hud.menuBar); return;}
+  if(e.target.closest("[data-hudprobe]")){hudProbe(false); return;}
+  const sw=e.target.closest(".sw[data-tg]");
+  if(sw){pushHist(); sp(sw.dataset.tg,!gp(sw.dataset.tg)); save(); renderDeck(); renderOut(); return;}
+  const sg=e.target.closest("[data-sg]");
+  if(sg){
+    pushHist(); const raw=sg.dataset.v; sp(sg.dataset.sg,isNaN(+raw)?raw:+raw);
+    if(sg.dataset.sg==="accel.preset")Object.assign(dev.accel,ACCEL_PRESETS[raw]||{});
+    save(); renderDeck(); renderOut(); return;
+  }
+  const pre=e.target.closest("[data-pre]");
+  if(pre){pushHist(); Object.assign(dev.tb,TB_PRESETS[+pre.dataset.pre][2]); save(); renderDeck(); renderOut(); toast("プリセット「"+TB_PRESETS[+pre.dataset.pre][0]+"」を適用しました"); return;}
+  const ad=e.target.closest("[data-assigndev]");
+  if(ad){
+    if(sel<0){toast("先にボード上で割当てたいキーをクリックしてください");return;}
+    const n=+ad.dataset.assigndev;
+    setBinding("&bt_dev"+n); renderDeck();
+    toast(`${layName(layer)} の ${KEYS[sel][0]} に「▸${devs[n].name||"BT"+(n+1)}」切替キーを割当てました`);
+    return;
+  }
+  const ao=e.target.closest("[data-assignout]");
+  if(ao){
+    if(sel<0){toast("先にボード上で割当てたいキーをクリックしてください");return;}
+    setBinding(ao.dataset.assignout); renderDeck();
+    toast(`${layName(layer)} の ${KEYS[sel][0]} に出力先切替（${legend(ao.dataset.assignout)}）を割当てました`);
+    return;
+  }
+});
+document.getElementById("deck").addEventListener("input",e=>{
+  const rg=e.target.closest("[data-rg]"); if(!rg)return;
+  if(!rg._histed){pushHist(); rg._histed=true;}
+  const p=rg.dataset.rg; let v=+rg.value;
+  if(p==="tb.spd"){sp(p,v);}
+  else if(p==="enc.trig"){dev.enc.trig=TRIG[v];}
+  else sp(p,v);
+  const vf=document.querySelector(`[data-vf="${p}"]`);
+  if(vf){const f={"tb.spd":FMT_SPD,"tb.autoMs":FMT_MS,"tb.autoIdle":FMT_MS,"mt.term":FMT_MS,"mt.ltTerm":FMT_MS,"joy.dead":FMT_PCT,"enc.trig":()=>dev.enc.trig+"/回転"}[p]||FMT_RAW; vf.textContent=f(v);}
+});
+document.getElementById("deck").addEventListener("change",e=>{
+  if(e.target.matches("[data-rg]")){e.target._histed=false; save(); renderOut(); return;}
+  if(e.target.matches("[data-sl]")){pushHist(); sp(e.target.dataset.sl,+e.target.value); save(); renderOut(); return;}
+  if(e.target.matches("[data-encraw]")){const v=e.target.value.trim();
+    if(!v.startsWith("&")){toast("ZMKの割当は & で始まります");return;}
+    pushHist(); enc[+e.target.dataset.encraw]=v; save(); renderDeck(); renderOut(); return;}
+  if(e.target.matches("[data-e0]")){pushHist(); enc[0]=e.target.value; save(); renderDeck(); renderOut(); return;}
+  if(e.target.matches("[data-e1]")){pushHist(); enc[1]=e.target.value; save(); renderOut(); return;}
+  if(e.target.matches("[data-joypush]")){pushHist(); km[0][39]=e.target.value; save(); refreshKeys(); renderDeck(); return;}
+  if(e.target.matches("[data-devname]")){pushHist(); devs[+e.target.dataset.devname].name=e.target.value.trim(); save(); renderDeck(); renderOut(); return;}
+  if(e.target.matches("[data-devlayer]")){pushHist(); devs[+e.target.dataset.devlayer].layer=+e.target.value; save(); renderOut(); return;}
+  if(e.target.matches("[data-devjis]")){pushHist(); devs[+e.target.dataset.devjis].jis=e.target.value==="jis"; save(); renderOut(); return;}
+  if(e.target.matches("[data-combobind]")){const v=e.target.value.trim(); if(!v.startsWith("&")){toast("ZMKの割当は & で始まります");return;} pushHist(); combos[+e.target.dataset.combobind].binding=v; save(); renderOut(); return;}
+  if(e.target.matches("[data-combotime]")){pushHist(); combos[+e.target.dataset.combotime].timeout=+e.target.value; save(); renderOut(); return;}
+  const em=e.target.closest("[data-em]");
+  if(em){
+    const [n,s]=em.dataset.em.split(":").map(Number);
+    const v=e.target.value;
+    pushHist();
+    if(v===""){delete encL[n];}
+    else{if(!encL[n])encL[n]=[enc[0],enc[1]]; encL[n][s]=v;}
+    save(); renderDeck(); renderOut(); return;
+  }
+});
+document.querySelectorAll("#modetg button").forEach(b=>b.addEventListener("click",()=>{
+  mode=b.dataset.m==="adv"?"adv":"basic"; save(); renderDeck();
+}));
+
+/* プロファイル（閲覧者ごとにブラウザ保存） */
+function getProfiles(){try{return JSON.parse(localStorage.getItem("arare-profiles"))||{};}catch(e){return{};}}
+function renderProfiles(){
+  const ps=getProfiles();
+  document.getElementById("profilebar").innerHTML=`
+    <select id="profsel"><option value="">プロファイル…</option>${Object.keys(ps).map(n=>`<option>${n}</option>`).join("")}</select>
+    <input id="profname" placeholder="名前をつけて保存">
+    <button class="btn plain" id="profsave">保存</button>
+    <button class="btn plain" id="profdel">削除</button>`;
+  document.getElementById("profsave").addEventListener("click",()=>{
+    const name=document.getElementById("profname").value.trim()||document.getElementById("profsel").value;
+    if(!name){toast("プロファイル名を入力してください");return;}
+    const ps=getProfiles(); ps[name]={km,enc,encL,dev,devs,combos,arr};
+    try{localStorage.setItem("arare-profiles",JSON.stringify(ps));}catch(e){}
+    renderProfiles(); document.getElementById("profsel").value=name;
+    toast("プロファイル「"+name+"」を保存しました（このブラウザ内）");
+  });
+  document.getElementById("profdel").addEventListener("click",()=>{
+    const name=document.getElementById("profsel").value; if(!name)return;
+    const ps=getProfiles(); delete ps[name];
+    try{localStorage.setItem("arare-profiles",JSON.stringify(ps));}catch(e){}
+    renderProfiles(); toast("プロファイル「"+name+"」を削除しました");
+  });
+  document.getElementById("profsel").addEventListener("change",e=>{
+    const p=getProfiles()[e.target.value]; if(!p)return;
+    pushHist();
+    km=JSON.parse(JSON.stringify(p.km)); enc=[...p.enc]; encL=JSON.parse(JSON.stringify(p.encL||{}));
+    devs=(p.devs&&p.devs.length===5)?JSON.parse(JSON.stringify(p.devs)):JSON.parse(JSON.stringify(DEVS_DEFAULT));
+    combos=Array.isArray(p.combos)?JSON.parse(JSON.stringify(p.combos)):[];
+    dev=JSON.parse(JSON.stringify(DEV_DEFAULT));
+    for(const g of GROUPS)if(p.dev&&p.dev[g])Object.assign(dev[g],p.dev[g]);
+    arr=p.arr==="jis"?"jis":"us";
+    if(layer>=km.length)layer=km.length-1; sel=-1; save();
+    renderArrTg(); renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
+    toast("プロファイル「"+e.target.value+"」を読み込みました");
+  });
+}
+
+/* ================= keymap 生成 ================= */
+function fmtLayer(l){
+  const out=[]; let p=0;
+  for(const n of ROWS){ out.push(km[l].slice(p,p+n).join("  ")); p+=n; }
+  return out.join("\n");
+}
+function genKeymap(){
+  const d=new Date().toISOString().slice(0,10);
+  const blocks=km.map((_,i)=>{
+    const pair=i===0?enc:encL[i];
+    return `        layer_${i} {
+            display-name = "${layName(i)}";
+            bindings = <
+${fmtLayer(i)}
+            >;${pair?`
+            sensor-bindings = <${pair[0]}>, <${pair[1]}>;`:""}
+        };`;}).join("\n\n");
+  return `/*
+ * arare keymap — arare Studio で生成（${d}）
+ * 配列: ${arr==="jis"?"JIS":"US"}ホスト向け
+ *
+ * ポジション順は arare.dtsi のコメント参照（47キー×${km.length}レイヤー）。
+ */
+
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/bt.h>
+#include <dt-bindings/zmk/outputs.h>
+#include <dt-bindings/zmk/pointing.h>
+
+${dev.mt.term!==200?`&mt { tapping-term-ms = <${dev.mt.term}>; };
+`:""}${dev.mt.ltTerm!==200?`&lt { tapping-term-ms = <${dev.mt.ltTerm}>; };
+`:""}/ {
+${genMacrosNode()}${genCombosNode()}    keymap {
+        compatible = "zmk,keymap";
+
+${blocks}
+    };
+};
+`;
+}
+/* デバイス切替マクロ（BT切替＋ベースレイヤー切替を1キーで） */
+function genMacrosNode(){
+  const used=[0,1,2,3,4].filter(n=>devs[n].name||km.some(l=>l.some(b=>b===("&bt_dev"+n))));
+  if(!used.length)return "";
+  const m=used.map(n=>`        bt_dev${n}: bt_dev${n} {${devs[n].name?`  /* ${devs[n].name}${devs[n].jis?" (JIS)":""} */`:""}
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <100>;
+            tap-ms = <5>;
+            bindings = <&bt BT_SEL ${n} &to ${devs[n].layer}>;
+        };`).join("\n");
+  return `    macros {
+${m}
+    };
+
+`;
+}
+function genCombosNode(){
+  if(!combos.length)return "";
+  const c=combos.map((cb,i)=>`        combo_${i+1} {
+            timeout-ms = <${cb.timeout||50}>;
+            key-positions = <${cb.keys.join(" ")}>;
+            bindings = <${cb.binding}>;
+        };`).join("\n");
+  return `    combos {
+        compatible = "zmk,combos";
+${c}
+    };
+
+`;
+}
+/* トラックボール＋右エンコーダ設定 → arare_tuning_R.dtsi */
+function genTuningR(){
+  const t=dev.tb, e=dev.enc, d=new Date().toISOString().slice(0,10);
+  let fl=[];
+  if(t.rot===90)fl=["INPUT_TRANSFORM_XY_SWAP","INPUT_TRANSFORM_X_INVERT"];
+  else if(t.rot===180)fl=["INPUT_TRANSFORM_X_INVERT","INPUT_TRANSFORM_Y_INVERT"];
+  else if(t.rot===270)fl=["INPUT_TRANSFORM_XY_SWAP","INPUT_TRANSFORM_Y_INVERT"];
+  const flip=f=>{const i=fl.indexOf(f); i>=0?fl.splice(i,1):fl.push(f);};
+  if(t.invx)flip("INPUT_TRANSFORM_X_INVERT");
+  if(t.invy)flip("INPUT_TRANSFORM_Y_INVERT");
+  const base=[];
+  if(fl.length)base.push(`<&zip_xy_transform (${fl.join(" | ")})>`);
+  const [mu,dv]=SPD[t.spd];
+  if(!(mu===1&&dv===1))base.push(`<&zip_xy_scaler ${mu} ${dv}>`);
+  if(t.autoOn)base.push(`<&zip_tb_auto_layer ${t.autoLayer} ${t.autoMs}>`);
+  const kids=[];
+  if(t.scrollOn){
+    const p=["<&zip_xy_to_scroll_mapper>",`<&zip_scroll_scaler 1 ${t.scrollDiv}>`];
+    if(t.natural)p.push("<&zip_scroll_transform INPUT_TRANSFORM_Y_INVERT>");
+    kids.push(`    scroller {\n        layers = <${t.scrollLayer}>;\n        input-processors = ${p.join(", ")};\n    };`);
+  }
+  if(t.snipeOn)kids.push(`    sniper {\n        layers = <${t.snipeLayer}>;\n        input-processors = <&zip_xy_scaler 1 ${t.snipeDiv}>;\n    };`);
+  const a=dev.accel;
+  if(a.on)base.unshift("<&pointer_accel>");
+  const listener=(base.length||kids.length)
+    ?`\n&trackball_listener {\n${base.length?`    input-processors = ${base.join(", ")};\n`:""}${kids.length?kids.join("\n\n")+"\n":""}};\n`
+    :"";
+  return `/* arare チューニング（右手）: トラックボール＋右エンコーダ — arare Studio 生成 ${d} */
+
+#include <input/processors.dtsi>
+#include <dt-bindings/zmk/input_transform.h>
+${a.on?"#include <behaviors/input_gestures_accel.dtsi>\n":""}
+&trackball {
+    res-cpi = <${t.cpi}>;${t.awake?"\n    force-awake;":""}
+};
+
+/ {
+    zip_tb_auto_layer: zip_tb_auto_layer {
+        compatible = "zmk,input-processor-temp-layer";
+        #input-processor-cells = <2>;
+        require-prior-idle-ms = <${t.autoIdle}>;
+    };
+};
+${listener}${a.on?`
+&pointer_accel {
+    input-type = <INPUT_EV_REL>;
+    codes = <INPUT_REL_X INPUT_REL_Y>;
+    sensitivity = <${a.sens}>;
+    max-factor = <${a.maxf}>;
+    speed-threshold = <${a.thr}>;
+    speed-max = <${a.smax}>;
+    acceleration-exponent = <${a.exp}>;
+    min-factor = <1000>;
+    sensor-dpi = <800>;
+};
+`:""}
+&right_encoder {
+    steps = <${e.steps2}>;
+};
+
+&sensors {
+    triggers-per-rotation = <${e.trig}>;
+};
+`;
+}
+/* 左エンコーダ＋ジョイスティック設定 → arare_tuning_L.dtsi */
+function genTuningL(){
+  const e=dev.enc, j=dev.joy, d=new Date().toISOString().slice(0,10);
+  return `/* arare チューニング（左手）: 左エンコーダ＋ジョイスティック — arare Studio 生成 ${d} */
+
+&left_encoder {
+    steps = <${e.steps1}>;
+};
+
+&sensors {
+    triggers-per-rotation = <${e.trig}>;
+};
+
+/* ---- ジョイスティック（アナログXY）: フェーズ2で有効化予定 ----
+ * ZMK本体のバッテリー計測とSAADC設定の衝突が解消したら実装。
+ * arare Studio の保存値:
+ *   mode=${j.mode} speed=${j.speed}/10 deadzone=${j.dead}% invert-y=${j.invy?"yes":"no"}
+ * ------------------------------------------------------------- */
+`;
+}
+const FILES=[
+ {id:"keymap",label:"arare.keymap",gen:genKeymap,path:"config/arare.keymap"},
+ {id:"tr",label:"arare_tuning_R.dtsi",gen:genTuningR,path:"config/boards/shields/arare/arare_tuning_R.dtsi"},
+ {id:"tl",label:"arare_tuning_L.dtsi",gen:genTuningL,path:"config/boards/shields/arare/arare_tuning_L.dtsi"}
+];
+let activeFile="keymap";
+function renderOut(){
+  const f=FILES.find(f=>f.id===activeFile)||FILES[0];
+  document.getElementById("ftabs").innerHTML=FILES.map(x=>
+    `<button class="ftab${x.id===f.id?" on":""}" data-f="${x.id}">${x.label}</button>`).join("");
+  document.querySelectorAll("#ftabs .ftab").forEach(b=>b.addEventListener("click",()=>{activeFile=b.dataset.f; renderOut();}));
+  document.getElementById("out").textContent=f.gen();
+  document.getElementById("copybtn").textContent=f.label+" をコピー";
+  const n=editCount();
+  document.getElementById("forgestats").innerHTML=
+    `FILES <b>3</b> / LAYERS <b>${km.length}</b> / 変更 <b>${n}</b>${n?"":" （出荷時と同一）"}`;
+}
+
+/* ================= actions ================= */
+function toast(msg){
+  const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2600);
+}
+document.getElementById("copybtn").addEventListener("click",async()=>{
+  const f=FILES.find(f=>f.id===activeFile)||FILES[0];
+  try{ await navigator.clipboard.writeText(f.gen()); toast(f.label+" をコピーしました — GitHubで全置換してください"); }
+  catch(e){
+    const ta=document.createElement("textarea"); ta.value=f.gen(); document.body.append(ta);
+    ta.select(); document.execCommand("copy"); ta.remove(); toast("コピーしました");
+  }
+});
+document.getElementById("openedit").addEventListener("click",()=>{
+  const f=FILES.find(f=>f.id===activeFile)||FILES[0];
+  window.open("https://github.com/amearare54/zmk-config-arare/edit/main/"+f.path,"_blank","noopener");
+});
+function resetAll(){
+  pushHist();
+  km=JSON.parse(JSON.stringify(SHIPPED.layers)); enc=[...SHIPPED.sensors]; layer=0;
+  dev=JSON.parse(JSON.stringify(DEV_DEFAULT)); encL={};
+  devs=JSON.parse(JSON.stringify(DEVS_DEFAULT)); combos=[]; comboCapture=null; arr="us";
+  try{localStorage.removeItem("arare-studio-draft");}catch(e){}
+  renderArrTg(); renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
+  toast("初期配置に戻しました（⌘Zで取り消せます・プロファイルは残ります）");
+}
+function confirmReset(){
+  const bg=document.createElement("div"); bg.className="modal-bg";
+  bg.innerHTML=`<div class="modal" role="dialog" aria-modal="true">
+    <h4>初期配置に戻しますか？</h4>
+    <p>キーマップ・レイヤー・デバイス設定・コンボが、最初に設定した初期配置で上書きされます。<br>
+    直後なら ⌘Z で取り消せます。保存済みプロファイルは消えません。</p>
+    <div class="btnrow">
+      <button class="btn plain" id="mCancel">キャンセル</button>
+      <button class="btn primary" id="mOk">初期配置に戻す</button>
+    </div></div>`;
+  document.body.append(bg);
+  const close=()=>{bg.remove(); removeEventListener("keydown",esc);};
+  const esc=e=>{if(e.key==="Escape")close();};
+  addEventListener("keydown",esc);
+  bg.addEventListener("click",e=>{if(e.target===bg)close();});
+  bg.querySelector("#mCancel").addEventListener("click",close);
+  bg.querySelector("#mOk").addEventListener("click",()=>{close(); resetAll();});
+  bg.querySelector("#mOk").focus();
+}
+document.getElementById("resetbtn").addEventListener("click",confirmReset);
+
+/* ================= LIVE接続バー ================= */
+const PAGES_URL="https://amearare54.github.io/zmk-config-arare/studio.html";
+function renderLink(){
+  const el=document.getElementById("linkbar");
+  const hasAPI=!!(navigator.bluetooth||navigator.serial);
+  if(!LIVE.on){
+    el.innerHTML=`<span class="st"><span class="dot"></span>OFFLINE — ファイル書き出しモード</span>
+      <span class="grow"></span>
+      ${navigator.serial?'<button class="btn ghost mini" id="cUsb">USBで接続</button>':""}
+      ${navigator.bluetooth?'<button class="btn primary mini" id="cBle">Bluetoothで接続</button>':""}
+      ${hasAPI?"":`<span class="note">この埋め込み表示では接続APIが使えません → <a href="${PAGES_URL}" target="_blank" rel="noopener">公開ページで開く</a>（Chrome/Edge推奨）</span>`}`;
+    const u=el.querySelector("#cUsb"), b=el.querySelector("#cBle");
+    if(u)u.addEventListener("click",()=>window.liveConnect&&window.liveConnect("serial"));
+    if(b)b.addEventListener("click",()=>window.liveConnect&&window.liveConnect("ble"));
+  }else{
+    el.innerHTML=`<span class="st"><span class="dot ${LIVE.locked?"lock":"live"}"></span>${LIVE.locked?"接続済み・ロック中":"LIVE"} — ${LIVE.device}（${LIVE.transport}）</span>
+      ${LIVE.locked?'<span class="note">キーボード側の <b>UNLOCK</b> キー（内側のタクトSW）を押すと編集できます</span>':""}
+      ${LIVE.unsaved?'<span class="unsaved">● 未保存の変更</span>':""}
+      <span class="grow"></span>
+      <button class="btn plain mini" id="rpctgl">RPCログ</button>
+      ${!LIVE.locked?'<button class="btn plain mini" id="cUndo">破棄</button><button class="btn save mini" id="cSave">キーボードに保存</button>':""}
+      <button class="btn ghost mini" id="cDisc">切断</button>
+      <div class="rpclog" id="rpclog" hidden></div>`;
+    el.querySelector("#cDisc").addEventListener("click",()=>window.liveDisconnect&&window.liveDisconnect());
+    const s=el.querySelector("#cSave"); if(s)s.addEventListener("click",()=>window.liveSave&&window.liveSave());
+    const dd=el.querySelector("#cUndo"); if(dd)dd.addEventListener("click",()=>window.liveDiscard&&window.liveDiscard());
+    el.querySelector("#rpctgl").addEventListener("click",()=>{const lg=document.getElementById("rpclog"); lg.hidden=!lg.hidden;});
+  }
+}
+window.__arare={
+  LIVE, renderLink, renderLayerbar, renderInsp, refreshKeys, renderDeck, toast,
+  get layer(){return layer}, set layer(v){layer=v},
+  clearSel(){sel=-1;}
+};
+renderLink();
+
+/* ================= hail ================= */
+(function(){
+  const c=document.getElementById("hail"),x=c.getContext("2d");
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches){c.remove();return;}
+  let W,H,P=[];
+  function rs(){W=c.width=innerWidth*devicePixelRatio;H=c.height=innerHeight*devicePixelRatio;
+    c.style.width=innerWidth+"px";c.style.height=innerHeight+"px";}
+  rs(); addEventListener("resize",rs);
+  /* 霰（あられ）: 白い小さな氷粒がころころ落ちる */
+  const N=Math.min(34,Math.floor(innerWidth/40));
+  for(let i=0;i<N;i++)P.push({x:Math.random(),y:Math.random(),
+    r:1.7+Math.random()*2.5,v:.85+Math.random()*.95,
+    ph:Math.random()*6.28,wob:.12+Math.random()*.22,acc:Math.random()<.1});
+  (function tick(now){
+    x.clearRect(0,0,W,H);
+    for(const p of P){
+      p.y+=p.v/240;
+      if(p.y>1.04){p.y=-.04;p.x=Math.random();}
+      const wx=Math.sin((now||0)*.0014+p.ph)*p.wob*.01;
+      const px=(p.x+wx)*W, py=p.y*H, r=p.r*devicePixelRatio;
+      /* 下の影 → 白い粒 → 縁 の3層でぷっくりした氷粒に */
+      x.beginPath(); x.arc(px, py+r*.45, r, 0, 7);
+      x.fillStyle="rgba(178,182,204,.28)"; x.fill();
+      x.beginPath(); x.arc(px, py, r, 0, 7);
+      x.fillStyle=p.acc?"rgba(199,192,248,.95)":"rgba(255,255,255,.95)"; x.fill();
+      x.strokeStyle=p.acc?"rgba(114,99,232,.4)":"rgba(158,162,184,.4)";
+      x.lineWidth=1; x.stroke();
+    }
+    requestAnimationFrame(tick);
+  })();
+})();
+
+renderDeck();
+refreshKeys();
+hudProbe(true);
+
+/* ================= 起動シーケンス（オーラリー校正 → リンク・ダイブ） ================= */
+(function(){
+  const bootEl=document.getElementById("boot");
+  if(!bootEl)return;
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches){bootEl.remove();return;}
+  const cv=document.getElementById("bootcv"), x=cv.getContext("2d");
+  const tag=document.getElementById("boottag");
+  let W,H,DPR=Math.min(2,devicePixelRatio||1);
+  function rs(){W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;x.setTransform(DPR,0,0,DPR,0,0);}
+  rs(); addEventListener("resize",rs);
+  const INK="#17181d",MUTE="#83858f",FAINT="#b6b8c2",GRID="#dcdde3",ACC="#5646d6",GROUND="#f6f6f7";
+  let seed=20260902; const rnd=()=>((seed=(seed*16807)%2147483647)/2147483647);
+  /* オーラリーの構成（決定論的に生成） */
+  const RINGS=[];
+  for(let i=0;i<9;i++)RINGS.push({r:.16+i*.115+rnd()*.03, w:i%3===2?2.2:1.1, c:i%2?GRID:FAINT,
+    dash:rnd()<.3?[1.5,5]:null, a0:rnd()*7, span:rnd()<.35?1.2+rnd()*2:Math.PI*2, sp:(rnd()-.5)*.6});
+  const ACCARC={r:.62,a0:1.1,span:1.4,w:2.6};
+  const ARMS=[];
+  for(let i=0;i<14;i++){const len=.3+rnd()*.75;
+    ARMS.push({ang:rnd()*Math.PI*2, len, w:rnd()<.25?1.8:1, no:String(i+1).padStart(2,"0"),
+      dots:[len*.35+rnd()*.2, len].concat(rnd()<.5?[len*.6]:[]), big:rnd()<.3});}
+  const DISCS=[];
+  for(let i=0;i<22;i++)DISCS.push({ang:rnd()*Math.PI*2, rr:.1+rnd()*.55, rad:4+rnd()*22, a:.05+rnd()*.14});
+  const LINES=[["PHYSICAL LAYOUT","1:1 FROM PCB"],["KEYS","47"],["BLE SPLIT","READY"],["TRACKBALL","PAW3222"],["FORGE","OK"],["SESSION LINK","▸ DIVE"]];
+  const T_DRAW=1500, T_HOLD=2300, T_END=3200;
+  const P=Array.from({length:150},()=>({ang:rnd()*Math.PI*2, r:rnd()*.5, sp:.9+rnd()*2.4,
+    w:rnd()<.15?2.4:1.2, col:rnd()<.14?ACC:(rnd()<.5?MUTE:FAINT)}));
+  const ease=a=>a<0?0:a>1?1:a*a*(3-2*a);
+  let t0=null, last=0, skipped=false;
+  bootEl.addEventListener("click",()=>{skipped=true;});
+  function frame(now){
+    if(t0===null)t0=now;
+    if(last&&now-last>400)t0+=now-last;  /* タブ非表示等の空白時間は演出を進めない */
+    last=now;
+    let t=now-t0;
+    if(skipped&&t<T_HOLD){t0=now-T_HOLD;t=T_HOLD;skipped=false;}
+    const cx=W/2, cy=H*.5, R=Math.min(W,H)*.44;
+    const pd=ease(t/T_DRAW), rot=t*.00013;
+    const dive=t<=T_HOLD?0:ease((t-T_HOLD)/(T_END-T_HOLD));
+    const scale=1+dive*dive*9;
+    x.clearRect(0,0,W,H);
+    x.fillStyle=GROUND; x.fillRect(0,0,W,H);
+    x.save(); x.translate(cx,cy); x.scale(scale,scale);
+    x.globalAlpha=1-dive;
+    /* 半透明ディスク */
+    for(const d of DISCS){const a=d.ang+rot*.4;
+      x.globalAlpha=(1-dive)*d.a*pd; x.fillStyle=MUTE;
+      x.beginPath(); x.arc(Math.cos(a)*d.rr*R,Math.sin(a)*d.rr*R,d.rad,0,7); x.fill();}
+    x.globalAlpha=1-dive;
+    /* リング */
+    RINGS.forEach((g,i)=>{const pr=ease(pd*2.2-i*.13); if(pr<=0)return;
+      x.beginPath(); x.strokeStyle=g.c; x.lineWidth=g.w;
+      if(g.dash)x.setLineDash(g.dash); else x.setLineDash([]);
+      const a0=g.a0+rot*g.sp;
+      x.arc(0,0,g.r*R,a0,a0+g.span*pr); x.stroke();});
+    x.setLineDash([]);
+    /* 差し色アーク（1本だけ紫） */
+    if(pd>.4){x.beginPath(); x.strokeStyle=ACC; x.lineWidth=ACCARC.w;
+      x.globalAlpha=(1-dive)*.75;
+      const a0=ACCARC.a0-rot*1.4;
+      x.arc(0,0,ACCARC.r*R,a0,a0+ACCARC.span*ease((pd-.4)/.6)); x.stroke();
+      x.globalAlpha=1-dive;}
+    /* アーム（放射線＋端点＋番号） */
+    x.font="9px 'IBM Plex Mono',monospace";
+    ARMS.forEach((m,i)=>{const pr=ease(pd*1.8-i*.06); if(pr<=0)return;
+      const a=m.ang+rot*.25, ca=Math.cos(a), sa=Math.sin(a), L=m.len*R*pr;
+      x.strokeStyle=INK; x.lineWidth=m.w; x.globalAlpha=(1-dive)*.85;
+      x.beginPath(); x.moveTo(ca*L*.06,sa*L*.06); x.lineTo(ca*L,sa*L); x.stroke();
+      x.fillStyle=INK;
+      m.dots.forEach(f=>{const rr2=f*R*pr, sz=(f===m.len&&m.big)?6.5:(f===m.len?3.6:2.2);
+        x.beginPath(); x.arc(ca*rr2,sa*rr2,sz,0,7); x.fill();});
+      if(pr>.95){x.fillStyle=MUTE; x.globalAlpha=(1-dive)*.9;
+        x.fillText(m.no, ca*(L+11)-6, sa*(L+11)+3);}
+      x.globalAlpha=1-dive;});
+    /* 中心 */
+    x.beginPath(); x.strokeStyle=INK; x.lineWidth=1.2; x.arc(0,0,R*.045,0,7); x.stroke();
+    /* LINKパルス（ダイブ直前） */
+    const pt=(t-(T_HOLD-420))/420;
+    if(pt>0&&pt<1){x.beginPath(); x.strokeStyle=ACC; x.globalAlpha=(1-pt)*.8;
+      x.lineWidth=2; x.arc(0,0,R*.045+pt*R*.3,0,7); x.stroke(); x.globalAlpha=1-dive;}
+    x.restore();
+    /* ダイブ粒子（視界を流れ去る） */
+    if(dive>0){
+      for(const p of P){
+        const rr=(p.r+dive*p.sp)*Math.max(W,H)*.8;
+        const rr2=rr+(26+150*dive)*p.sp;
+        const ca=Math.cos(p.ang), sa=Math.sin(p.ang);
+        x.globalAlpha=Math.min(1,dive*2.5)*.9; x.strokeStyle=p.col; x.lineWidth=p.w;
+        x.beginPath(); x.moveTo(cx+ca*rr,cy+sa*rr); x.lineTo(cx+ca*rr2,cy+sa*rr2); x.stroke();
+      }
+      x.globalAlpha=1;
+    }
+    /* ブートログ */
+    const n=Math.min(LINES.length,Math.floor(t/(T_HOLD/LINES.length))+(t>60?1:0));
+    tag.innerHTML=LINES.slice(0,n).map(([k,v])=>k.padEnd(17,"·")+" <b>"+v+"</b>").join("\n");
+    bootEl.style.opacity=String(1-dive);
+    if(t>=T_END){bootEl.remove();return;}
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+
+<script type="module">
+/* ================= LIVE エンジン（ZMK Studio公式プロトコル） =================
+ * @zmkfirmware/zmk-studio-ts-client を使用。BLE GATT / USBシリアル両対応。 */
+const A=window.__arare, LIVE=A.LIVE;
+const CDN="https://cdn.jsdelivr.net/npm/@zmkfirmware/zmk-studio-ts-client@0.0.18";
+function log(...a){
+  const el=document.getElementById("rpclog");
+  const s=a.map(x=>typeof x==="string"?x:JSON.stringify(x)).join(" ");
+  if(el){el.textContent+=s+"\n"; el.scrollTop=el.scrollHeight;}
+}
+function rerender(){A.renderLink();A.renderLayerbar();A.renderInsp();A.refreshKeys();A.renderDeck();}
+
+/* --- ZMKキーコードのエンコード/デコード --- */
+const KEYPAGE=0x07,CONSPAGE=0x0C;
+const U={A:4,B:5,C:6,D:7,E:8,F:9,G:10,H:11,I:12,J:13,K:14,L:15,M:16,N:17,O:18,P:19,Q:20,R:21,S:22,T:23,U:24,V:25,W:26,X:27,Y:28,Z:29,
+N1:30,N2:31,N3:32,N4:33,N5:34,N6:35,N7:36,N8:37,N9:38,N0:39,
+ENTER:40,ESC:41,BSPC:42,TAB:43,SPACE:44,MINUS:45,EQUAL:46,LBKT:47,RBKT:48,BSLH:49,SEMI:51,SQT:52,GRAVE:53,COMMA:54,DOT:55,FSLH:56,CAPS:57,
+F1:58,F2:59,F3:60,F4:61,F5:62,F6:63,F7:64,F8:65,F9:66,F10:67,F11:68,F12:69,
+HOME:74,PG_UP:75,DEL:76,END:77,PG_DN:78,RIGHT:79,LEFT:80,DOWN:81,UP:82,
+F13:104,F14:105,F15:106,F16:107,F17:108,F18:109,F19:110,
+LANG1:0x90,LANG2:0x91,LCTRL:224,LSHFT:225,LALT:226,LGUI:227,RCTRL:228,RSHFT:229,RALT:230,RGUI:231};
+const SHIFTED={EXCL:"N1",AT:"N2",HASH:"N3",DLLR:"N4",PRCNT:"N5",CARET:"N6",AMPS:"N7",ASTRK:"N8",LPAR:"N9",RPAR:"N0",UNDER:"MINUS",PLUS:"EQUAL",LBRC:"LBKT",RBRC:"RBKT",PIPE:"BSLH",COLON:"SEMI",DQT:"SQT",TILDE:"GRAVE",QMARK:"FSLH"};
+const CONS_U={C_VOL_UP:0xE9,C_VOL_DN:0xEA,C_MUTE:0xE2,C_PP:0xCD,C_NEXT:0xB5,C_PREV:0xB6,C_BRI_UP:0x6F,C_BRI_DN:0x70};
+const MODBIT={LC:0x01,LS:0x02,LA:0x04,LG:0x08,RC:0x10,RS:0x20,RA:0x40,RG:0x80};
+function encKey(name){
+  let mods=0,m;
+  while((m=name.match(/^(LS|LC|LA|LG|RS|RC|RA|RG)\((.+)\)$/))){mods|=MODBIT[m[1]];name=m[2];}
+  if(SHIFTED[name]!==undefined){mods|=MODBIT.LS;name=SHIFTED[name];}
+  if(U[name]!==undefined)return ((mods<<24)|(KEYPAGE<<16)|U[name])>>>0;
+  if(CONS_U[name]!==undefined)return ((mods<<24)|(CONSPAGE<<16)|CONS_U[name])>>>0;
+  return null;
+}
+const RU=Object.fromEntries(Object.entries(U).map(([k,v])=>[v,k]));
+const RCONS=Object.fromEntries(Object.entries(CONS_U).map(([k,v])=>[v,k]));
+const RSHIFT=Object.fromEntries(Object.entries(SHIFTED).map(([k,v])=>[v,k]));
+function decKey(p){
+  let mods=(p>>>24)&0xFF; const page=(p>>>16)&0xFF, id=p&0xFFFF;
+  let name=page===KEYPAGE?RU[id]:page===CONSPAGE?RCONS[id]:null;
+  if(name==null)return null;
+  if((mods&MODBIT.LS)&&RSHIFT[name]){name=RSHIFT[name];mods&=~MODBIT.LS;}
+  for(const [k,b] of Object.entries(MODBIT))if(mods&b)name=`${k}(${name})`;
+  return name;
+}
+
+/* --- 挙動(behavior)マップ: displayName → 当アプリの記法 --- */
+const NAME_MATCH=[["&studio_unlock","studio unlock"],["&bootloader","bootloader"],["&sys_reset","reset"],
+ ["&kp","key press"],["&mt","mod-tap"],["&lt","layer tap"],["&mo","momentary layer"],["&tog","toggle layer"],["&to","to layer"],
+ ["&trans","transparent"],["&none","none"],["&mkp","mouse button"],["&bt","bluetooth"],["&out","output"]];
+let B={},BID={}; // B["&kp"]=id / BID[id]={key,displayName}
+
+let call=null, transport=null, notifAbort=null;
+async function rpc(req){
+  const r=await call(req);
+  log("→ "+JSON.stringify(req).slice(0,120)+"  ← "+JSON.stringify(r).slice(0,160));
+  return r;
+}
+async function connect(kind){
+  try{
+    const core=await import(CDN+"/+esm");
+    const tr=await import(CDN+"/transport/"+(kind==="ble"?"gatt":"serial")+"/+esm");
+    transport=await tr.connect();
+    const conn=core.create_rpc_connection(transport);
+    call=(req)=>core.call_rpc(conn,req);
+    LIVE.transport=kind==="ble"?"Bluetooth":"USB";
+    const info=await rpc({core:{getDeviceInfo:true}});
+    LIVE.device=info.core?.getDeviceInfo?.name||"ZMK device";
+    LIVE.on=true;
+    const ls=await rpc({core:{getLockState:true}});
+    LIVE.locked=(ls.core?.getLockState!==1);
+    if(!LIVE.locked)await hydrate();
+    A.layer=0; A.clearSel(); rerender();
+    A.toast(LIVE.locked?"接続しました。キーボードのUNLOCKキーを押してください":"接続しました — LIVE編集モード");
+    watchNotifications(conn);
+  }catch(e){
+    console.error(e); log("ERR "+(e&&e.message||e));
+    A.toast("接続できませんでした: "+(e&&e.message||e));
+    LIVE.on=false; rerender();
+  }
+}
+async function watchNotifications(conn){
+  try{
+    const reader=conn.notification_readable.getReader();
+    for(;;){
+      const {done,value}=await reader.read();
+      if(done)break;
+      log("通知 "+JSON.stringify(value).slice(0,120));
+      const lsc=value.core?.lockStateChanged;
+      if(lsc!==undefined){
+        LIVE.locked=(lsc!==1);
+        if(!LIVE.locked)await hydrate();
+        A.layer=0; A.clearSel(); rerender();
+        A.toast(LIVE.locked?"ロックされました":"ロック解除 — LIVE編集モード");
+      }
+    }
+  }catch(e){ log("通知ストリーム終了 "+(e&&e.message||e)); disconnected(); }
+}
+async function hydrate(){
+  B={};BID={};
+  const lb=await rpc({behaviors:{listAllBehaviors:true}});
+  const ids=lb.behaviors?.listAllBehaviors?.behaviors||[];
+  for(const id of ids){
+    const d=await call({behaviors:{getBehaviorDetails:{behaviorId:id}}});
+    const dn=(d.behaviors?.getBehaviorDetails?.displayName||"").toLowerCase();
+    for(const [key,pat] of NAME_MATCH){
+      if(B[key]===undefined && dn.includes(pat)){B[key]=id; break;}
+    }
+    BID[id]=d.behaviors?.getBehaviorDetails?.displayName||("#"+id);
+  }
+  log("behaviors: "+JSON.stringify(B));
+  const kr=await rpc({keymap:{getKeymap:true}});
+  const layers=kr.keymap?.getKeymap?.layers||[];
+  LIVE.layerIds=layers.map(l=>l.id);
+  LIVE.names=layers.map((l,i)=>l.name||("L"+i));
+  LIVE.layers=layers.map(l=>(l.bindings||[]).map(decodeBinding));
+  LIVE.dirty.clear();
+  const us=await rpc({keymap:{checkUnsavedChanges:true}});
+  LIVE.unsaved=!!us.keymap?.checkUnsavedChanges;
+}
+function decodeBinding(b){
+  const key=Object.keys(B).find(k=>B[k]===b.behaviorId);
+  const p1=b.param1>>>0, p2=b.param2>>>0;
+  switch(key){
+    case "&kp":{const n=decKey(p1); return n?"&kp "+n:rawBind(b);}
+    case "&mt":{const a=decKey(p1),c=decKey(p2); return a&&c?`&mt ${a} ${c}`:rawBind(b);}
+    case "&lt":{const c=decKey(p2); return c?`&lt ${p1} ${c}`:rawBind(b);}
+    case "&mo":return "&mo "+p1;
+    case "&tog":return "&tog "+p1;
+    case "&to":return "&to "+p1;
+    case "&trans":return "&trans";
+    case "&none":return "&none";
+    case "&mkp":return "&mkp "+({1:"LCLK",2:"RCLK",4:"MCLK"}[p1]||p1);
+    case "&sys_reset":return "&sys_reset";
+    case "&bootloader":return "&bootloader";
+    case "&studio_unlock":return "&studio_unlock";
+    case "&bt":return p1===3?("&bt BT_SEL "+p2):p1===0?"&bt BT_CLR":p1===1?"&bt BT_NXT":p1===2?"&bt BT_PRV":rawBind(b);
+    case "&out":return p1===0?"&out OUT_TOG":p1===1?"&out OUT_USB":p1===2?"&out OUT_BLE":rawBind(b);
+    default:return rawBind(b);
+  }
+}
+function rawBind(b){return `#${b.behaviorId}(${b.param1},${b.param2})`;}
+function encodeBinding(s){
+  let m;
+  if(s==="&trans"&&B["&trans"]!=null)return {behaviorId:B["&trans"],param1:0,param2:0};
+  if(s==="&none"&&B["&none"]!=null)return {behaviorId:B["&none"],param1:0,param2:0};
+  if(s==="&sys_reset"&&B["&sys_reset"]!=null)return {behaviorId:B["&sys_reset"],param1:0,param2:0};
+  if(s==="&bootloader"&&B["&bootloader"]!=null)return {behaviorId:B["&bootloader"],param1:0,param2:0};
+  if(s==="&studio_unlock"&&B["&studio_unlock"]!=null)return {behaviorId:B["&studio_unlock"],param1:0,param2:0};
+  if((m=s.match(/^&kp (.+)$/))&&B["&kp"]!=null){const c=encKey(m[1]); if(c!=null)return {behaviorId:B["&kp"],param1:c,param2:0};}
+  if((m=s.match(/^&mo (\d+)$/))&&B["&mo"]!=null)return {behaviorId:B["&mo"],param1:+m[1],param2:0};
+  if((m=s.match(/^&tog (\d+)$/))&&B["&tog"]!=null)return {behaviorId:B["&tog"],param1:+m[1],param2:0};
+  if((m=s.match(/^&mt (\S+) (.+)$/))&&B["&mt"]!=null){const a=encKey(m[1]),c=encKey(m[2]); if(a!=null&&c!=null)return {behaviorId:B["&mt"],param1:a,param2:c};}
+  if((m=s.match(/^&lt (\d+) (.+)$/))&&B["&lt"]!=null){const c=encKey(m[2]); if(c!=null)return {behaviorId:B["&lt"],param1:+m[1],param2:c};}
+  if((m=s.match(/^&mkp (\w+)$/))&&B["&mkp"]!=null){const btn={LCLK:1,RCLK:2,MCLK:4}[m[1]]; if(btn)return {behaviorId:B["&mkp"],param1:btn,param2:0};}
+  if((m=s.match(/^&bt BT_SEL (\d)$/))&&B["&bt"]!=null)return {behaviorId:B["&bt"],param1:3,param2:+m[1]};
+  if(s==="&bt BT_CLR"&&B["&bt"]!=null)return {behaviorId:B["&bt"],param1:0,param2:0};
+  if(s==="&bt BT_NXT"&&B["&bt"]!=null)return {behaviorId:B["&bt"],param1:1,param2:0};
+  if(s==="&bt BT_PRV"&&B["&bt"]!=null)return {behaviorId:B["&bt"],param1:2,param2:0};
+  if(s==="&out OUT_TOG"&&B["&out"]!=null)return {behaviorId:B["&out"],param1:0,param2:0};
+  if(s==="&out OUT_USB"&&B["&out"]!=null)return {behaviorId:B["&out"],param1:1,param2:0};
+  if(s==="&out OUT_BLE"&&B["&out"]!=null)return {behaviorId:B["&out"],param1:2,param2:0};
+  return null;
+}
+window.liveConnect=connect;
+window.liveSetBinding=async(layer,pos,s)=>{
+  if(LIVE.locked){A.toast("ロック中です。キーボードのUNLOCKキーを押してください");return;}
+  const b=encodeBinding(s);
+  if(!b){A.toast("この割当はLIVEモード未対応です: "+s);return;}
+  try{
+    const r=await rpc({keymap:{setLayerBinding:{layerId:LIVE.layerIds[layer],keyPosition:pos,binding:b}}});
+    const code=r.keymap?.setLayerBinding;
+    if(code===0){
+      liveHist.push({layer,pos,old:LIVE.layers[layer][pos]}); if(liveHist.length>80)liveHist.shift();
+      LIVE.layers[layer][pos]=s; LIVE.dirty.add(layer+":"+pos); LIVE.unsaved=true;
+      A.renderInsp(); A.refreshKeys(); A.renderLink();
+    }else{
+      A.toast("キーボードが割当を拒否しました (code "+code+")");
+    }
+  }catch(e){A.toast("送信エラー: "+(e&&e.message||e));}
+};
+const liveHist=[];
+window.liveUndo=async()=>{
+  const h=liveHist.pop();
+  if(!h){A.toast("戻せるLIVE操作がありません");return;}
+  const b=encodeBinding(h.old);
+  if(!b){A.toast("この割当はLIVEで戻せません: "+h.old);return;}
+  try{
+    const r=await rpc({keymap:{setLayerBinding:{layerId:LIVE.layerIds[h.layer],keyPosition:h.pos,binding:b}}});
+    if(r.keymap?.setLayerBinding===0){
+      LIVE.layers[h.layer][h.pos]=h.old; LIVE.dirty.delete(h.layer+":"+h.pos);
+      A.renderInsp(); A.refreshKeys(); A.renderLink(); A.toast("1つ戻しました ↶（キーボードに送信済み）");
+    }
+  }catch(e){A.toast("undo送信エラー: "+(e&&e.message||e));}
+};
+window.liveSave=async()=>{
+  try{await rpc({keymap:{saveChanges:true}}); LIVE.unsaved=false; LIVE.dirty.clear();
+    A.renderLink(); A.refreshKeys(); A.toast("キーボードに保存しました（電源を切っても残ります）");}
+  catch(e){A.toast("保存エラー: "+(e&&e.message||e));}
+};
+window.liveDiscard=async()=>{
+  try{await rpc({keymap:{discardChanges:true}}); await hydrate(); rerender(); A.toast("変更を破棄しました");}
+  catch(e){A.toast("破棄エラー: "+(e&&e.message||e));}
+};
+function disconnected(){
+  LIVE.on=false; LIVE.layers=[]; LIVE.names=[]; LIVE.dirty.clear(); LIVE.unsaved=false;
+  A.layer=0; A.clearSel(); rerender();
+}
+window.liveDisconnect=()=>{
+  try{transport&&transport.abortController.abort("user disconnect");}catch(e){}
+  disconnected(); A.toast("切断しました");
+};
+</script>
+
+<a id="arare-sitelink" href="./" style="position:fixed;left:14px;bottom:14px;z-index:2147483000;display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border:1px solid rgba(128,128,140,.45);border-radius:2px;background:rgba(255,255,255,.92);color:#0E0E12;text-decoration:none;font:400 11px/1 'IBM Plex Mono',ui-monospace,monospace;letter-spacing:.14em;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)">← MANUAL</a>
