@@ -32,17 +32,6 @@
 
 LOG_MODULE_REGISTER(arare_battery_led, CONFIG_ZMK_LOG_LEVEL);
 
-/* --- 一時的な検証（このコミットは戻す）---
- * ジョイスティックの経路が本当に有効になっているかを、コンパイルを落とすことで確かめる。
- * 左手だけが落ちれば「ノードがokay」「ドライバが有効」「入力転送が有効」の3つが同時に成立している。 */
-#if IS_ENABLED(CONFIG_ZMK_INPUT_SPLIT) && IS_ENABLED(CONFIG_ANALOG_INPUT) &&                       \
-    DT_NODE_HAS_STATUS(DT_NODELABEL(joystick), okay) &&                                            \
-    DT_NODE_HAS_STATUS(DT_NODELABEL(joystick_split), okay)
-#error "VERIFY-MARKER: ジョイスティックの経路が有効"
-#endif
-
-
-
 #define LED_RED_NODE   DT_ALIAS(led0)
 #define LED_BLUE_NODE  DT_ALIAS(led1)
 #define LED_GREEN_NODE DT_ALIAS(led2)
