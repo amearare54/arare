@@ -281,7 +281,7 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
 }
 #arare-intro.gone{opacity:0; transition:opacity .18s linear; pointer-events:none}
 #arare-intro /* JS が落ちても 9 秒で必ず本文へ通す（通常は JS が先に DOM から外す） */
-#arare-intro{animation:arareIntroFailsafe 15s steps(1,end) forwards}
+#arare-intro{animation:arareIntroFailsafe 17s steps(1,end) forwards}
 @keyframes arareIntroFailsafe{#arare-intro to{opacity:0;visibility:hidden;pointer-events:none}}
 #arare-intro.still{animation:none}
 #arare-intro #stage{width:100%; height:100%; display:block}
@@ -627,10 +627,11 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
 <g class="part rhand" id="wheel" transform="translate(903.0 217.5)">
 <path class="thin" d="M-45.0,-53.0 h89.9 a8.0,8.0 0 0 1 8.0,8.0 v89.9 a8.0,8.0 0 0 1 -8.0,8.0 h-89.9 a8.0,8.0 0 0 1 -8.0,-8.0 v-89.9 a8.0,8.0 0 0 1 8.0,-8.0 Z"/>
 <g class="roll"><path class="cap" d="M-17.5,-37.9 h35.0 a9.0,9.0 0 0 1 9.0,9.0 v57.8 a9.0,9.0 0 0 1 -9.0,9.0 h-35.0 a9.0,9.0 0 0 1 -9.0,-9.0 v-57.8 a9.0,9.0 0 0 1 9.0,-9.0 Z"/>
-<line class="thin" x1="-22.5" y1="-22.7" x2="22.5" y2="-22.7"/>
-<line class="thin" x1="-22.5" y1="-7.6" x2="22.5" y2="-7.6"/>
-<line class="thin" x1="-22.5" y1="7.6" x2="22.5" y2="7.6"/>
-<line class="thin" x1="-22.5" y1="22.7" x2="22.5" y2="22.7"/>
+<line class="thin" x1="-23.5" y1="-25.3" x2="23.5" y2="-25.3"/>
+<line class="thin" x1="-23.5" y1="-12.6" x2="23.5" y2="-12.6"/>
+<line class="thin" x1="-23.5" y1="0.0" x2="23.5" y2="0.0"/>
+<line class="thin" x1="-23.5" y1="12.6" x2="23.5" y2="12.6"/>
+<line class="thin" x1="-23.5" y1="25.3" x2="23.5" y2="25.3"/>
 </g></g>
 <g class="part rhand" id="ball" transform="translate(1219.2 438.6)">
 <circle class="cap" r="56.2"/><g class="spin"><circle class="thin" cx="-16.9" cy="-16.9" r="16.9"/></g></g></g>
@@ -2052,7 +2053,7 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
   }
 
   /* ── 再生 ── */
-  var rate = mode === 'short' ? 1.9 : 0.60;
+  var rate = mode === 'short' ? 1.9 : 0.49;
   anims.forEach(function (o) {
     if (o.a.updatePlaybackRate) o.a.updatePlaybackRate(rate); else o.a.playbackRate = rate;
     o.a.play();
@@ -2074,7 +2075,7 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
   }
   document.documentElement.style.overflow = 'hidden';
   setTimeout(finish, ms(T.end + 0.35) / rate);
-  setTimeout(finish, 11500);
+  setTimeout(finish, 13500);
   ['click', 'keydown', 'wheel', 'touchstart'].forEach(function (ev) {
     addEventListener(ev, finish, { once: true, passive: true });
   });
