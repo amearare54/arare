@@ -1837,9 +1837,8 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
   var q = new URLSearchParams(location.search);
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   var wide = innerWidth >= 900;
-  var seen = false;
-  try { seen = !!localStorage.getItem('arare.intro'); } catch (e) {}
-  var mode = q.get('entry') || (reduce ? 'still' : (seen ? 'short' : 'full'));
+  /* 何度目の訪問でも同じ長さで再生する（短縮版は持たない） */
+  var mode = q.get('entry') || (reduce ? 'still' : 'full');
   if (q.get('entry') === 'off' || (location.hash && !q.get('entry'))) mode = 'off';
   if (!q.get('entry') && document.visibilityState === 'hidden') mode = 'off';
   if (mode === 'off') { root.remove(); return; }
@@ -2050,7 +2049,6 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
         if (root && root.parentNode) root.parentNode.removeChild(root);
         document.dispatchEvent(new CustomEvent('arare:intro-done'));
       }, 220);
-      try { localStorage.setItem('arare.intro', '1'); } catch (e) {}
     };
     var b = document.getElementById('skip');
     if (b) { b.textContent = '本文へ進む'; b.addEventListener('click', leave); b.focus({ preventScroll: true }); }
@@ -2061,13 +2059,11 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
   }
 
   /* ── 再生 ── */
-  var rate = mode === 'short' ? 1.9 : 0.98;
+  var rate = 0.98;
   anims.forEach(function (o) {
     if (o.a.updatePlaybackRate) o.a.updatePlaybackRate(rate); else o.a.playbackRate = rate;
     o.a.play();
   });
-  if (mode === 'short') $('#gengo').style.display = 'none';
-
   var done = false;
   function finish() {
     if (done) return; done = true;
@@ -2079,7 +2075,6 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
       if (root && root.parentNode) root.parentNode.removeChild(root);
       document.dispatchEvent(new CustomEvent('arare:intro-done'));
     }, 220);
-    try { localStorage.setItem('arare.intro', '1'); } catch (e) {}
   }
   document.documentElement.style.overflow = 'hidden';
   setTimeout(finish, ms(T.end + 0.35) / rate);
@@ -2102,7 +2097,6 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
   var b = document.getElementById('replay');
   if (!b) return;
   b.addEventListener('click', function () {
-    try { localStorage.removeItem('arare.intro'); } catch (e) {}
     location.href = location.pathname + '?entry=full';
   });
 })();
