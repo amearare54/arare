@@ -742,14 +742,15 @@ function el(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAt
 function drawDecor(){
   // トラックボール(右)・ジョイスティック(左)・エンコーダリング・照準
   const g=el("g",{});
-  // トラックボール: 実基板の座標から算出。KiCad(92.9, 88.2)mm ＝ ケース設計のボール中心。
-  // 変換 units=(mm-offset)*100/17、右基板 offset=(-93.126, 17.027)mm（回転なしキー20個でフィット・残差0.2mm以下）
-  // 外側の破線=ボールø25(r=73.5) / 内側=カップ底開口ø17.2(r=50.6)
-  const TB={x:1094,y:419};
-  const tb=el("circle",{cx:TB.x,cy:TB.y,r:73.5,class:"deco deco-accent","stroke-dasharray":"4 5"});
+  // トラックボール: 現行の3Dモデル正データ ~/arare/tools/colorsim/arare_data.json の
+  // trackball center=[88.5,-91.5,3.4] / bbox 19.1mm角（Y符号は3D系。KiCadでは +91.5）。
+  // 変換 units=(mm-offset)*100/17、右基板 offset=(-93.126, 17.027)mm
+  // ※ケース設計ノートの ø25・(92.9,88.2) は2026-07-09のv1で、その後19mmへ変更されている（旧値を使わないこと）
+  const TB={x:1068,y:438,r:56.2};
+  const tb=el("circle",{cx:TB.x,cy:TB.y,r:TB.r,class:"deco deco-accent","stroke-dasharray":"4 5"});
   g.append(tb);
-  g.append(el("circle",{cx:TB.x,cy:TB.y,r:50.6,class:"deco"}));
-  const tbl=el("text",{x:TB.x,y:TB.y+5,class:"deco-label","text-anchor":"middle"});tbl.textContent="TRACKBALL";g.append(tbl);
+  const tbl=el("text",{x:TB.x,y:TB.y+4,class:"deco-label","text-anchor":"middle","font-size":9});
+  tbl.textContent="TRACKBALL";g.append(tbl);
   g.append(el("circle",{cx:561,cy:220,r:34,class:"deco"}));
   g.append(el("circle",{cx:753,cy:220,r:34,class:"deco deco-accent"}));
   const j=el("circle",{cx:590,cy:443,r:30,class:"deco","stroke-dasharray":"2 4"});g.append(j);
