@@ -30,8 +30,6 @@
 #include <zmk/events/usb_conn_state_changed.h>
 #endif
 
-#error "VERIFY-MARKER: battery_led.c がコンパイルされている"
-
 LOG_MODULE_REGISTER(arare_battery_led, CONFIG_ZMK_LOG_LEVEL);
 
 #define LED_RED_NODE   DT_ALIAS(led0)
