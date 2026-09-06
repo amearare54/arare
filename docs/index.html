@@ -859,7 +859,7 @@ const PICK={
  "記号":["MINUS","EQUAL","LBKT","RBKT","BSLH","SEMI","SQT","GRAVE","COMMA","DOT","FSLH","AT","HASH","PRCNT","CARET","AMPS","ASTRK","LPAR","RPAR","UNDER","PLUS","EXCL","QMARK","DQT","COLON","TILDE","PIPE","DLLR"].map(c=>[GLYPH[c],c]),
  "制御":["SPACE","ENTER","BSPC","TAB","ESC","DEL","CAPS","LANG1","LANG2","GLOBE"].map(c=>[GLYPH[c],c]),
  "ナビ":["UP","DOWN","LEFT","RIGHT","HOME","END","PG_UP","PG_DN"].map(c=>[GLYPH[c],c]),
- "Fキー":Array.from({length:12},(_,i)=>["F"+(i+1),"F"+(i+1)]),
+ "Fキー":Array.from({length:19},(_,i)=>["F"+(i+1),"F"+(i+1)]),   /* F13〜F19はMacの既定で未使用＝アプリ起動に向く */
  "モッド":["LSHFT","LCTRL","LALT","LGUI"].map(c=>[GLYPH[c]+" "+c,c]),
  "メディア":["C_VOL_UP","C_VOL_DN","C_MUTE","C_PP","C_NEXT","C_PREV","C_BRI_UP","C_BRI_DN"].map(c=>[GLYPH[c],c]),
  "JIS":["INT4","INT5","INT2","INT1","INT3","NUHS"].map(c=>[GLYPH[c],c])
@@ -870,7 +870,7 @@ function tactReco(){
   devs.forEach((d,n)=>{if(d.name)a.push(["▸ "+d.name+"に切替","&bt_dev"+n]);});
   if(!a.length)a.push(["BT接続先1","&bt BT_SEL 0"],["BT接続先2","&bt BT_SEL 1"],["BT接続先3","&bt BT_SEL 2"]);
   a.push(["BT次へ","&bt BT_NXT"],["BTペア解除","&bt BT_CLR"],
-    ["アプリ用 F13","&kp F13"],["アプリ用 F14","&kp F14"],["アプリ用 F15","&kp F15"],
+    ["アプリ用 F13","&kp F13"],["アプリ用 F14","&kp F14"],["アプリ用 F15","&kp F15"],["アプリ用 F16","&kp F16"],
     ["RESET","&sys_reset"],["UNLOCK","&studio_unlock"]);
   return a;
 }
@@ -879,7 +879,7 @@ const SPECIAL=[["▽ 透過","&trans"],["✕ 無効","&none"],["CLK·L","&mkp LC
  ["出力→USB","&out OUT_USB"],["出力→BLE","&out OUT_BLE"],["出力⇄切替","&out OUT_TOG"],
  ["RESET","&sys_reset"],["BOOT","&bootloader"],["UNLOCK","&studio_unlock"],["BT消去","&bt BT_CLR"]];
 const TACT_RECO=[["BT接続先1","&bt BT_SEL 0"],["BT接続先2","&bt BT_SEL 1"],["BT接続先3","&bt BT_SEL 2"],["BT次へ","&bt BT_NXT"],["BTペア解除","&bt BT_CLR"],
- ["アプリ用 F13","&kp F13"],["アプリ用 F14","&kp F14"],["アプリ用 F15","&kp F15"],["RESET","&sys_reset"],["UNLOCK","&studio_unlock"]];
+ ["アプリ用 F13","&kp F13"],["アプリ用 F14","&kp F14"],["アプリ用 F15","&kp F15"],["アプリ用 F16","&kp F16"],["RESET","&sys_reset"],["UNLOCK","&studio_unlock"]];
 function layerSpecials(){
   const a=[], L=LIVE.on?LIVE.layers.length:km.length;
   for(let n=1;n<L;n++){a.push(["→"+layName(n),"&mo "+n]);a.push(["⇄"+layName(n),"&tog "+n]);}
