@@ -242,6 +242,14 @@
   .seg button.on{background:var(--ink); color:#fff}
   /* 接続（CONNECTIONS）パネル */
   #dev-devices{grid-column:1/-1}
+  #dev-launch{grid-column:1/-1}
+  .lc-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:10px; margin-top:6px}
+  .lc-card{border:1px solid var(--line); border-radius:14px; padding:11px 13px; background:rgba(255,255,255,.5)}
+  .lc-card .lc-t{font-size:12px; font-weight:600; margin-bottom:2px}
+  .lc-card .lc-t small{display:block; font-size:10px; color:var(--mute); font-weight:400}
+  .lc-card select,.lc-card input{margin-top:7px; font-size:11.5px; padding:6px 8px}
+  .lc-key{font-family:var(--mono); font-size:10px; color:var(--accent); letter-spacing:.1em; margin-top:7px}
+  .lc-warn{font-size:11px; color:var(--warn); margin-top:8px; line-height:1.6}
   .conn-status{display:flex; gap:12px; flex-wrap:wrap; margin:8px 0 10px}
   .cs-cell{flex:1 1 160px; border:1px solid var(--line); border-radius:14px; padding:10px 14px; background:rgba(255,255,255,.55)}
   .cs-cell span{display:block; font-family:var(--mono); font-size:9.5px; letter-spacing:.12em; color:var(--mute); margin-bottom:3px}
@@ -505,6 +513,7 @@
     <div class="panel dev" id="dev-mt"></div>
     <div class="panel dev" id="dev-devices"></div>
     <div class="panel dev" id="dev-combo"></div>
+    <div class="panel dev" id="dev-launch"></div>
     <div class="panel dev" id="dev-hud"></div>
   </div>
 </div>
@@ -598,11 +607,13 @@ const DEV_DEFAULT={
  tb:{cpi:800,rot:0,invx:false,invy:false,spd:3,scrollOn:false,scrollLayer:1,scrollDiv:8,natural:true,
      autoOn:false,autoLayer:1,autoMs:800,autoIdle:300,snipeOn:false,snipeLayer:2,snipeDiv:3,awake:false},
  enc:{trig:10,steps1:12,steps2:12},
+ launch:[{kind:"keep",target:""},{kind:"keep",target:""},{kind:"keep",target:""},{kind:"keep",target:""}],
  joy:{threshold:40,dead:60,gu:"&kp LC(UP)",gd:"&kp LC(DOWN)",gl:"&kp LC(LEFT)",gr:"&kp LC(RIGHT)"},
  mt:{term:200,ltTerm:200},
  accel:{on:false,preset:"mid",sens:1200,maxf:3000,thr:500,smax:3500,exp:2}
 };
 const GROUPS=["tb","enc","joy","mt","accel"];
+/* launch は配列なので GROUPS(オブジェクト前提のマージ)には入れず、個別に復元する */
 const ACCEL_PRESETS={weak:{sens:1000,maxf:2000,thr:600,smax:3500,exp:2},mid:{sens:1200,maxf:3000,thr:500,smax:3500,exp:2},strong:{sens:1300,maxf:4000,thr:400,smax:3000,exp:3}};
 const DEVS_DEFAULT=[0,1,2,3,4].map(()=>({name:"",layer:0,jis:false}));
 /* US→JIS 記号変換（QMK公式 keymap_japanese.h 互換） */
@@ -699,33 +710,35 @@ function legend(b){
 }
 
 /* ================= state ================= */
-let km, enc, encL, dev, devs, combos, mode="basic", layer=0, sel=-1, arr="us";
+let km, enc, encL, joyL, dev, devs, combos, mode="basic", layer=0, sel=-1, arr="us";
 function load(){
   km=JSON.parse(JSON.stringify(SHIPPED.layers)); enc=[...SHIPPED.sensors];
-  dev=JSON.parse(JSON.stringify(DEV_DEFAULT)); encL={};
+  dev=JSON.parse(JSON.stringify(DEV_DEFAULT)); encL={}; joyL={};
   devs=JSON.parse(JSON.stringify(DEVS_DEFAULT)); combos=[]; arr="us";
   try{
     const d=JSON.parse(localStorage.getItem("arare-studio-draft"));
     if(d && d.km && d.km.length>=1 && d.km.length<=10 && d.km.every(l=>l.length===47)){
-      km=d.km; enc=d.enc||enc; encL=d.encL||{}; mode=d.mode||"basic";
+      km=d.km; enc=d.enc||enc; encL=d.encL||{}; joyL=d.joyL||{}; mode=d.mode||"basic";
       if(d.dev)for(const g of GROUPS)if(d.dev[g])Object.assign(dev[g],d.dev[g]);
+      if(d.dev&&Array.isArray(d.dev.launch)&&d.dev.launch.length===4)dev.launch=d.dev.launch;
       if(d.devs&&d.devs.length===5)devs=d.devs;
       if(Array.isArray(d.combos))combos=d.combos;
       if(d.arr==="jis")arr="jis";
     }
   }catch(e){}
 }
-function save(){ try{localStorage.setItem("arare-studio-draft",JSON.stringify({km,enc,encL,dev,devs,combos,mode,arr}));}catch(e){} }
+function save(){ try{localStorage.setItem("arare-studio-draft",JSON.stringify({km,enc,encL,joyL,dev,devs,combos,mode,arr}));}catch(e){} }
 /* ===== Undo / Redo ===== */
 let hist=[], redoStack=[];
-function snapState(){return JSON.stringify({km,enc,encL,dev,devs,combos,arr});}
+function snapState(){return JSON.stringify({km,enc,encL,joyL,dev,devs,combos,arr});}
 function pushHist(){hist.push(snapState()); if(hist.length>80)hist.shift(); redoStack.length=0;}
 function applyState(s){
   const d=JSON.parse(s);
-  km=d.km; enc=d.enc; encL=d.encL||{}; combos=d.combos||[];
+  km=d.km; enc=d.enc; encL=d.encL||{}; joyL=d.joyL||{}; combos=d.combos||[];
   devs=(d.devs&&d.devs.length===5)?d.devs:JSON.parse(JSON.stringify(DEVS_DEFAULT));
   dev=JSON.parse(JSON.stringify(DEV_DEFAULT));
   for(const g of GROUPS)if(d.dev&&d.dev[g])Object.assign(dev[g],d.dev[g]);
+  if(d.dev&&Array.isArray(d.dev.launch)&&d.dev.launch.length===4)dev.launch=d.dev.launch;
   arr=d.arr==="jis"?"jis":"us";
   if(layer>=km.length)layer=km.length-1; if(sel>=47)sel=-1;
   save(); renderArrTg(); renderLayerbar(); renderDeck(); renderInsp(); refreshKeys();
@@ -1078,6 +1091,7 @@ function renderLayerbar(){
   if(del)del.addEventListener("click",()=>{
     pushHist(); km.pop(); if(layer>=km.length)layer=km.length-1;
     for(const k of Object.keys(encL))if(+k>=km.length)delete encL[k];
+    for(const k of Object.keys(joyL))if(+k>=km.length)delete joyL[k];
     ["scrollLayer","autoLayer","snipeLayer"].forEach(f=>{if(dev.tb[f]>=km.length)dev.tb[f]=Math.max(1,km.length-1);});
     save();
     renderLayerbar(); renderInsp(); renderDeck(); refreshKeys(); toast("最後のレイヤーを削除しました");
@@ -1120,6 +1134,99 @@ function switchArr(v){
 }
 document.querySelectorAll("#arrtg button").forEach(b=>b.addEventListener("click",()=>switchArr(b.dataset.a)));
 renderArrTg();
+
+/* ================= LAUNCHER: タクトSWでアプリ/URLを開く =================
+ * キーボード自身はアプリを開けない。めったに使わないキー(F13〜)を送り、
+ * Mac側でそれをアプリやURLに結びつける、という二段構えにする。 */
+const TACT = [
+  {i:43, name:"左・外側", def:"RESET"},
+  {i:44, name:"左・内側", def:"UNLOCK"},
+  {i:45, name:"右・内側", def:"UNLOCK"},
+  {i:46, name:"右・外側", def:"RESET"},
+];
+const TACT_HOTKEY = ["F13","F14","F15","F16"];
+const APP_SUGGEST = ["Safari","Google Chrome","Visual Studio Code","Terminal","Finder","Mail",
+                     "Slack","Notion","Obsidian","Spotify","ミュージック","システム設定"];
+
+function shq(v){ return "'" + String(v).replace(/'/g, "'\\''") + "'"; }
+
+/* Karabiner-Elements にそのまま貼れる形 */
+function launcherKarabiner(){
+  const rules = [];
+  dev.launch.forEach((l, n) => {
+    if(l.kind === "keep" || !l.target.trim()) return;
+    const key = TACT_HOTKEY[n].toLowerCase();
+    const cmd = l.kind === "app" ? "open -a " + shq(l.target.trim())
+                                 : "open " + shq(l.target.trim());
+    rules.push({
+      description: TACT_HOTKEY[n] + " → " + (l.kind==="app"?"":"") + l.target.trim() + " を開く",
+      manipulators: [{ type:"basic", from:{ key_code:key }, to:[{ shell_command: cmd }] }]
+    });
+  });
+  if(!rules.length) return "";
+  return JSON.stringify({ title:"arare — タクトSW ランチャー", rules }, null, 2);
+}
+
+function renderLauncher(){
+  const el = document.getElementById("dev-launch");
+  if(!el) return;
+  const cards = TACT.map((t, n) => {
+    const l = dev.launch[n];
+    const sel = ["keep","app","url"].map(k =>
+      `<option value="${k}"${l.kind===k?" selected":""}>${
+        k==="keep"?"そのまま（"+t.def+"）":k==="app"?"アプリを開く":"URLを開く"}</option>`).join("");
+    const ph = l.kind==="url" ? "https://example.com" : "Safari";
+    return `<div class="lc-card">
+      <div class="lc-t">${t.name}<small>${KEYS[t.i][0]} · POS ${t.i}</small></div>
+      <select data-lckind="${n}">${sel}</select>
+      ${l.kind==="keep" ? "" :
+        `<input type="text" data-lctarget="${n}" value="${l.target.replace(/"/g,"&quot;")}"
+                placeholder="${ph}" list="applist" spellcheck="false">
+         <div class="lc-key">送るキー: ${TACT_HOTKEY[n]}</div>`}
+    </div>`;
+  }).join("");
+
+  /* RESET と UNLOCK を全部潰していないか */
+  const left = TACT.filter((t,n) => dev.launch[n].kind === "keep");
+  const warns = [];
+  if(!left.some(t => t.def === "UNLOCK"))
+    warns.push("⚠ UNLOCK が1つも残っていません。arare Studio からキーを書き換える前に押す必要があるので、1つは残すことをおすすめします。");
+  if(!left.some(t => t.def === "RESET"))
+    warns.push("⚠ RESET が1つも残っていません。動きが怪しいときの再起動ができなくなります。");
+
+  const kb = launcherKarabiner();
+  const active = dev.launch.filter(l => l.kind!=="keep" && l.target.trim()).length;
+
+  el.innerHTML = `
+    <h3>LAUNCHER <small>タクトSWでアプリ / URL を開く</small></h3>
+    <div class="desc">キーボード自身はアプリを開けないので、<b>めったに使わないキー（F13〜）を送り、Mac側でそれをアプリやURLに結びつけます</b>。下に手順が出ます。</div>
+    <datalist id="applist">${APP_SUGGEST.map(a=>`<option value="${a}">`).join("")}</datalist>
+    <div class="lc-grid">${cards}</div>
+    ${warns.map(w=>`<div class="lc-warn">${w}</div>`).join("")}
+    ${active ? `
+    <div class="sec" style="font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;color:var(--mute);margin:16px 0 6px">MAC 側の設定</div>
+    <div class="desc" style="margin:0 0 8px"><b>方法A: ショートカット.app（追加インストール不要）</b><br>
+      ① ショートカット.app で新規ショートカットを作る　② 「Appを開く」または「URLを開く」を追加して対象を選ぶ　
+      ③ 右上の設定 → キーボードショートカット → 該当のFキーを押す　…を割当ごとに繰り返します。</div>
+    <div class="desc" style="margin:0 0 6px"><b>方法B: Karabiner-Elements（コピペで一括設定）</b><br>
+      下のJSONを <code style="font-family:var(--mono)">~/.config/karabiner/assets/complex_modifications/arare.json</code> に保存し、
+      設定 → Complex Modifications → Add rule から有効にします。</div>
+    <pre class="out" style="max-height:200px;margin:0">${kb.replace(/</g,"&lt;")}</pre>
+    <div class="btnrow" style="margin-top:8px"><button class="btn ghost mini" id="lccopy">この設定をコピー</button></div>
+    ` : `<div class="desc" style="margin-top:10px">上でどれかを「アプリを開く」「URLを開く」にすると、Mac側の設定手順がここに出ます。</div>`}`;
+
+  const c = document.getElementById("lccopy");
+  if(c) c.addEventListener("click", async () => {
+    try{ await navigator.clipboard.writeText(launcherKarabiner()); toast("コピーしました"); }
+    catch(e){ toast("コピーできませんでした"); }
+  });
+}
+
+/* 選択に応じて実際のキーマップ（L0のタクトSW）を書き換える */
+function applyLauncher(n){
+  const l = dev.launch[n], t = TACT[n];
+  km[0][t.i] = (l.kind === "keep") ? SHIPPED.layers[0][t.i] : ("&kp " + TACT_HOTKEY[n]);
+}
 
 /* ================= 設定デッキ（かんたん/上級・プロファイル） ================= */
 function gp(path){const [g,k]=path.split(".");return dev[g][k];}
@@ -1195,6 +1302,25 @@ function renderDeck(){
   /* --- ジョイスティック --- */
   const cur=km[0][39];
   const joyEx=JOY_PUSH.some(([,v])=>v===cur)?"":`<option value="${cur}" selected>${legend(cur)}（現在）</option>`;
+  /* レイヤー別のジェスチャ（上級） */
+  let joyMat="";
+  if(km.length>1){
+    const gopt=(v,cur)=>`<option value="${v.replace(/"/g,"&quot;")}"${v===cur?" selected":""}>${legend(v)}</option>`;
+    joyMat=`<table class="encmat adv"><tr><th>レイヤー別</th>${JOY_DIRS.map(([,l])=>`<th>${l}</th>`).join("")}</tr>`;
+    for(let n=1;n<km.length;n++){
+      const set=joyL[n];
+      joyMat+=`<tr><td style="font-family:var(--mono)">${layName(n)}</td>`+
+        JOY_DIRS.map(([k])=>{
+          const cur=set?set[k]:"";
+          const extra=(cur&&!JOY_GESTURE_PRESETS.some(([,v])=>v===cur))?gopt(cur,cur):"";
+          return `<td><select data-joylm="${n}:${k}">`+
+            `<option value=""${set?"":" selected"}>— L0と同じ —</option>`+extra+
+            JOY_GESTURE_PRESETS.map(([l,v])=>`<option value="${v}"${set&&v===cur?" selected":""}>${l}</option>`).join("")+
+            `</select></td>`;
+        }).join("")+`</tr>`;
+    }
+    joyMat+=`</table><div class="desc adv" style="margin:6px 0 0">そのレイヤーを押している間だけ、ジェスチャの割当が入れ替わります。「— L0と同じ —」なら上の設定をそのまま使います。</div>`;
+  }
   const gestRow=(key,label)=>{
     const cur=dev.joy[key];
     const known=JOY_GESTURE_PRESETS.some(([,v])=>v===cur);
@@ -1211,7 +1337,8 @@ function renderDeck(){
     <div class="sec" style="font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;color:var(--mute);margin:14px 0 2px">GESTURE</div>
     ${JOY_DIRS.map(([k,l])=>gestRow(k,l)).join("")}
     ${rowH("感度","小さいほど軽く反応する。誤爆するなら大きく",rgH("joy.threshold",10,120,5,FMT_RAW))}
-    ${rowH("デッドゾーン","中央の遊び(mV)。手を離しても反応するなら大きく",rgH("joy.dead",0,200,10,FMT_RAW),"adv")}`;
+    ${rowH("デッドゾーン","中央の遊び(mV)。手を離しても反応するなら大きく",rgH("joy.dead",0,200,10,FMT_RAW),"adv")}
+    ${joyMat}`;
   /* --- Mod-Tap / Layer-Tap --- */
   document.getElementById("dev-mt").innerHTML=`
     <h3>MOD-TAP <small>長押し判定</small></h3>
@@ -1283,6 +1410,7 @@ function renderDeck(){
     pushHist(); combos.splice(+b.dataset.combodel,1); save(); renderDeck(); refreshKeys(); renderOut();
   }));
   renderProfiles();
+  renderLauncher();
   hudRender();
 }
 
@@ -1401,6 +1529,18 @@ document.getElementById("deck").addEventListener("change",e=>{
   if(e.target.matches("[data-e0]")){pushHist(); enc[0]=e.target.value; save(); renderDeck(); renderOut(); return;}
   if(e.target.matches("[data-e1]")){pushHist(); enc[1]=e.target.value; save(); renderOut(); return;}
   if(e.target.matches("[data-joypush]")){pushHist(); km[0][39]=e.target.value; save(); refreshKeys(); renderDeck(); return;}
+  if(e.target.matches("[data-lckind]")){
+    const n=+e.target.dataset.lckind; pushHist();
+    dev.launch[n].kind=e.target.value; applyLauncher(n);
+    save(); renderDeck(); refreshKeys(); renderOut(); return;}
+  if(e.target.matches("[data-lctarget]")){
+    const n=+e.target.dataset.lctarget; pushHist();
+    dev.launch[n].target=e.target.value; save(); renderLauncher(); return;}
+  if(e.target.matches("[data-joylm]")){
+    const [n,k]=e.target.dataset.joylm.split(":"); const v=e.target.value; pushHist();
+    if(v===""){ if(joyL[n]){ delete joyL[n][k]; if(!Object.keys(joyL[n]).length) delete joyL[n]; } }
+    else { if(!joyL[n]) joyL[n]={}; joyL[n][k]=v; }
+    save(); renderDeck(); renderOut(); return;}
   if(e.target.matches("[data-joyg]")){pushHist(); dev.joy[e.target.dataset.joyg]=e.target.value; save(); renderDeck(); renderOut(); return;}
   if(e.target.matches("[data-devname]")){pushHist(); devs[+e.target.dataset.devname].name=e.target.value.trim(); save(); renderDeck(); renderOut(); return;}
   if(e.target.matches("[data-devlayer]")){pushHist(); devs[+e.target.dataset.devlayer].layer=+e.target.value; save(); renderOut(); return;}
@@ -1593,6 +1733,7 @@ ${listener}${a.on?`
     threshold = <${dev.joy.threshold}>;
     bindings = <${dev.joy.gu}>, <${dev.joy.gd}>, <${dev.joy.gl}>, <${dev.joy.gr}>;
 };
+${genJoyLayers()}
 
 &right_encoder {
     steps = <${e.steps2}>;
@@ -1603,6 +1744,35 @@ ${listener}${a.on?`
 };
 `;
 }
+/* レイヤー別のジェスチャ。listener の子ノードは process-next が無ければ
+ * そのレイヤーの間だけ上の設定を置き換える（ZMK v0.3.0 input_listener.c:223）。 */
+function genJoyLayers(){
+  const ns=Object.keys(joyL).map(Number).filter(n=>n>0&&n<km.length).sort((a,b)=>a-b);
+  if(!ns.length) return "";
+  const g=n=>{
+    const s=joyL[n], b=k=>(s&&s[k])||dev.joy[k];
+    return `    joy_gesture_${n}: joy_gesture_${n} {
+        compatible = "arare,input-processor-gesture";
+        #input-processor-cells = <0>;
+        threshold = <${dev.joy.threshold}>;
+        bindings = <${b("gu")}>, <${b("gd")}>, <${b("gl")}>, <${b("gr")}>;
+    };`;
+  };
+  return `
+/ {
+${ns.map(g).join("\n")}
+};
+
+&joystick_listener {
+    input-processors = <&joy_gesture>;
+${ns.map(n=>`    joy_ov_${n} {
+        layers = <${n}>;
+        input-processors = <&joy_gesture_${n}>;
+    };`).join("\n")}
+};
+`;
+}
+
 /* 左エンコーダ＋ジョイスティック設定 → arare_tuning_L.dtsi */
 function genTuningL(){
   const e=dev.enc, j=dev.joy, d=new Date().toISOString().slice(0,10);
@@ -1665,8 +1835,8 @@ document.getElementById("openedit").addEventListener("click",()=>{
 function resetAll(){
   pushHist();
   km=JSON.parse(JSON.stringify(SHIPPED.layers)); enc=[...SHIPPED.sensors]; layer=0;
-  dev=JSON.parse(JSON.stringify(DEV_DEFAULT)); encL={};
-  devs=JSON.parse(JSON.stringify(DEVS_DEFAULT)); combos=[]; comboCapture=null; arr="us";
+  dev=JSON.parse(JSON.stringify(DEV_DEFAULT)); encL={}; joyL={};
+  devs=JSON.parse(JSON.stringify(DEVS_DEFAULT)); combos=[]; comboCapture=null; joyL={}; arr="us";
   try{localStorage.removeItem("arare-studio-draft");}catch(e){}
   renderArrTg(); renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
   toast("初期配置に戻しました（⌘Zで取り消せます・プロファイルは残ります）");
