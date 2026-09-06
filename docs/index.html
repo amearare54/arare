@@ -507,6 +507,7 @@
     </div>
   </div>
   <div class="dev-grid">
+    <div class="panel dev" id="dev-build"></div>
     <div class="panel dev" id="dev-tb"></div>
     <div class="panel dev" id="dev-enc"></div>
     <div class="panel dev" id="dev-joy"></div>
@@ -607,12 +608,14 @@ const DEV_DEFAULT={
  tb:{cpi:800,rot:0,invx:false,invy:false,spd:3,scrollOn:false,scrollLayer:1,scrollDiv:8,natural:true,
      autoOn:false,autoLayer:1,autoMs:800,autoIdle:300,snipeOn:false,snipeLayer:2,snipeDiv:3,awake:false},
  enc:{trig:10,steps1:12,steps2:12},
+ /* ビルド構成: 選択制の3か所に何を付けたか */
+ build:{encL:true,encR:true,joy:true},
  launch:[{kind:"keep",target:""},{kind:"keep",target:""},{kind:"keep",target:""},{kind:"keep",target:""}],
  joy:{threshold:40,dead:60,gu:"&kp LC(UP)",gd:"&kp LC(DOWN)",gl:"&kp LC(LEFT)",gr:"&kp LC(RIGHT)"},
  mt:{term:200,ltTerm:200},
  accel:{on:false,preset:"mid",sens:1200,maxf:3000,thr:500,smax:3500,exp:2}
 };
-const GROUPS=["tb","enc","joy","mt","accel"];
+const GROUPS=["tb","enc","joy","mt","accel","build"];
 /* launch は配列なので GROUPS(オブジェクト前提のマージ)には入れず、個別に復元する */
 const ACCEL_PRESETS={weak:{sens:1000,maxf:2000,thr:600,smax:3500,exp:2},mid:{sens:1200,maxf:3000,thr:500,smax:3500,exp:2},strong:{sens:1300,maxf:4000,thr:400,smax:3000,exp:3}};
 const DEVS_DEFAULT=[0,1,2,3,4].map(()=>({name:"",layer:0,jis:false}));
@@ -793,14 +796,24 @@ function drawDecor(){
   g.append(tb);
   const tbl=el("text",{x:TB.x,y:TB.y+4,class:"deco-label","text-anchor":"middle","font-size":9});
   tbl.textContent="TRACKBALL";g.append(tbl);
-  g.append(el("circle",{cx:561,cy:220,r:34,class:"deco"}));
-  g.append(el("circle",{cx:753,cy:220,r:34,class:"deco deco-accent"}));
-  const j=el("circle",{cx:590,cy:443,r:30,class:"deco","stroke-dasharray":"2 4"});g.append(j);
-  const jl=el("text",{x:566,y:490,class:"deco-label"});jl.textContent="JOY";g.append(jl);
+  /* 選択制の3か所は、付けている構成のときだけ描く */
+  if(dev.build.encL) g.append(el("circle",{cx:561,cy:220,r:34,class:"deco"}));
+  if(dev.build.encR) g.append(el("circle",{cx:753,cy:220,r:34,class:"deco deco-accent"}));
+  if(dev.build.joy){
+    g.append(el("circle",{cx:590,cy:443,r:30,class:"deco","stroke-dasharray":"2 4"}));
+    const jl=el("text",{x:566,y:490,class:"deco-label"});jl.textContent="JOY";g.append(jl);
+  }
   // 中央の分割線と照準
   g.append(el("line",{x1:658,y1:-10,x2:658,y2:120,class:"deco"}));
   g.append(el("path",{d:"M646 132 l12 14 l12 -14",class:"deco"}));
+  g.setAttribute("id","decor");
   board.append(g);
+}
+function redrawDecor(){
+  const old=document.getElementById("decor"); if(old)old.remove();
+  drawDecor();
+  const b=document.getElementById("board");
+  b.querySelectorAll(".key").forEach(k=>b.appendChild(k));  /* キーを装飾より前面に戻す */
 }
 function drawKeys(){
   const defs=el("defs",{});
@@ -1135,6 +1148,35 @@ function switchArr(v){
 document.querySelectorAll("#arrtg button").forEach(b=>b.addEventListener("click",()=>switchArr(b.dataset.a)));
 renderArrTg();
 
+/* ================= BUILD: 選択制の3か所に何を付けたか =================
+ * arare はエンコーダ/ジョイスティックの代わりに普通のキースイッチを挿せる。
+ * ミドルプレートも構成に合わせて選べるようになっている。
+ * ここでの宣言に応じて、画面表示と生成ファイルの両方を追従させる。 */
+const BUILD_PARTS=[
+ {k:"encL", name:"左エンコーダ", pos:15, sub:"ノブ（EC12・縦型）"},
+ {k:"encR", name:"右エンコーダ", pos:16, sub:"ホイール（CKW12・横型）"},
+ {k:"joy",  name:"ジョイスティック", pos:39, sub:"NS40-T（左手・親指）"},
+];
+function renderBuild(){
+  const el=document.getElementById("dev-build");
+  if(!el)return;
+  const rows=BUILD_PARTS.map(p=>{
+    const on=dev.build[p.k];
+    return `<div class="row"><div class="lab">${p.name}<small>${p.sub} · ${KEYS[p.pos][0]}</small></div>
+      <div class="ctl"><span class="seg">
+        <button data-build="${p.k}" data-v="1" class="${on?"on":""}">付けている</button>
+        <button data-build="${p.k}" data-v="0" class="${on?"":"on"}">普通のキー</button>
+      </span></div></div>`;
+  }).join("");
+  const off=BUILD_PARTS.filter(p=>!dev.build[p.k]);
+  el.innerHTML=`
+    <h3>BUILD <small>この個体に何を付けたか</small></h3>
+    <div class="desc">arare はエンコーダやジョイスティックの代わりに<b>普通のキースイッチを挿せます</b>。ここで宣言すると、ボード図・設定パネル・生成ファイルがまとめて追従します。</div>
+    ${rows}
+    ${off.length?`<div class="desc" style="margin-top:8px">「普通のキー」にした位置は、ボード上のキーをクリックすれば他のキーと同じように割り当てられます。${
+      dev.build.joy?"":"<br><b>ジョイスティックを外した構成では、アナログ入力とSAADCの差し替えを生成ファイルから除きます</b>（付けていない端子を読み続けて電池を減らさないため）。"}</div>`:""}`;
+}
+
 /* ================= LAUNCHER: タクトSWでアプリ/URLを開く =================
  * キーボード自身はアプリを開けない。めったに使わないキー(F13〜)を送り、
  * Mac側でそれをアプリやURLに結びつける、という二段構えにする。 */
@@ -1287,11 +1329,13 @@ function renderDeck(){
     }
     mat+=`</table>`;
   }
-  document.getElementById("dev-enc").innerHTML=`
-    <h3>ENCODER <small>EC12（左） / CKW12（右）</small></h3>
+  const encPanel=document.getElementById("dev-enc");
+  encPanel.style.display=(dev.build.encL||dev.build.encR)?"":"none";
+  encPanel.innerHTML=`
+    <h3>ENCODER <small>${[dev.build.encL?"EC12（左）":"",dev.build.encR?"CKW12（右）":""].filter(Boolean).join(" / ")||"—"}</small></h3>
     <div class="desc">回転に割り当てる操作。上級ではレイヤーごとの割当と感度も。</div>
-    ${rowH("ENC1（左）の回転","",encSelH('data-e0="1"',enc[0]))}
-    ${rowH("ENC2（右）の回転","",encSelH('data-e1="1"',enc[1]))}
+    ${dev.build.encL?rowH("ENC1（左）の回転","",encSelH('data-e0="1"',enc[0])):""}
+    ${dev.build.encR?rowH("ENC2（右）の回転","",encSelH('data-e1="1"',enc[1])):""}
     ${rowH("感度","1回転あたりの反応回数",rgH("enc.trig",0,TRIG.length-1,1,FMT_TRIG),"adv")}
     ${rowH("ENC1 自由入力","&inc_dec_kp 上回し 下回し",`<input type="text" data-encraw="0" value="${enc[0].replace(/"/g,"&quot;")}" style="width:200px;font-family:var(--mono);font-size:10px">`,"adv")}
     ${rowH("ENC2 自由入力","例: &inc_dec_kp LG(C) LG(V)",`<input type="text" data-encraw="1" value="${enc[1].replace(/"/g,"&quot;")}" style="width:200px;font-family:var(--mono);font-size:10px">`,"adv")}
@@ -1330,7 +1374,9 @@ function renderDeck(){
       <div class="ctl"><select data-joyg="${key}">${opts}</select>
       <button class="btn plain mini" data-joycap="${key}" style="padding:6px 10px;font-size:10.5px">⌨ 押して設定</button></div></div>`;
   };
-  document.getElementById("dev-joy").innerHTML=`
+  const joyPanel=document.getElementById("dev-joy");
+  joyPanel.style.display=dev.build.joy?"":"none";
+  joyPanel.innerHTML=`
     <h3>JOYSTICK <small>NS40-T · 左手</small></h3>
     <div class="desc">トラックパッドの3本指スワイプの代わりです。<b>倒した方向でショートカットを送ります</b>（カーソルは動きません。ポインタはトラックボールの担当）。押込は下で設定します。</div>
     ${rowH("押込ボタン","スティックを押し込んだとき",`<select data-joypush="1">${joyEx}${JOY_PUSH.map(([l,v])=>`<option value="${v}"${v===cur?" selected":""}>${l}</option>`).join("")}</select>`)}
@@ -1409,6 +1455,7 @@ function renderDeck(){
   document.querySelectorAll("[data-combodel]").forEach(b=>b.addEventListener("click",()=>{
     pushHist(); combos.splice(+b.dataset.combodel,1); save(); renderDeck(); refreshKeys(); renderOut();
   }));
+  renderBuild();
   renderProfiles();
   renderLauncher();
   hudRender();
@@ -1484,6 +1531,9 @@ document.getElementById("deck").addEventListener("click",e=>{
   if(e.target.closest("[data-hudprobe]")){hudProbe(false); return;}
   const sw=e.target.closest(".sw[data-tg]");
   if(sw){pushHist(); sp(sw.dataset.tg,!gp(sw.dataset.tg)); save(); renderDeck(); renderOut(); return;}
+  const bt=e.target.closest("[data-build]");
+  if(bt){ pushHist(); dev.build[bt.dataset.build]=bt.dataset.v==="1"; save();
+          redrawDecor(); renderDeck(); refreshKeys(); renderOut(); return; }
   const sg=e.target.closest("[data-sg]");
   if(sg){
     pushHist(); const raw=sg.dataset.v; sp(sg.dataset.sg,isNaN(+raw)?raw:+raw);
@@ -1727,13 +1777,16 @@ ${listener}${a.on?`
     sensor-dpi = <800>;
 };
 `:""}
-/* ジョイスティックのジェスチャ（倒した方向でショートカットを送る）
+${dev.build.joy?`/* ジョイスティックのジェスチャ（倒した方向でショートカットを送る）
  * bindings の順番は 上・下・左・右。感度は小さいほど軽く反応する。 */
 &joy_gesture {
     threshold = <${dev.joy.threshold}>;
     bindings = <${dev.joy.gu}>, <${dev.joy.gd}>, <${dev.joy.gl}>, <${dev.joy.gr}>;
 };
-${genJoyLayers()}
+${genJoyLayers()}`:`/* ジョイスティックを付けていない構成。左手から入力が来ないので受け口を閉じる。 */
+&joystick_listener {
+    status = "disabled";
+};`}
 
 &right_encoder {
     steps = <${e.steps2}>;
@@ -1786,15 +1839,29 @@ function genTuningL(){
     triggers-per-rotation = <${e.trig}>;
 };
 
-/* ジョイスティックのアナログXY。中央の遊び(mV)。
- * 中点電圧とフルストロークは実機のログを見て決める（arare_L.conf の測定4行セット）。 */
+${dev.build.joy?`/* ジョイスティックを付けている構成。
+ * 電池ドライバを oversampling=0 の arare 版へ差し替えて SAADC の停止を避ける。
+ * 理由と代償は arare_L.conf のコメントを参照。 */
+#include "arare_saadc_fix.dtsi"
+
+/* 中央の遊び(mV)。中点電圧とフルストロークは実機のログを見て決める
+ * （arare_L.conf の測定4行セット） */
 &joy_x {
     mv-deadzone = <${j.dead}>;
 };
 
 &joy_y {
     mv-deadzone = <${j.dead}>;
+};`:`/* ジョイスティックを付けていない構成（この位置には普通のキースイッチ）。
+ * アナログ入力と中継を無効にする。付けていない端子を読み続けて電池を減らさないため。
+ * 電池ドライバの差し替え（arare_saadc_fix.dtsi）も行わない＝本家のまま精度が高い。 */
+&joystick {
+    status = "disabled";
 };
+
+&joystick_split {
+    status = "disabled";
+};`}
 `;
 }
 const FILES=[

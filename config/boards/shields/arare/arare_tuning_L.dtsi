@@ -13,6 +13,13 @@
     triggers-per-rotation = <10>;
 };
 
+/* ジョイスティックを付けている構成。
+ * 電池ドライバを oversampling=0 の arare 版へ差し替えて SAADC の停止を避ける。
+ * 理由と代償は arare_L.conf のコメントを参照。
+ * ★付けない構成では arare Studio がこのincludeを出さず、代わりに
+ *   &joystick / &joystick_split を disabled にする。 */
+#include "arare_saadc_fix.dtsi"
+
 /* ---- ジョイスティック（アナログXY）: 実機合わせの調整値 ----
  *
  * 測り方: arare_L.conf の実機測定4行セットを有効にすると生値とmVがログに出る。それを見て

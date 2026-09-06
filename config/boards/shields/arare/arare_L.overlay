@@ -7,10 +7,8 @@
 
 #include <zephyr/dt-bindings/input/input-event-codes.h>
 
-/* ジョイスティックのアナログXYを使うので有効。
- * 電池ドライバを oversampling=0 の arare 版へ差し替えて SAADC の停止を避ける。
- * 理由と代償は arare_L.conf のコメントを参照。 */
-#include "arare_saadc_fix.dtsi"
+/* 電池ドライバの差し替え（arare_saadc_fix.dtsi）は arare_tuning_L.dtsi 側で行う。
+ * ジョイスティックを付けない構成では差し替えないため、arare Studio が構成に応じて出し分ける。 */
 
 &kscan_matrix {
     gpios
