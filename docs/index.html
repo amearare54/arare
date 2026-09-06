@@ -598,7 +598,7 @@ const DEV_DEFAULT={
  tb:{cpi:800,rot:0,invx:false,invy:false,spd:3,scrollOn:false,scrollLayer:1,scrollDiv:8,natural:true,
      autoOn:false,autoLayer:1,autoMs:800,autoIdle:300,snipeOn:false,snipeLayer:2,snipeDiv:3,awake:false},
  enc:{trig:10,steps1:12,steps2:12},
- joy:{mode:"mouse",speed:5,dead:10,invy:false},
+ joy:{threshold:40,dead:60,gu:"&kp LC(UP)",gd:"&kp LC(DOWN)",gl:"&kp LC(LEFT)",gr:"&kp LC(RIGHT)"},
  mt:{term:200,ltTerm:200},
  accel:{on:false,preset:"mid",sens:1200,maxf:3000,thr:500,smax:3500,exp:2}
 };
@@ -631,6 +631,22 @@ function usTranslate(b){let m;
  if((m=b.match(/^&lt (\d+) (.+)$/)))return `&lt ${m[1]} ${usKey(m[2])}`;
  if((m=b.match(/^&inc_dec_kp (\S+) (\S+)$/)))return `&inc_dec_kp ${usKey(m[1])} ${usKey(m[2])}`;
  return b;}
+/* ジェスチャによく割り当てる操作（macOSの既定ショートカット） */
+const JOY_GESTURE_PRESETS=[
+ ["Mission Control","&kp LC(UP)"],
+ ["App Exposé","&kp LC(DOWN)"],
+ ["左のデスクトップへ","&kp LC(LEFT)"],
+ ["右のデスクトップへ","&kp LC(RIGHT)"],
+ ["アプリを切り替え","&kp LG(TAB)"],
+ ["ブラウザ: 戻る","&kp LG(LEFT)"],
+ ["ブラウザ: 進む","&kp LG(RIGHT)"],
+ ["タブ: 次へ","&kp LC(TAB)"],
+ ["タブ: 前へ","&kp LC(LS(TAB))"],
+ ["音量 +","&kp C_VOL_UP"],
+ ["音量 −","&kp C_VOL_DN"],
+ ["何もしない","&none"]
+];
+const JOY_DIRS=[["gu","上"],["gd","下"],["gl","左"],["gr","右"]];
 const JOY_PUSH=[["左クリック","&mkp LCLK"],["右クリック","&mkp RCLK"],["中クリック","&mkp MCLK"],["Enter","&kp ENTER"],["Space","&kp SPACE"],["Esc","&kp ESC"]];
 const TB_PRESETS=[
  ["標準","バランスの取れた既定値",{spd:3,cpi:800,scrollOn:false,snipeOn:false,autoOn:false}],
@@ -883,14 +899,25 @@ const CODE_TO_ZMK = (() => {
 const MOD_ONLY = new Set(["ShiftLeft","ShiftRight","ControlLeft","ControlRight",
                           "AltLeft","AltRight","MetaLeft","MetaRight"]);
 
-let capturing = false;
+let capturing = false;      /* KEY EDIT 側 */
+let capJoyDir = null;        /* ジェスチャ側。方向キー名 or null */
 function setCapturing(v){
   capturing = v;
+  if(v) capJoyDir = null;
   const b = document.getElementById("capbtn");
   if(b){
     b.classList.toggle("on", v);
     b.textContent = v ? "キーを押してください…（Escで中止）" : "⌨ 押して設定";
   }
+}
+function setCapJoy(dir){
+  capJoyDir = dir;
+  if(dir) capturing = false;
+  document.querySelectorAll("[data-joycap]").forEach(b=>{
+    const on = b.dataset.joycap===dir;
+    b.classList.toggle("on", on);
+    b.textContent = on ? "押してください…" : "⌨ 押して設定";
+  });
 }
 /* 押されたキーの組み合わせを ZMK の記法へ */
 function eventToBinding(e){
@@ -908,13 +935,23 @@ function eventToBinding(e){
 }
 /* capture:true で先に受け取り、ブラウザやページ側の処理へ渡さない */
 window.addEventListener("keydown", e => {
-  if(!capturing) return;
+  if(!capturing && !capJoyDir) return;
   if(e.code === "Escape" && !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey){
-    e.preventDefault(); e.stopPropagation(); setCapturing(false);
+    e.preventDefault(); e.stopPropagation();
+    if(capJoyDir) setCapJoy(null); else setCapturing(false);
     toast("設定を中止しました"); return;
   }
   if(MOD_ONLY.has(e.code)) return;   /* 修飾キーだけならまだ待つ */
   e.preventDefault(); e.stopPropagation();
+  if(capJoyDir){
+    const saveHold = holdSel; holdSel = "none";   /* ジェスチャは常に単発のキー */
+    const b = eventToBinding(e); holdSel = saveHold;
+    if(!b){ toast("このキーには対応していません（"+e.code+"）"); return; }
+    pushHist(); dev.joy[capJoyDir] = b; save();
+    setCapJoy(null); renderDeck(); renderOut();
+    toast(legend(b)+" を割り当てました");
+    return;
+  }
   const b = eventToBinding(e);
   if(!b){ toast("このキーには対応していません（"+e.code+"）"); return; }
   setCapturing(false);
@@ -1158,14 +1195,23 @@ function renderDeck(){
   /* --- ジョイスティック --- */
   const cur=km[0][39];
   const joyEx=JOY_PUSH.some(([,v])=>v===cur)?"":`<option value="${cur}" selected>${legend(cur)}（現在）</option>`;
+  const gestRow=(key,label)=>{
+    const cur=dev.joy[key];
+    const known=JOY_GESTURE_PRESETS.some(([,v])=>v===cur);
+    const opts=(known?"":`<option value="${cur.replace(/"/g,"&quot;")}" selected>${legend(cur)}（現在）</option>`)
+      +JOY_GESTURE_PRESETS.map(([l,v])=>`<option value="${v}"${v===cur?" selected":""}>${l}</option>`).join("");
+    return `<div class="row"><div class="lab">${label}へ倒す<small>${cur}</small></div>
+      <div class="ctl"><select data-joyg="${key}">${opts}</select>
+      <button class="btn plain mini" data-joycap="${key}" style="padding:6px 10px;font-size:10.5px">⌨ 押して設定</button></div></div>`;
+  };
   document.getElementById("dev-joy").innerHTML=`
     <h3>JOYSTICK <small>NS40-T · 左手</small></h3>
-    <div class="desc">押込ボタンはすぐ使えます。<b>倒す操作（アナログXY）は未実装です</b> — マイコンのアナログ変換器を電池残量の測定と共有しており、現状のZMKでは同時に使うと停止する問題があるためです。ここでの設定は保存され、チューニングLに予約として書き出されます。</div>
+    <div class="desc">トラックパッドの3本指スワイプの代わりです。<b>倒した方向でショートカットを送ります</b>（カーソルは動きません。ポインタはトラックボールの担当）。押込は下で設定します。</div>
     ${rowH("押込ボタン","スティックを押し込んだとき",`<select data-joypush="1">${joyEx}${JOY_PUSH.map(([l,v])=>`<option value="${v}"${v===cur?" selected":""}>${l}</option>`).join("")}</select>`)}
-    <div class="row"><div class="lab">アナログ操作 <span class="badge">PREVIEW</span><small>フェーズ2で有効化</small></div><div class="ctl">${segH("joy.mode",[["mouse","マウス"],["scroll","スクロール"],["arrows","矢印"]])}</div></div>
-    ${rowH("速さ","",rgH("joy.speed",1,10,1,FMT_RAW))}
-    ${rowH("デッドゾーン","中央の遊び。手ブレで動かない範囲",rgH("joy.dead",0,30,1,FMT_PCT))}
-    ${rowH("上下反転","",swH("joy.invy"))}`;
+    <div class="sec" style="font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;color:var(--mute);margin:14px 0 2px">GESTURE</div>
+    ${JOY_DIRS.map(([k,l])=>gestRow(k,l)).join("")}
+    ${rowH("感度","小さいほど軽く反応する。誤爆するなら大きく",rgH("joy.threshold",10,120,5,FMT_RAW))}
+    ${rowH("デッドゾーン","中央の遊び(mV)。手を離しても反応するなら大きく",rgH("joy.dead",0,200,10,FMT_RAW),"adv")}`;
   /* --- Mod-Tap / Layer-Tap --- */
   document.getElementById("dev-mt").innerHTML=`
     <h3>MOD-TAP <small>長押し判定</small></h3>
@@ -1316,6 +1362,8 @@ document.getElementById("deck").addEventListener("click",e=>{
     if(sg.dataset.sg==="accel.preset")Object.assign(dev.accel,ACCEL_PRESETS[raw]||{});
     save(); renderDeck(); renderOut(); return;
   }
+  const jc=e.target.closest("[data-joycap]");
+  if(jc){ setCapJoy(capJoyDir===jc.dataset.joycap?null:jc.dataset.joycap); jc.blur(); return; }
   const pre=e.target.closest("[data-pre]");
   if(pre){pushHist(); Object.assign(dev.tb,TB_PRESETS[+pre.dataset.pre][2]); save(); renderDeck(); renderOut(); toast("プリセット「"+TB_PRESETS[+pre.dataset.pre][0]+"」を適用しました"); return;}
   const ad=e.target.closest("[data-assigndev]");
@@ -1353,6 +1401,7 @@ document.getElementById("deck").addEventListener("change",e=>{
   if(e.target.matches("[data-e0]")){pushHist(); enc[0]=e.target.value; save(); renderDeck(); renderOut(); return;}
   if(e.target.matches("[data-e1]")){pushHist(); enc[1]=e.target.value; save(); renderOut(); return;}
   if(e.target.matches("[data-joypush]")){pushHist(); km[0][39]=e.target.value; save(); refreshKeys(); renderDeck(); return;}
+  if(e.target.matches("[data-joyg]")){pushHist(); dev.joy[e.target.dataset.joyg]=e.target.value; save(); renderDeck(); renderOut(); return;}
   if(e.target.matches("[data-devname]")){pushHist(); devs[+e.target.dataset.devname].name=e.target.value.trim(); save(); renderDeck(); renderOut(); return;}
   if(e.target.matches("[data-devlayer]")){pushHist(); devs[+e.target.dataset.devlayer].layer=+e.target.value; save(); renderOut(); return;}
   if(e.target.matches("[data-devjis]")){pushHist(); devs[+e.target.dataset.devjis].jis=e.target.value==="jis"; save(); renderOut(); return;}
@@ -1538,6 +1587,13 @@ ${listener}${a.on?`
     sensor-dpi = <800>;
 };
 `:""}
+/* ジョイスティックのジェスチャ（倒した方向でショートカットを送る）
+ * bindings の順番は 上・下・左・右。感度は小さいほど軽く反応する。 */
+&joy_gesture {
+    threshold = <${dev.joy.threshold}>;
+    bindings = <${dev.joy.gu}>, <${dev.joy.gd}>, <${dev.joy.gl}>, <${dev.joy.gr}>;
+};
+
 &right_encoder {
     steps = <${e.steps2}>;
 };
@@ -1560,11 +1616,15 @@ function genTuningL(){
     triggers-per-rotation = <${e.trig}>;
 };
 
-/* ---- ジョイスティック（アナログXY）: フェーズ2で有効化予定 ----
- * ZMK本体のバッテリー計測とSAADC設定の衝突が解消したら実装。
- * arare Studio の保存値:
- *   mode=${j.mode} speed=${j.speed}/10 deadzone=${j.dead}% invert-y=${j.invy?"yes":"no"}
- * ------------------------------------------------------------- */
+/* ジョイスティックのアナログXY。中央の遊び(mV)。
+ * 中点電圧とフルストロークは実機のログを見て決める（arare_L.conf の測定4行セット）。 */
+&joy_x {
+    mv-deadzone = <${j.dead}>;
+};
+
+&joy_y {
+    mv-deadzone = <${j.dead}>;
+};
 `;
 }
 const FILES=[
