@@ -3,6 +3,9 @@
  * （実基板 arare_R.kicad_pcb の XIAO パッド→ネットと機械照合済み 2026-08-31）
  */
 
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/keys.h>
+
 #include "arare.dtsi"
 
 &default_transform {
@@ -83,6 +86,27 @@
  * 速度・加速などの input-processors は tuning 側から &joystick_listener を参照して書く。 */
 &joystick_listener {
     status = "okay";
+    /* スティックはポインタではなくジェスチャ専用にする（ポインタはトラックボール）。
+     * このプロセッサが REL イベントを消費するので、倒してもカーソルは動かない。
+     * ポインタとして使いたくなったら input-processors の行を消す。 */
+    input-processors = <&joy_gesture>;
+};
+
+/ {
+    /* トラックパッドの3本指スワイプ相当。macOSの既定ショートカットに合わせてある。
+     *   上  = ⌃↑  Mission Control
+     *   下  = ⌃↓  App Exposé
+     *   左右 = ⌃← / ⌃→  デスクトップ（スペース）の移動
+     * bindings は必ず 上・下・左・右 の順。
+     * 感度は threshold で調整する（小さいほど軽く反応する）。 */
+    joy_gesture: joy_gesture {
+        compatible = "arare,input-processor-gesture";
+        #input-processor-cells = <0>;
+        threshold = <40>;
+        reset-ms = <200>;
+        tap-ms = <20>;
+        bindings = <&kp LC(UP)>, <&kp LC(DOWN)>, <&kp LC(LEFT)>, <&kp LC(RIGHT)>;
+    };
 };
 
 #include "arare_tuning_R.dtsi"
