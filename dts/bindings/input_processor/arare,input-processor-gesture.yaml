@@ -1,0 +1,28 @@
+# arare 独自: ジョイスティックを倒した方向でビヘイビアを1回だけ発火させる入力プロセッサ
+#
+# トラックパッドの3本指スワイプ相当を親指のスティックで行うためのもの。
+# 相対移動(REL_X/REL_Y)を方向ごとに積算し、しきい値を超えた瞬間にタップを1回送る。
+# 中央へ戻す（イベントが途切れる）と再武装する。
+description: Fire a behavior once per directional flick of an analog stick
+
+compatible: "arare,input-processor-gesture"
+
+include: ip_zero_param.yaml
+
+properties:
+  threshold:
+    type: int
+    default: 40
+    description: この量だけ積算したら発火する（相対移動の合計）
+  reset-ms:
+    type: int
+    default: 200
+    description: この時間イベントが来なければ積算を捨てて再武装する
+  tap-ms:
+    type: int
+    default: 20
+    description: 押してから離すまでの時間
+  bindings:
+    type: phandle-array
+    required: true
+    description: 上・下・左・右の順に4つ指定する

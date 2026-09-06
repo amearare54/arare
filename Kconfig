@@ -1,3 +1,4 @@
+DT_COMPAT_ARARE_GESTURE := arare,input-processor-gesture
 DT_COMPAT_ARARE_BATTERY_VOLTAGE_DIVIDER := arare,battery-voltage-divider
 
 # arare 独自設定
@@ -51,3 +52,13 @@ config ARARE_BATTERY_VOLTAGE_DIVIDER
     help
       ZMK本家の battery_voltage_divider と同一だが oversampling=0。
       本家を fork せずに済ませるため設定リポジトリ側にドライバを持つ。
+
+# ジョイスティックの「はじく」操作をビヘイビアに変える入力プロセッサ
+# （トラックパッドの3本指スワイプ相当）。DTにノードがあれば自動で有効。
+config ARARE_INPUT_PROCESSOR_GESTURE
+    bool
+    default $(dt_compat_enabled,$(DT_COMPAT_ARARE_GESTURE))
+    depends on ZMK_POINTING
+    help
+      ZMK標準の input-processor-behaviors は移動量を真偽値に潰すため方向を判別できない。
+      その代わりとして方向ごとに積算し、しきい値超過でタップを1回送る。
