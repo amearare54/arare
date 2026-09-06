@@ -32,6 +32,17 @@
 
 LOG_MODULE_REGISTER(arare_battery_led, CONFIG_ZMK_LOG_LEVEL);
 
+/* --- 一時的な検証（このコミットは戻す）---
+ * ジェスチャの経路が右手で有効になっているかを、コンパイルを落として確かめる。
+ * 右手だけが落ちれば「プロセッサが有効」「ノードがokay」「listenerがokay」が同時に成立。 */
+#if IS_ENABLED(CONFIG_ARARE_INPUT_PROCESSOR_GESTURE) &&                                            \
+    DT_NODE_HAS_STATUS(DT_NODELABEL(joy_gesture), okay) &&                                         \
+    DT_NODE_HAS_STATUS(DT_NODELABEL(joystick_listener), okay)
+#error "VERIFY-MARKER: ジェスチャの経路が有効"
+#endif
+
+
+
 #define LED_RED_NODE   DT_ALIAS(led0)
 #define LED_BLUE_NODE  DT_ALIAS(led1)
 #define LED_GREEN_NODE DT_ALIAS(led2)
