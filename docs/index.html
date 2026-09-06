@@ -280,6 +280,8 @@
   .linkbar .note{font-size:10.5px; color:var(--mute)}
   .linkbar .note a{color:var(--accent)}
   .btn.mini{padding:8px 16px; font-size:11.5px}
+  #capbtn.on{background:linear-gradient(180deg,#7b6cf0,#5646d6); color:#fff; border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(86,70,214,.22)}
   .btn.save{background:var(--ok); color:#fff}
   .unsaved{font-family:var(--mono); font-size:10px; color:var(--warn); letter-spacing:.1em}
   .rpclog{width:100%; max-height:130px; overflow-y:auto; background:#232538; color:#9aa0c7; border-radius:10px;
@@ -854,6 +856,72 @@ function layerSpecials(){
   for(let n=1;n<L;n++){a.push(["→"+layName(n),"&mo "+n]);a.push(["⇄"+layName(n),"&tog "+n]);}
   return a;
 }
+/* ================= 押して設定（ショートカット記録） =================
+ * 実際にキーを押すと、その組み合わせをそのまま割当にする。
+ * KeyboardEvent.code は「キーの物理位置」でOSの配列設定に左右されないため、
+ * ZMKの &kp が送るスキャンコードとそのまま対応する。
+ * （このためJIS変換は掛けない。JIS配列で「=」を出したい人は実際にその打ち方をすればよい） */
+const CODE_TO_ZMK = (() => {
+  const m = {};
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(c => m["Key"+c] = c);
+  "1234567890".split("").forEach((d,i) => m["Digit"+d] = "N"+d);
+  for (let i=1;i<=12;i++) m["F"+i] = "F"+i;
+  Object.assign(m, {
+    Minus:"MINUS", Equal:"EQUAL", BracketLeft:"LBKT", BracketRight:"RBKT",
+    Backslash:"BSLH", Semicolon:"SEMI", Quote:"SQT", Backquote:"GRAVE",
+    Comma:"COMMA", Period:"DOT", Slash:"FSLH",
+    Space:"SPACE", Enter:"ENTER", Backspace:"BSPC", Tab:"TAB", Escape:"ESC",
+    Delete:"DEL", CapsLock:"CAPS",
+    ArrowUp:"UP", ArrowDown:"DOWN", ArrowLeft:"LEFT", ArrowRight:"RIGHT",
+    Home:"HOME", End:"END", PageUp:"PG_UP", PageDown:"PG_DN",
+    /* JIS配列のキー */
+    IntlYen:"INT3", IntlRo:"INT1", Convert:"INT4", NonConvert:"INT5",
+    Lang1:"LANG1", Lang2:"LANG2",
+  });
+  return m;
+})();
+const MOD_ONLY = new Set(["ShiftLeft","ShiftRight","ControlLeft","ControlRight",
+                          "AltLeft","AltRight","MetaLeft","MetaRight"]);
+
+let capturing = false;
+function setCapturing(v){
+  capturing = v;
+  const b = document.getElementById("capbtn");
+  if(b){
+    b.classList.toggle("on", v);
+    b.textContent = v ? "キーを押してください…（Escで中止）" : "⌨ 押して設定";
+  }
+}
+/* 押されたキーの組み合わせを ZMK の記法へ */
+function eventToBinding(e){
+  const base = CODE_TO_ZMK[e.code];
+  if(!base) return null;
+  let c = base;
+  /* 適用順は手動の修飾ボタンと揃える（LG が内側、LS が外側） */
+  if(e.metaKey)  c = `LG(${c})`;
+  if(e.altKey)   c = `LA(${c})`;
+  if(e.ctrlKey)  c = `LC(${c})`;
+  if(e.shiftKey) c = `LS(${c})`;
+  if(holdSel === "none")            return `&kp ${c}`;
+  if(holdSel.startsWith("lt"))      return `&lt ${holdSel.slice(2)} ${base}`;
+  return `&mt ${holdSel} ${base}`;
+}
+/* capture:true で先に受け取り、ブラウザやページ側の処理へ渡さない */
+window.addEventListener("keydown", e => {
+  if(!capturing) return;
+  if(e.code === "Escape" && !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey){
+    e.preventDefault(); e.stopPropagation(); setCapturing(false);
+    toast("設定を中止しました"); return;
+  }
+  if(MOD_ONLY.has(e.code)) return;   /* 修飾キーだけならまだ待つ */
+  e.preventDefault(); e.stopPropagation();
+  const b = eventToBinding(e);
+  if(!b){ toast("このキーには対応していません（"+e.code+"）"); return; }
+  setCapturing(false);
+  setBinding(b);
+  toast(legend(b)+" を割り当てました");
+}, true);
+
 let pickTab="文字", modState={LS:false,LC:false,LA:false,LG:false}, holdSel="none";
 
 let comboCapture=null;
@@ -899,6 +967,12 @@ function renderInsp(){
         <option value="LGUI">⌘ ホールドでCmd</option>
         ${km.map((_,n)=>n?`<option value="lt${n}">ホールドで ${layName(n)} レイヤー</option>`:"").join("")}
       </select>
+      <div class="sec">押して設定</div>
+      <button class="btn ghost mini" id="capbtn" style="width:100%">⌨ 押して設定</button>
+      <div class="desc" style="margin:6px 0 0;font-size:10.5px;color:var(--mute);line-height:1.55">
+        押すと待機状態になり、次に叩いたキーの組み合わせがそのまま入ります（⇧⌃⌥⌘も一緒に押してOK）。
+        中止は Esc。<b>⌘Space や ⌘Tab など、OSが先に横取りする組み合わせは取れません</b>——その場合は下のRAWで直接書いてください。
+      </div>
       <div class="sec">RAW（ZMK記法を直接入力）</div>
       <input type="text" id="rawin" spellcheck="false" placeholder="&kp LS(LG(V)) など">
     </div>
@@ -929,6 +1003,9 @@ function renderInsp(){
   const raw=box.querySelector("#rawin");
   raw.value=curKm()[layer][sel]||"&trans";
   raw.addEventListener("change",()=>{const v=raw.value.trim(); if(v.startsWith("&"))setBinding(v); else toast("ZMKの割当は & で始まります");});
+  const cap=box.querySelector("#capbtn");
+  cap.addEventListener("click",()=>{ setCapturing(!capturing); if(capturing)cap.blur(); });
+  setCapturing(false);
 }
 
 /* ================= layers（番号制・追加可能） ================= */
