@@ -164,10 +164,12 @@ figcaption b{color:var(--muted); font-weight:400; text-transform:uppercase; lett
 .klay{display:none}
 #kmL0:checked ~ .kmbar label[for=kmL0],
 #kmL1:checked ~ .kmbar label[for=kmL1],
-#kmL2:checked ~ .kmbar label[for=kmL2]{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
+#kmL2:checked ~ .kmbar label[for=kmL2],
+#kmL3:checked ~ .kmbar label[for=kmL3]{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
 #kmL0:checked ~ figure .klay0,
 #kmL1:checked ~ figure .klay1,
-#kmL2:checked ~ figure .klay2{display:block}
+#kmL2:checked ~ figure .klay2,
+#kmL3:checked ~ figure .klay3{display:block}
 .kkey{fill:var(--surface); stroke:var(--ink); stroke-width:1.2; opacity:.95}
 .kspec{fill:var(--raise); stroke:var(--ink)}
 .klbl{fill:var(--ink); text-anchor:middle; dominant-baseline:central; font-family:var(--mono); font-weight:500}
@@ -957,7 +959,7 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
       <tr><td>トラックボール</td><td class="k">右</td><td>指で転がしてポインタを動かします。&#216;19 mm・光学センサー式。</td></tr>
       <tr><td>ホイール（横型エンコーダー）</td><td class="k">右</td><td><strong>軸は左右方向。指で前後に転がします</strong>（マウスのスクロールホイールと同じ向き）。回すとページ送り、押し込みは左クリックです。</td></tr>
       <tr><td>ノブ（縦型エンコーダー）</td><td class="k">左</td><td><strong>軸は上向き。ボリュームつまみのように水平に回します。</strong>回すと音量、押し込みは <span class="k">&#8679;&#8984;V</span>（書式なしペースト）です。</td></tr>
-      <tr><td>スティック</td><td class="k">左</td><td><strong>トラックパッドの代わりです。</strong>2 本指・3 本指でするような操作を、親指ひとつでできるようにと載せています。<strong>倒したぶんだけポインタが動き</strong>、押し込みが左クリックです。倒しはじめの重さ（デッドゾーン）と速さは arare Studio から変えられます。</td></tr>
+      <tr><td>スティック</td><td class="k">左</td><td><strong>トラックパッドの代わりです。</strong>2 本指・3 本指でするような操作を、親指ひとつでできるようにと載せています。<strong>倒すと、その向きのショートカットが出ます</strong>——出荷時は Mission Control とデスクトップの移動（macOS のトラックパッドの 3 本指スワイプと同じ操作）です。カーソルは動きません（それはトラックボールの担当です）。押し込むと <span class="k">L3</span> レイヤーになります。倒しはじめの重さと、どの向きに何を出すかは arare Studio から変えられます。</td></tr>
       <tr><td>タクトスイッチ（外側）</td><td class="k">左右</td><td>RESET。動きが怪しいときに、その側だけを再起動します。</td></tr>
       <tr><td>タクトスイッチ（内側）</td><td class="k">左右</td><td>UNLOCK。Studio からキーを書き換える前に、いちど押します。</td></tr>
       <tr><td>電源スイッチ</td><td class="k">左右</td><td>内側の側面にあるスライドスイッチ。左右それぞれに付いています。</td></tr>
@@ -1332,15 +1334,18 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
   <div class="shead"><span class="snum">04</span><span class="skicker">Default keymap</span></div>
   <h2>出荷時のキーマップ</h2>
   <div class="prose">
-    <p>3 つのレイヤーが入っています。<span class="k">fn1</span> を押しているあいだが記号、<span class="k">fn2</span> を押しているあいだが数字と矢印です。US 配列のパソコンにつないだ状態で、キーに書いてあるとおりの文字が出ます。</p>
+    <p>レイヤーは 4 つです。<span class="k">fn1</span> を押しているあいだが記号、<span class="k">fn2</span> を押しているあいだが数字と矢印。US 配列のパソコンにつないだ状態で、キーに書いてあるとおりの文字が出ます。</p>
+    <p><span class="k">L3</span> は<strong>まるごと空けてあります</strong>。スティックを押しているあいだ有効になるので、よく使う操作を arare Studio で入れてください。</p>
   </div>
   <input type="radio" name="kmlayer" id="kmL0" checked>
   <input type="radio" name="kmlayer" id="kmL1">
   <input type="radio" name="kmlayer" id="kmL2">
+  <input type="radio" name="kmlayer" id="kmL3">
   <div class="kmbar">
     <label for="kmL0" tabindex="0">L0 &nbsp;Base</label>
     <label for="kmL1" tabindex="0">L1 &nbsp;Sym</label>
     <label for="kmL2" tabindex="0">L2 &nbsp;Num</label>
+    <label for="kmL3" tabindex="0">L3 &nbsp;Free</label>
     <span class="kmhint">・印はひとつ下のレイヤーがそのまま出るキーです</span>
   </div>
   <figure>
@@ -1436,17 +1441,18 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
 <text class="klbl k-mt" x="161.0" y="385.0" font-size="25">LCTRL</text>
 <text class="ksub" x="161.0" y="415.0" font-size="15">⌥ 長押し</text>
 <text class="klbl k-kp" x="261.0" y="368.0" font-size="38">⌘</text>
-<text class="klbl k-fn" x="361.0" y="407.0" font-size="38">fn1</text>
-<text class="ksub" x="361.0" y="437.0" font-size="15">レイヤー 1</text>
-<text class="klbl k-kp" x="477.0" y="420.0" font-size="38" transform="rotate(8.21 477 420)">␣</text>
-<text class="klbl k-ptr kjp" x="590.0" y="443.0" font-size="25" transform="rotate(18.07 590 443)">左クリック</text>
+<text class="klbl k-kp" x="361.0" y="415.0" font-size="38">␣</text>
+<text class="klbl k-fn" x="477.0" y="412.0" font-size="38" transform="rotate(8.21 477 420)">fn1</text>
+<text class="ksub" x="477.0" y="442.0" font-size="15" transform="rotate(8.21 477 420)">レイヤー 1</text>
+<text class="klbl k-fn" x="590.0" y="435.0" font-size="38" transform="rotate(18.07 590 443)">fn3</text>
+<text class="ksub" x="590.0" y="465.0" font-size="15" transform="rotate(18.07 590 443)">レイヤー 3</text>
 <text class="klbl k-kp" x="725.0" y="443.0" font-size="38" transform="rotate(-18.07 725 443)">⏎</text>
 <text class="klbl k-kp" x="838.0" y="420.0" font-size="38" transform="rotate(-8.21 838 420)">⌫</text>
 <text class="klbl k-kp kjp" x="1253.0" y="418.0" font-size="38">かな</text>
-<text class="klbl k-sys" x="30.0" y="30.0" font-size="20">RESET</text>
-<text class="klbl k-sys" x="83.0" y="30.0" font-size="17">UNLOCK</text>
-<text class="klbl k-sys" x="1232.0" y="30.0" font-size="17">UNLOCK</text>
-<text class="klbl k-sys" x="1285.0" y="30.0" font-size="20">RESET</text>
+<text class="klbl k-sys" x="30.0" y="30.0" font-size="20">BT1</text>
+<text class="klbl k-sys" x="83.0" y="30.0" font-size="20">BT2</text>
+<text class="klbl k-sys" x="1232.0" y="30.0" font-size="20">BT3</text>
+<text class="klbl k-sys" x="1285.0" y="30.0" font-size="17">UNLOCK</text>
 </g>
 <g class="klay klay1">
 <text class="klbl k-kp" x="61.0" y="118.0" font-size="38">Esc</text>
@@ -1492,10 +1498,10 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
 <text class="klbl k-kp" x="725.0" y="443.0" font-size="25" transform="rotate(-18.07 725 443)">Globe</text>
 <text class="klbl k-kp" x="838.0" y="420.0" font-size="38" transform="rotate(-8.21 838 420)">Del</text>
 <text class="klbl k-kp" x="1253.0" y="418.0" font-size="38">*</text>
-<circle class="ktr" cx="30.0" cy="30.0" r="4"/>
-<circle class="ktr" cx="83.0" cy="30.0" r="4"/>
-<circle class="ktr" cx="1232.0" cy="30.0" r="4"/>
-<circle class="ktr" cx="1285.0" cy="30.0" r="4"/>
+<text class="klbl k-kp" x="30.0" y="30.0" font-size="20">F13</text>
+<text class="klbl k-kp" x="83.0" y="30.0" font-size="20">F14</text>
+<text class="klbl k-kp" x="1232.0" y="30.0" font-size="20">F15</text>
+<text class="klbl k-kp" x="1285.0" y="30.0" font-size="20">F16</text>
 </g>
 <g class="klay klay2">
 <circle class="ktr" cx="61.0" cy="118.0" r="4"/>
@@ -1546,6 +1552,55 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
 <circle class="ktr" cx="1232.0" cy="30.0" r="4"/>
 <circle class="ktr" cx="1285.0" cy="30.0" r="4"/>
 </g>
+<g class="klay klay3">
+<circle class="ktr" cx="61.0" cy="118.0" r="4"/>
+<circle class="ktr" cx="161.0" cy="93.0" r="4"/>
+<circle class="ktr" cx="261.0" cy="68.0" r="4"/>
+<circle class="ktr" cx="361.0" cy="86.0" r="4"/>
+<circle class="ktr" cx="461.0" cy="93.0" r="4"/>
+<circle class="ktr" cx="853.0" cy="93.0" r="4"/>
+<circle class="ktr" cx="953.0" cy="86.0" r="4"/>
+<circle class="ktr" cx="1053.0" cy="68.0" r="4"/>
+<circle class="ktr" cx="1153.0" cy="93.0" r="4"/>
+<circle class="ktr" cx="1253.0" cy="118.0" r="4"/>
+<circle class="ktr" cx="61.0" cy="218.0" r="4"/>
+<circle class="ktr" cx="161.0" cy="193.0" r="4"/>
+<circle class="ktr" cx="261.0" cy="168.0" r="4"/>
+<circle class="ktr" cx="361.0" cy="186.0" r="4"/>
+<circle class="ktr" cx="461.0" cy="193.0" r="4"/>
+<circle class="ktr" cx="561.0" cy="220.0" r="4"/>
+<circle class="ktr" cx="753.0" cy="220.0" r="4"/>
+<circle class="ktr" cx="853.0" cy="193.0" r="4"/>
+<circle class="ktr" cx="953.0" cy="186.0" r="4"/>
+<circle class="ktr" cx="1053.0" cy="168.0" r="4"/>
+<circle class="ktr" cx="1153.0" cy="193.0" r="4"/>
+<circle class="ktr" cx="1253.0" cy="218.0" r="4"/>
+<circle class="ktr" cx="61.0" cy="318.0" r="4"/>
+<circle class="ktr" cx="161.0" cy="293.0" r="4"/>
+<circle class="ktr" cx="261.0" cy="268.0" r="4"/>
+<circle class="ktr" cx="361.0" cy="286.0" r="4"/>
+<circle class="ktr" cx="461.0" cy="293.0" r="4"/>
+<circle class="ktr" cx="561.0" cy="318.0" r="4"/>
+<circle class="ktr" cx="753.0" cy="318.0" r="4"/>
+<circle class="ktr" cx="853.0" cy="293.0" r="4"/>
+<circle class="ktr" cx="953.0" cy="286.0" r="4"/>
+<circle class="ktr" cx="1053.0" cy="268.0" r="4"/>
+<circle class="ktr" cx="1153.0" cy="293.0" r="4"/>
+<circle class="ktr" cx="1253.0" cy="318.0" r="4"/>
+<circle class="ktr" cx="61.0" cy="418.0" r="4"/>
+<circle class="ktr" cx="161.0" cy="393.0" r="4"/>
+<circle class="ktr" cx="261.0" cy="368.0" r="4"/>
+<circle class="ktr" cx="361.0" cy="415.0" r="4"/>
+<circle class="ktr" cx="477.0" cy="420.0" r="4" transform="rotate(8.21 477 420)"/>
+<circle class="ktr" cx="590.0" cy="443.0" r="4" transform="rotate(18.07 590 443)"/>
+<circle class="ktr" cx="725.0" cy="443.0" r="4" transform="rotate(-18.07 725 443)"/>
+<circle class="ktr" cx="838.0" cy="420.0" r="4" transform="rotate(-8.21 838 420)"/>
+<circle class="ktr" cx="1253.0" cy="418.0" r="4"/>
+<circle class="ktr" cx="30.0" cy="30.0" r="4"/>
+<circle class="ktr" cx="83.0" cy="30.0" r="4"/>
+<circle class="ktr" cx="1232.0" cy="30.0" r="4"/>
+<circle class="ktr" cx="1285.0" cy="30.0" r="4"/>
+</g>
 </svg>
     </div>
     <figcaption><b>Fig.3</b> 出荷時キーマップ（実際のファームウェア設定から生成）</figcaption>
@@ -1554,12 +1609,16 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
   <table>
     <thead><tr><th>操作</th><th>出荷時の割り当て</th></tr></thead>
     <tbody>
-      <tr><td>ノブを回す（左）</td><td>音量の上げ下げ</td></tr>
+      <tr><td>ノブを回す（左）</td><td>拡大 / 縮小（<span class="k">⌘+</span> / <span class="k">⌘-</span>）</td></tr>
       <tr><td>ホイールを回す（右）</td><td>ページ送り（PageUp / PageDown）</td></tr>
       <tr><td>ノブを押す（左）</td><td class="k">⇧⌘V</td></tr>
-      <tr><td>ホイールを押す（右）／ スティックを押す（左）</td><td>左クリック</td></tr>
+      <tr><td>ホイールを押す（右）</td><td>左クリック</td></tr>
+      <tr><td>スティックを押す（左）</td><td>押しているあいだ <span class="k">L3</span> レイヤー（出荷時は空）</td></tr>
+      <tr><td>スティックを倒す（左）</td><td>Mission Control / App Exposé / デスクトップの移動</td></tr>
       <tr><td>Z を長押し</td><td class="k">⇧</td></tr>
       <tr><td>Ctrl を長押し</td><td class="k">⌥</td></tr>
+      <tr><td>タクトスイッチ 4 つ</td><td>Bluetooth の接続先 1〜3 の切り替えと <span class="k">UNLOCK</span></td></tr>
+      <tr><td><span class="k">fn1</span> ＋ タクトスイッチ</td><td><span class="k">F13</span>〜<span class="k">F16</span>（Mac 側でアプリの起動に割り当てられます）</td></tr>
     </tbody>
   </table>
   </div>
