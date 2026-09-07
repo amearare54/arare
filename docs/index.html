@@ -568,25 +568,33 @@ const KEYS=[ /* [sw, x, y, w, h, rot, rx, ry] 単位=centi-keyunit(17mm/100) */
 ];
 const ROWS=[10,12,12,9,4]; // keymap整形用の行割り
 const SHIPPED={
- name:["Base","Sym","Num"],
+ name:["L0","L1","L2","L3"],
  layers:[
   ["&kp Q","&kp W","&kp E","&kp R","&kp T","&kp Y","&kp U","&kp I","&kp O","&kp P",
    "&kp A","&kp S","&kp D","&kp F","&kp G","&kp LS(LG(V))","&mkp LCLK","&kp H","&kp J","&kp K","&kp L","&kp MINUS",
    "&mt LSHFT Z","&kp X","&kp C","&kp V","&kp B","&mo 2","&mkp RCLK","&kp N","&kp M","&kp COMMA","&kp DOT","&kp AT",
-   "&kp LANG2","&mt LALT LCTRL","&kp LGUI","&mo 1","&kp SPACE","&mkp LCLK","&kp ENTER","&kp BSPC","&kp LANG1",
-   "&sys_reset","&studio_unlock","&studio_unlock","&sys_reset"],
+   "&kp LANG2","&mt LALT LCTRL","&kp LGUI","&kp SPACE","&mo 1","&mo 3","&kp ENTER","&kp BSPC","&kp LANG1",
+   "&bt BT_SEL 0","&bt BT_SEL 1","&bt BT_SEL 2","&studio_unlock"],
   ["&kp ESC","&trans","&trans","&trans","&trans","&kp LPAR","&kp RPAR","&kp EXCL","&kp QMARK","&kp EQUAL",
    "&kp TAB","&trans","&trans","&trans","&trans","&trans","&trans","&kp LBKT","&kp RBKT","&kp HASH","&kp PRCNT","&kp FSLH",
    "&trans","&trans","&trans","&trans","&trans","&trans","&kp DQT","&kp SEMI","&kp COLON","&kp AMPS","&kp SQT","&kp UNDER",
    "&kp CAPS","&trans","&trans","&trans","&trans","&trans","&kp GLOBE","&kp DEL","&kp ASTRK",
-   "&trans","&trans","&trans","&trans"],
+   "&kp F13","&kp F14","&kp F15","&kp F16"],
   ["&trans","&trans","&trans","&trans","&trans","&trans","&trans","&kp N7","&kp N8","&kp N9",
    "&trans","&trans","&trans","&trans","&trans","&trans","&trans","&kp UP","&trans","&kp N4","&kp N5","&kp N6",
    "&trans","&trans","&trans","&trans","&trans","&trans","&kp LEFT","&kp DOWN","&kp RIGHT","&kp N1","&kp N2","&kp N3",
    "&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&kp N0",
+   "&trans","&trans","&trans","&trans"],
+  ["&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans",
+   "&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans",
+   "&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans",
+   "&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans",
    "&trans","&trans","&trans","&trans"]
  ],
- sensors:["&inc_dec_kp C_VOL_UP C_VOL_DN","&inc_dec_kp PG_UP PG_DN"]
+ sensors:["&inc_dec_kp LG(EQUAL) LG(MINUS)","&inc_dec_kp PG_UP PG_DN"],
+ /* レイヤー別のエンコーダー割当。ここに無いレイヤーは sensor-bindings を出さない
+  * （ZMK は割当の無いレイヤーを飛ばして下のレイヤーへ落ちる: keymap.c:758 の !behavior → continue） */
+ sensorsL:{1:["&inc_dec_kp LG(EQUAL) LG(MINUS)","&inc_dec_kp PG_UP PG_DN"], 2:["&inc_dec_kp C_BRI_UP C_BRI_DN","&inc_dec_kp C_VOL_UP C_VOL_DN"]}
 };
 const ENC_OPTS=[
  ["&inc_dec_kp C_VOL_UP C_VOL_DN","音量 +/−"],
@@ -716,7 +724,7 @@ function legend(b){
 let km, enc, encL, joyL, dev, devs, combos, mode="basic", layer=0, sel=-1, arr="us";
 function load(){
   km=JSON.parse(JSON.stringify(SHIPPED.layers)); enc=[...SHIPPED.sensors];
-  dev=JSON.parse(JSON.stringify(DEV_DEFAULT)); encL={}; joyL={};
+  dev=JSON.parse(JSON.stringify(DEV_DEFAULT)); encL=JSON.parse(JSON.stringify(SHIPPED.sensorsL)); joyL={};
   devs=JSON.parse(JSON.stringify(DEVS_DEFAULT)); combos=[]; arr="us";
   try{
     const d=JSON.parse(localStorage.getItem("arare-studio-draft"));
@@ -1181,10 +1189,10 @@ function renderBuild(){
  * キーボード自身はアプリを開けない。めったに使わないキー(F13〜)を送り、
  * Mac側でそれをアプリやURLに結びつける、という二段構えにする。 */
 const TACT = [
-  {i:43, name:"左・外側", def:"RESET"},
-  {i:44, name:"左・内側", def:"UNLOCK"},
-  {i:45, name:"右・内側", def:"UNLOCK"},
-  {i:46, name:"右・外側", def:"RESET"},
+  {i:43, name:"左・外側", def:"BT 1"},
+  {i:44, name:"左・内側", def:"BT 2"},
+  {i:45, name:"右・内側", def:"BT 3"},
+  {i:46, name:"右・外側", def:"UNLOCK"},
 ];
 const TACT_HOTKEY = ["F13","F14","F15","F16"];
 const APP_SUGGEST = ["Safari","Google Chrome","Visual Studio Code","Terminal","Finder","Mail",
@@ -1228,13 +1236,13 @@ function renderLauncher(){
     </div>`;
   }).join("");
 
-  /* RESET と UNLOCK を全部潰していないか */
+  /* UNLOCK と Bluetooth の切替を全部潰していないか */
   const left = TACT.filter((t,n) => dev.launch[n].kind === "keep");
   const warns = [];
   if(!left.some(t => t.def === "UNLOCK"))
     warns.push("⚠ UNLOCK が1つも残っていません。arare Studio からキーを書き換える前に押す必要があるので、1つは残すことをおすすめします。");
-  if(!left.some(t => t.def === "RESET"))
-    warns.push("⚠ RESET が1つも残っていません。動きが怪しいときの再起動ができなくなります。");
+  if(!left.some(t => t.def.startsWith("BT")))
+    warns.push("⚠ Bluetooth の接続先切替（BT 1〜3）が1つも残っていません。複数の機器で使い分けるなら1つは残してください。");
 
   const kb = launcherKarabiner();
   const active = dev.launch.filter(l => l.kind!=="keep" && l.target.trim()).length;
@@ -1902,7 +1910,7 @@ document.getElementById("openedit").addEventListener("click",()=>{
 function resetAll(){
   pushHist();
   km=JSON.parse(JSON.stringify(SHIPPED.layers)); enc=[...SHIPPED.sensors]; layer=0;
-  dev=JSON.parse(JSON.stringify(DEV_DEFAULT)); encL={}; joyL={};
+  dev=JSON.parse(JSON.stringify(DEV_DEFAULT)); encL=JSON.parse(JSON.stringify(SHIPPED.sensorsL)); joyL={};
   devs=JSON.parse(JSON.stringify(DEVS_DEFAULT)); combos=[]; comboCapture=null; joyL={}; arr="us";
   try{localStorage.removeItem("arare-studio-draft");}catch(e){}
   renderArrTg(); renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
