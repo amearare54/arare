@@ -1,10 +1,14 @@
 ---
+# ★診断用ブランチ（fix-split-scan）: 左右ともUSBログを出す。
+#   studio-rpc-usb-uart は同じCDCを取り合うのでこのビルドでは外している。
+#   ステータスBLEアドバタイズ(prospector)は main のまま有効＝壊れている状態をそのまま観測する。
 include:
-  # central = RIGHT (trackball side). Studio RPC over USB on central only.
+  # central = RIGHT (trackball side)
   - board: seeeduino_xiao_ble
     shield: arare_R
-    snippet: studio-rpc-usb-uart
+    snippet: zmk-usb-logging
   - board: seeeduino_xiao_ble
     shield: arare_L
+    snippet: zmk-usb-logging
   - board: seeeduino_xiao_ble
     shield: settings_reset
