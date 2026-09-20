@@ -1,9 +1,11 @@
 ---
+# ★診断用（test-notb-log）: トラボ無し ＋ 右手にUSBログ。
+#   トラボ有りだと右手が起動しないので、ログを取るにはトラボ無しと併用する必要がある。
+#   左手(peripheral)には zmk-usb-logging を入れない（USBが有効化されず起動が止まるため）。
 include:
-  # central = RIGHT (trackball side). Studio RPC over USB on central only.
   - board: seeeduino_xiao_ble
     shield: arare_R
-    snippet: studio-rpc-usb-uart
+    snippet: zmk-usb-logging
   - board: seeeduino_xiao_ble
     shield: arare_L
   - board: seeeduino_xiao_ble
