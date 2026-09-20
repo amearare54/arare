@@ -110,3 +110,14 @@
 };
 
 #include "arare_tuning_R.dtsi"
+
+/* ★切り分け用（test-no-trackball ブランチ限定）
+ * ドライバを外すだけだと trackball_listener の DEVICE_DT_GET がリンクエラーになるので、
+ * ノードごと無効化する。listener を先に閉じれば trackball は参照されない。 */
+&trackball_listener {
+    status = "disabled";
+};
+
+&trackball {
+    status = "disabled";
+};
