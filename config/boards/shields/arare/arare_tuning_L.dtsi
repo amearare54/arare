@@ -1,7 +1,11 @@
-/* arare チューニング（左手）: 左エンコーダ＋ジョイスティック（受け口）
+/* arare チューニング（左手）— ★切り分け用（test-L-nojoy ブランチ限定）
  *
- * このファイルは arare Studio の「設定」パネルが生成するテキストでまるごと差し替える運用。
- * 既定値 = 現状維持。
+ * ジョイスティックを外した構成（arare Studio の BUILD パネル「普通のキー」と同じ中身）。
+ * 左右が繋がらない原因が、左手のジョイスティック／SAADC まわりで左手の処理が止まり、
+ * split の広告が出ていないことか確かめる。
+ *
+ * 根拠（2026-09-22 実機ログ）: 右手のスキャンは正常で周囲23台を検出しているが、
+ * Found the split service が一度も出ない＝左手の広告が一度も届いていない。
  */
 
 /* 左エンコーダ（EC12・縦）の分解能と感度 */
@@ -13,47 +17,12 @@
     triggers-per-rotation = <10>;
 };
 
-/* ジョイスティックを付けている構成。
- * 電池ドライバを oversampling=0 の arare 版へ差し替えて SAADC の停止を避ける。
- * 理由と代償は arare_L.conf のコメントを参照。
- * ★付けない構成では arare Studio がこのincludeを出さず、代わりに
- *   &joystick / &joystick_split を disabled にする。 */
-#include "arare_saadc_fix.dtsi"
-
-/* ---- ジョイスティック（アナログXY）: 実機合わせの調整値 ----
- *
- * 測り方: arare_L.conf の実機測定4行セットを有効にすると生値とmVがログに出る。それを見て
- *   mv-mid      = 中立時のmV
- *   mv-min-max  = 最大まで倒したときの |mv - mv-mid|（少し小さめに取ると端まで届く）
- *   mv-deadzone = 中立時のふらつき幅より少し大きく（uint8_t 格納なので 255 以下）
- *
- * 1サンプルあたりの移動量はこの順で決まる:
- *   (1) v = mv - mv-mid → (2) デッドゾーンぶん原点へ寄せる → (3) ±mv-min-max にクランプ
- *   → (4) invert なら符号反転 → (5) v × scale-multiplier ÷ scale-divisor（整数除算）
- *
- * ★(5) の切り捨て残差は捨てられ積算されない。つまり scale-divisor は mv-deadzone とは別に
- *   「その値ぶんの実効デッドゾーン」を作る。ゆっくり少しだけ倒しても動かないのはこれが原因。
- *   低速域を効かせたいときは比を保ったまま分解能を上げる（4/280 は 1/70 と同比で4倍細かい）。
- *
- * ★向き: invert はこのファイルで付け外しする。DTのbooleanは再代入で消せないので
- *   overlay 側には置かない（消すときは行ごと削除）。
- */
-&joy_x {
-    mv-mid = <1650>;
-    mv-min-max = <1200>;
-    mv-deadzone = <60>;
-    scale-multiplier = <4>;
-    scale-divisor = <280>;
-    /* invert; */
+/* ジョイスティックを付けていない構成。アナログ入力と中継を無効にする。
+ * 電池ドライバの差し替え（arare_saadc_fix.dtsi）も行わない＝本家のまま。 */
+&joystick {
+    status = "disabled";
 };
 
-&joy_y {
-    mv-mid = <1650>;
-    mv-min-max = <1200>;
-    mv-deadzone = <60>;
-    scale-multiplier = <4>;
-    scale-divisor = <280>;
-    /* 上下の向きは実機で確認して付け外しする */
-    /* invert; */
+&joystick_split {
+    status = "disabled";
 };
-/* ------------------------------------------------------------- */
