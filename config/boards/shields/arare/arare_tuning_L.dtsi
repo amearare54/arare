@@ -18,7 +18,10 @@
  * 理由と代償は arare_L.conf のコメントを参照。
  * ★付けない構成では arare Studio がこのincludeを出さず、代わりに
  *   &joystick / &joystick_split を disabled にする。 */
-#include "arare_saadc_fix.dtsi"
+/* ★切り分け用（test-L-joy-nobatt）: 電池ドライバを丸ごと止める（本家も arare 版も使わない） */
+&vbatt {
+    status = "disabled";
+};
 
 /* ---- ジョイスティック（アナログXY）: 実機合わせの調整値 ----
  *
