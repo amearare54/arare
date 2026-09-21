@@ -10,7 +10,14 @@
  *
  * ここでは相対移動を軸ごとに積算し、しきい値を超えた瞬間に「押して離す」を1回送る。
  * スティックを中央へ戻すとイベントが途切れるので、reset-ms 経過で積算を捨てて再武装する。
- * 倒し続けた場合はしきい値ごとに繰り返し発火する（スペースを連続で送れる）。
+ *
+ * 1回はじく＝1回だけ発火する。次が出るのは、中央へ戻して（イベントが reset-ms 途切れて）から。
+ *   倒したまま別の向きへ動かしても出さない。離したときにバネで反対側へ跳ね返る分で
+ *   逆向き（奥→手前など）が誤って出るのを防ぐため。
+ *   以前は倒し続けるとしきい値を超えるたびに発火していた。いっぱいまで倒すと
+ *   1サンプルで 12 前後積算されるため、しきい値 40 なら 1 秒に 20 回以上 ⌃← などが出てしまう
+ *   （Mission Control は開閉を繰り返す）。2026-09-22 に変更。
+ * 倒し続けて繰り返したいときは repeat-ms を指定する（キーリピートと同じ考え方）。
  */
 
 #define DT_DRV_COMPAT arare_input_processor_gesture
@@ -35,6 +42,7 @@ struct gesture_config {
     int32_t threshold;
     int32_t reset_ms;
     int32_t tap_ms;
+    int32_t repeat_ms; /* 0 = 倒したままでは繰り返さない */
     const struct zmk_behavior_binding *bindings; /* 上・下・左・右 */
 };
 
@@ -43,6 +51,8 @@ struct gesture_data {
     int32_t acc_x;
     int32_t acc_y;
     int64_t last_ms;
+    int held_dir;         /* 直前に発火した向き。-1 = 中央（再武装済み） */
+    int64_t next_repeat_ms;
     struct k_work_delayable release_work;
     struct zmk_behavior_binding pending;
     struct zmk_behavior_binding_event pending_event;
@@ -101,11 +111,12 @@ static int gesture_handle_event(const struct device *dev, struct input_event *ev
         return ZMK_INPUT_PROC_CONTINUE;
     }
 
-    /* しばらく動きが無ければ中央へ戻したとみなして積算を捨てる */
+    /* しばらく動きが無ければ中央へ戻したとみなして積算を捨て、再武装する */
     int64_t now = k_uptime_get();
     if (now - data->last_ms > cfg->reset_ms) {
         data->acc_x = 0;
         data->acc_y = 0;
+        data->held_dir = -1;
     }
     data->last_ms = now;
 
@@ -116,14 +127,27 @@ static int gesture_handle_event(const struct device *dev, struct input_event *ev
     }
 
     /* 大きく傾いている軸を優先し、斜めで2方向が同時に出るのを防ぐ */
+    int dir = -1;
     if (abs(data->acc_x) >= cfg->threshold && abs(data->acc_x) >= abs(data->acc_y)) {
-        fire(dev, data->acc_x > 0 ? DIR_RIGHT : DIR_LEFT, state);
-        data->acc_x = 0;
-        data->acc_y = 0;
+        dir = data->acc_x > 0 ? DIR_RIGHT : DIR_LEFT;
     } else if (abs(data->acc_y) >= cfg->threshold) {
-        fire(dev, data->acc_y > 0 ? DIR_DOWN : DIR_UP, state);
+        dir = data->acc_y > 0 ? DIR_DOWN : DIR_UP;
+    }
+
+    if (dir >= 0) {
         data->acc_x = 0;
         data->acc_y = 0;
+        if (data->held_dir < 0) {
+            /* 中央からはじいた → 1回だけ出す */
+            data->held_dir = dir;
+            data->next_repeat_ms = now + cfg->repeat_ms;
+            fire(dev, (enum arare_dir)dir, state);
+        } else if (dir == data->held_dir && cfg->repeat_ms > 0 && now >= data->next_repeat_ms) {
+            /* 同じ向きに倒し続けている → repeat-ms ごとに繰り返す */
+            data->next_repeat_ms = now + cfg->repeat_ms;
+            fire(dev, (enum arare_dir)dir, state);
+        }
+        /* それ以外（中央を通らない向きの切り替え・跳ね返り）は捨てる */
     }
 
     /* ポインタは動かさない（スティックはジェスチャ専用。ポインタはトラックボール） */
@@ -138,6 +162,7 @@ static int gesture_init(const struct device *dev) {
     struct gesture_data *data = dev->data;
     data->dev = dev;
     data->last_ms = k_uptime_get();
+    data->held_dir = -1;
     k_work_init_delayable(&data->release_work, release_pending);
     return 0;
 }
@@ -152,6 +177,7 @@ static int gesture_init(const struct device *dev) {
         .threshold = DT_INST_PROP(n, threshold),                                                   \
         .reset_ms = DT_INST_PROP(n, reset_ms),                                                     \
         .tap_ms = DT_INST_PROP(n, tap_ms),                                                         \
+        .repeat_ms = DT_INST_PROP(n, repeat_ms),                                                   \
         .bindings = gesture_bindings_##n,                                                          \
     };                                                                                             \
     static struct gesture_data gesture_data_##n;                                                   \

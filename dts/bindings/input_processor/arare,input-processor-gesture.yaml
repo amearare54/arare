@@ -2,7 +2,7 @@
 #
 # トラックパッドの3本指スワイプ相当を親指のスティックで行うためのもの。
 # 相対移動(REL_X/REL_Y)を方向ごとに積算し、しきい値を超えた瞬間にタップを1回送る。
-# 中央へ戻す（イベントが途切れる）と再武装する。
+# 1回はじく＝1回。中央へ戻す（イベントが reset-ms 途切れる）と次が出る。
 description: Fire a behavior once per directional flick of an analog stick
 
 compatible: "arare,input-processor-gesture"
@@ -22,6 +22,12 @@ properties:
     type: int
     default: 20
     description: 押してから離すまでの時間
+  repeat-ms:
+    type: int
+    default: 0
+    description: >
+      同じ向きに倒し続けたとき、この間隔で繰り返す。0 = 繰り返さない（1回はじく＝1回）。
+      上（Mission Control）のように開閉が交互になる操作があるので、既定は 0
   bindings:
     type: phandle-array
     required: true

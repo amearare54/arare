@@ -41,33 +41,49 @@
      * ★ report-on-change-only は絶対に付けないこと。
      *   付けると「倒し続けても最初の1回しか動かない」挙動になる。
      *
-     * 実機合わせの数値（mv-mid / mv-min-max / mv-deadzone / scale / invert）は
-     * arare_tuning_L.dtsi 側で上書きする。ここは必須プロパティと安全側の初期値のみ。 */
+     * ★★ 実機の軸は想定から90°回っている（2026-09-22 実測）★★
+     *   AIN2（/L_JOY_X と名付けた線）が「奥・手前」、AIN3（/L_JOY_Y）が「左・右」に振れる。
+     *   子ノードの並びは上の理由で変えられないので、input-code を入れ替えて合わせる:
+     *     joy_x（AIN2）→ REL_Y（奥=負・手前=正。そのままで向きも合う）
+     *     joy_y（AIN3）→ REL_X（左=正・右=負で逆向きなので invert）
+     *
+     * 中点と振れ幅も実測値（~/arare/tools/dfu/joy_measure.py、ブランチ cal-L-joy のログ）:
+     *   AIN2: 離すと 2228〜2285 mV（中央値 2264）。奥 −1284、手前 +1036（3.3V で頭打ち）
+     *   AIN3: 離すと 1744〜1777 mV（中央値 1768）。左 +1334、右 −1330
+     *   揺れは ±15 mV 程度。離すたびの戻り位置のずれが最大 ±40 mV ほどある。
+     *   ※仮置きの 1650 のままだと AIN2 が常に +600 mV 倒れている扱いになり、
+     *     触っていないのにジェスチャが1秒に十数回出続けた。
+     *
+     * これらはこの基板・この部品の事実なので overlay に置く。
+     * arare Studio が生成する arare_tuning_L.dtsi は mv-deadzone しか出さないため、
+     * そちらに置くと Studio で再生成した瞬間に消える。
+     * invert も同じ理由でここに置く（DT の boolean は後から消せないが、向きは部品で決まる）。 */
     joystick: analog_input_0 {
         compatible = "zmk,analog-input";
         status = "okay";
         sampling-hz = <100>;
 
-        joy_x: x-ch {                      /* 昇順1番目: AIN2 */
+        joy_x: x-ch {                      /* 昇順1番目: AIN2 = 実機の「奥・手前」 */
             io-channels = <&adc 2>;
-            mv-mid = <1650>;               /* 3V3/2。実機で確定させる */
-            mv-min-max = <1200>;
-            mv-deadzone = <60>;            /* uint8_t 格納なので 255 以下 */
+            mv-mid = <2264>;               /* 実測 */
+            mv-min-max = <900>;            /* 手前側は +1036 で頭打ちなので、両側で届く値に揃える */
+            mv-deadzone = <100>;           /* uint8_t 格納なので 255 以下。tuning 側で上書きされる */
             scale-multiplier = <4>;
             scale-divisor = <280>;         /* 1/70 と同比のまま分解能を上げてある */
             evt-type = <INPUT_EV_REL>;
-            input-code = <INPUT_REL_X>;
+            input-code = <INPUT_REL_Y>;    /* 90°回っているので Y へ */
         };
 
-        joy_y: y-ch {                      /* 昇順2番目: AIN3 */
+        joy_y: y-ch {                      /* 昇順2番目: AIN3 = 実機の「左・右」 */
             io-channels = <&adc 3>;
-            mv-mid = <1650>;
-            mv-min-max = <1200>;
-            mv-deadzone = <60>;
+            mv-mid = <1768>;               /* 実測 */
+            mv-min-max = <900>;
+            mv-deadzone = <100>;
             scale-multiplier = <4>;
             scale-divisor = <280>;
             evt-type = <INPUT_EV_REL>;
-            input-code = <INPUT_REL_Y>;
+            input-code = <INPUT_REL_X>;    /* 90°回っているので X へ */
+            invert;                        /* 右に倒すと電圧が下がるため */
         };
     };
 };
