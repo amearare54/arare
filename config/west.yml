@@ -11,6 +11,9 @@ manifest:
     # ジョイスティック（アナログXY）用
     - name: badjeff
       url-base: https://github.com/badjeff
+    # 上流の不具合を直したフォーク（arare 自身のアカウント）
+    - name: amearare54
+      url-base: https://github.com/amearare54
   projects:
     - name: zmk
       remote: zmkfirmware
@@ -39,9 +42,14 @@ manifest:
     # ユーザーが消費電力を承知のうえで採用を決定（2026-09-05）。
     # ZMKバージョン対応の記載はリポジトリに無く、v0.3.0との互換は依存API
     # （input_report / sensor_driver_api / ADC_DT_SPEC_GET_BY_IDX）のソース照合による間接確認のみ。
+    # ★2026-09-22 フォーク版に切り替え。上流 2684f22 に1行の修正を足したもの（branch: arare-fix-uint8-loop）。
+    #   analog_input.c の `for (uint8_t i = len - 1; i >= 0; i--)` は i >= 0 が常に真で、
+    #   全チャネルが前回と同じ（スティック静止）ときに配列の外を読み続け、永久に抜けないことがある。
+    #   左手でこれを踏むと左右が繋がらなかった（ジョイスティックを外すと 20/20 で繋がる）。
+    #   上流 main でも未修正（2026-09-22 時点）。
     - name: zmk-analog-input-driver
-      remote: badjeff
-      revision: 2684f22ee7e2168d4393f7e63676912210a796fc
+      remote: amearare54
+      revision: 81f22641ca430040363b4d6dd569555cb6a2c260
       path: modules/zmk-analog-input-driver
   self:
     path: config
