@@ -1,10 +1,9 @@
 ---
+# ★診断用（diag-R-tb ブランチ限定・main には入れない）
+# トラックボールが動かない（2026-09-22）。右手を USB ログ版にして、PAW3222 ドライバの
+# 起動時の製品ID確認（"Invalid product id" 等）と、転がしたときの "x= y=" を見る。
+# Studio 用の CDC（studio-rpc-usb-uart）はログと同居できないので外す。
 include:
-  # central = RIGHT (trackball side). Studio RPC over USB on central only.
   - board: seeeduino_xiao_ble
     shield: arare_R
-    snippet: studio-rpc-usb-uart
-  - board: seeeduino_xiao_ble
-    shield: arare_L
-  - board: seeeduino_xiao_ble
-    shield: settings_reset
+    snippet: zmk-usb-logging
