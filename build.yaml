@@ -1,10 +1,7 @@
 ---
+# ★診断用（diag-L-enc ブランチ限定・main には入れない）
+# 左手を単独のキーボードにして、左ノブ（EC12）の信号を USB ログで直接見る。
 include:
-  # central = RIGHT (trackball side). Studio RPC over USB on central only.
-  - board: seeeduino_xiao_ble
-    shield: arare_R
-    snippet: studio-rpc-usb-uart
   - board: seeeduino_xiao_ble
     shield: arare_L
-  - board: seeeduino_xiao_ble
-    shield: settings_reset
+    snippet: zmk-usb-logging

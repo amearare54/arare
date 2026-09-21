@@ -34,3 +34,8 @@
 &joy_y {
     mv-deadzone = <100>;
 };
+
+/* ★診断用（diag-L-enc ブランチ限定）: split を切るので右への中継口は閉じる */
+&joystick_split {
+    status = "disabled";
+};
