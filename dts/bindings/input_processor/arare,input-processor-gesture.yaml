@@ -16,8 +16,12 @@ properties:
     description: この量だけ積算したら発火する（相対移動の合計）
   reset-ms:
     type: int
-    default: 200
-    description: この時間イベントが来なければ積算を捨てて再武装する
+    default: 100
+    description: >
+      この時間、大きな動き（|値| > min-value）が来なければ、中央へ戻したとみなして再武装する。
+      倒している間は約30msごとにレポートが来る。200 だと素早く続けてはじいた2回目以降を
+      取りこぼした（実測ログで17回中9回）。80 を切ると倒したままの間に再武装して2回出る恐れがある。
+      arare Studio のレイヤー別ノード（joy_gesture_N）は指定しないので、この既定値が効く
   tap-ms:
     type: int
     default: 20
@@ -28,6 +32,13 @@ properties:
     description: >
       同じ向きに倒し続けたとき、この間隔で繰り返す。0 = 繰り返さない（1回はじく＝1回）。
       上（Mission Control）のように開閉が交互になる操作があるので、既定は 0
+  min-value:
+    type: int
+    default: 6
+    description: >
+      1回のイベントの |値| がこれ以下なら、中央付近の揺れ・中点のずれとして無視する（積算もしない）。
+      6 は 1サンプル2（中点からおよそ デッドゾーン+210mV まで）× 1レポート3サンプル。
+      はっきりはじくと1レポートで 15〜36 になる
   bindings:
     type: phandle-array
     required: true

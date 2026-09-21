@@ -11,13 +11,21 @@
  * ここでは相対移動を軸ごとに積算し、しきい値を超えた瞬間に「押して離す」を1回送る。
  * スティックを中央へ戻すとイベントが途切れるので、reset-ms 経過で積算を捨てて再武装する。
  *
- * 1回はじく＝1回だけ発火する。次が出るのは、中央へ戻して（イベントが reset-ms 途切れて）から。
+ * 1回はじく＝1回だけ発火する。次が出るのは、中央へ戻して（大きな動きが reset-ms 途切れて）から。
  *   倒したまま別の向きへ動かしても出さない。離したときにバネで反対側へ跳ね返る分で
  *   逆向き（奥→手前など）が誤って出るのを防ぐため。
  *   以前は倒し続けるとしきい値を超えるたびに発火していた。いっぱいまで倒すと
- *   1サンプルで 12 前後積算されるため、しきい値 40 なら 1 秒に 20 回以上 ⌃← などが出てしまう
+ *   1レポート（約30ms）で 36 積算されるため、しきい値 40 なら 1 秒に十数回 ⌃← などが出てしまう
  *   （Mission Control は開閉を繰り返す）。2026-09-22 に変更。
  * 倒し続けて繰り返したいときは repeat-ms を指定する（キーリピートと同じ考え方）。
+ *
+ * |値| が min-value 以下のイベントは「中央付近の揺れ・中点のずれ」として無視する。
+ *   電池が減って 3V3 が下がると、スティックの出力（電源に比例）と ADC の基準（内部0.6V、絶対値）が
+ *   ずれて中点が動く。そのとき小さな値が出続けても、発火も再武装の妨げもしないようにするため。
+ *
+ * 状態はスティック1本ぶんを全インスタンスで共有する。arare Studio はレイヤーごとに
+ * joy_gesture_N を生成するので、インスタンスごとに持つと、倒したままレイヤーを切り替えた
+ * 瞬間に新しいインスタンスが「中央から来た」とみなして2回目を出してしまう。
  */
 
 #define DT_DRV_COMPAT arare_input_processor_gesture
@@ -43,16 +51,21 @@ struct gesture_config {
     int32_t reset_ms;
     int32_t tap_ms;
     int32_t repeat_ms; /* 0 = 倒したままでは繰り返さない */
+    int32_t min_value; /* |値| がこれ以下のイベントは無視する */
     const struct zmk_behavior_binding *bindings; /* 上・下・左・右 */
 };
 
-struct gesture_data {
-    const struct device *dev;
+/* スティック1本ぶんの状態（全インスタンスで共有。理由は冒頭のコメント） */
+static struct {
     int32_t acc_x;
     int32_t acc_y;
-    int64_t last_ms;
+    int64_t last_ms;      /* 最後に大きな動き（|値| > min-value）が来た時刻 */
     int held_dir;         /* 直前に発火した向き。-1 = 中央（再武装済み） */
     int64_t next_repeat_ms;
+} stick = {.held_dir = -1};
+
+struct gesture_data {
+    const struct device *dev;
     struct k_work_delayable release_work;
     struct zmk_behavior_binding pending;
     struct zmk_behavior_binding_event pending_event;
@@ -104,53 +117,67 @@ static int gesture_handle_event(const struct device *dev, struct input_event *ev
                                 uint32_t param1, uint32_t param2,
                                 struct zmk_input_processor_state *state) {
     const struct gesture_config *cfg = dev->config;
-    struct gesture_data *data = dev->data;
 
     if (event->type != INPUT_EV_REL ||
         (event->code != INPUT_REL_X && event->code != INPUT_REL_Y)) {
         return ZMK_INPUT_PROC_CONTINUE;
     }
 
-    /* しばらく動きが無ければ中央へ戻したとみなして積算を捨て、再武装する */
+    /* 大きな動きが reset-ms 途切れたら、中央へ戻したとみなして積算を捨て、再武装する。
+     * 倒している間は約30msごとにレポートが来るので、100ms なら取り違えない */
     int64_t now = k_uptime_get();
-    if (now - data->last_ms > cfg->reset_ms) {
-        data->acc_x = 0;
-        data->acc_y = 0;
-        data->held_dir = -1;
-    }
-    data->last_ms = now;
-
-    if (event->code == INPUT_REL_X) {
-        data->acc_x += event->value;
-    } else {
-        data->acc_y += event->value;
+    if (now - stick.last_ms > cfg->reset_ms) {
+        stick.acc_x = 0;
+        stick.acc_y = 0;
+        stick.held_dir = -1;
     }
 
-    /* 大きく傾いている軸を優先し、斜めで2方向が同時に出るのを防ぐ */
-    int dir = -1;
-    if (abs(data->acc_x) >= cfg->threshold && abs(data->acc_x) >= abs(data->acc_y)) {
-        dir = data->acc_x > 0 ? DIR_RIGHT : DIR_LEFT;
-    } else if (abs(data->acc_y) >= cfg->threshold) {
-        dir = data->acc_y > 0 ? DIR_DOWN : DIR_UP;
-    }
-
-    if (dir >= 0) {
-        data->acc_x = 0;
-        data->acc_y = 0;
-        if (data->held_dir < 0) {
-            /* 中央からはじいた → 1回だけ出す */
-            data->held_dir = dir;
-            data->next_repeat_ms = now + cfg->repeat_ms;
-            fire(dev, (enum arare_dir)dir, state);
-        } else if (dir == data->held_dir && cfg->repeat_ms > 0 && now >= data->next_repeat_ms) {
-            /* 同じ向きに倒し続けている → repeat-ms ごとに繰り返す */
-            data->next_repeat_ms = now + cfg->repeat_ms;
-            fire(dev, (enum arare_dir)dir, state);
+    /* 小さな値は中央付近の揺れ・中点のずれとして無視する（積算もしない） */
+    if (abs(event->value) > cfg->min_value) {
+        stick.last_ms = now;
+        if (event->code == INPUT_REL_X) {
+            stick.acc_x += event->value;
+        } else {
+            stick.acc_y += event->value;
         }
-        /* それ以外（中央を通らない向きの切り替え・跳ね返り）は捨てる */
     }
 
-    /* ポインタは動かさない（スティックはジェスチャ専用。ポインタはトラックボール） */
+    /* 向きはレポートの区切り（sync）でだけ判定する。ドライバは1回のレポートを
+     * AIN2（REL_Y）→ AIN3（REL_X）の順に送るので、途中で判定すると斜めが上下に寄る */
+    if (event->sync) {
+        /* 大きく傾いている軸を優先し、斜めで2方向が同時に出るのを防ぐ */
+        int dir = -1;
+        if (abs(stick.acc_x) >= cfg->threshold && abs(stick.acc_x) >= abs(stick.acc_y)) {
+            dir = stick.acc_x > 0 ? DIR_RIGHT : DIR_LEFT;
+        } else if (abs(stick.acc_y) >= cfg->threshold) {
+            dir = stick.acc_y > 0 ? DIR_DOWN : DIR_UP;
+        }
+
+        if (dir >= 0) {
+            stick.acc_x = 0;
+            stick.acc_y = 0;
+            if (stick.held_dir < 0) {
+                /* 中央からはじいた → 1回だけ出す */
+                stick.held_dir = dir;
+                stick.next_repeat_ms = now + cfg->repeat_ms;
+                fire(dev, (enum arare_dir)dir, state);
+            } else if (dir == stick.held_dir && cfg->repeat_ms > 0 &&
+                       now >= stick.next_repeat_ms) {
+                /* 同じ向きに倒し続けている → repeat-ms ごとに繰り返す */
+                stick.next_repeat_ms = now + cfg->repeat_ms;
+                fire(dev, (enum arare_dir)dir, state);
+            }
+            /* それ以外（中央を通らない向きの切り替え・跳ね返り）は捨てる */
+        }
+    }
+
+    /* ポインタは動かさない（スティックはジェスチャ専用。ポインタはトラックボール）。
+     * レイヤー別の上書き（arare Studio の joy_ov_N。process-next なし）では、ZMK が
+     * このプロセッサの STOP を CONTINUE に置き換えて後段へ流し、カーソルが動いてしまう
+     * （zmk v0.3.0 app/src/pointing/input_listener.c filter_with_input_config）。
+     * どちらの経路でも何も起きないよう、値そのものを消しておく。 */
+    event->value = 0;
+    event->sync = false;
     return ZMK_INPUT_PROC_STOP;
 }
 
@@ -161,8 +188,6 @@ static struct zmk_input_processor_driver_api gesture_driver_api = {
 static int gesture_init(const struct device *dev) {
     struct gesture_data *data = dev->data;
     data->dev = dev;
-    data->last_ms = k_uptime_get();
-    data->held_dir = -1;
     k_work_init_delayable(&data->release_work, release_pending);
     return 0;
 }
@@ -178,6 +203,7 @@ static int gesture_init(const struct device *dev) {
         .reset_ms = DT_INST_PROP(n, reset_ms),                                                     \
         .tap_ms = DT_INST_PROP(n, tap_ms),                                                         \
         .repeat_ms = DT_INST_PROP(n, repeat_ms),                                                   \
+        .min_value = DT_INST_PROP(n, min_value),                                                   \
         .bindings = gesture_bindings_##n,                                                          \
     };                                                                                             \
     static struct gesture_data gesture_data_##n;                                                   \

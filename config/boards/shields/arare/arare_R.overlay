@@ -103,7 +103,7 @@
         compatible = "arare,input-processor-gesture";
         #input-processor-cells = <0>;
         threshold = <40>;
-        reset-ms = <200>;
+        reset-ms = <100>;   /* 中央で止める時間。200 だと素早い連続のはじきを取りこぼした */
         tap-ms = <20>;
         bindings = <&kp LC(UP)>, <&kp LC(DOWN)>, <&kp LC(LEFT)>, <&kp LC(RIGHT)>;
     };
