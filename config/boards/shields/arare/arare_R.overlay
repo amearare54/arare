@@ -85,7 +85,7 @@
  *   そちらに書くと再生成時にジョイスティックが黙って無効化される。
  * 速度・加速などの input-processors は tuning 側から &joystick_listener を参照して書く。 */
 &joystick_listener {
-    status = "okay";
+    status = "disabled";   /* ★R-B（切り分け用） */
     /* スティックはポインタではなくジェスチャ専用にする（ポインタはトラックボール）。
      * このプロセッサが REL イベントを消費するので、倒してもカーソルは動かない。
      * ポインタとして使いたくなったら input-processors の行を消す。 */
