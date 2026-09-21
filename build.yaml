@@ -1,10 +1,7 @@
 ---
+# ★測定用（cal-L-joy ブランチ限定・main には入れない）
+# 左手を単独のキーボードにして USB ログでジョイスティックの生の mV を読む。
 include:
-  # central = RIGHT (trackball side). Studio RPC over USB on central only.
-  - board: seeeduino_xiao_ble
-    shield: arare_R
-    snippet: studio-rpc-usb-uart
   - board: seeeduino_xiao_ble
     shield: arare_L
-  - board: seeeduino_xiao_ble
-    shield: settings_reset
+    snippet: zmk-usb-logging
