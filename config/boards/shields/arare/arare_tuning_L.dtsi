@@ -26,3 +26,7 @@
 &joystick_split {
     status = "disabled";
 };
+
+/* ★切り分け用（test-L-nojoy-fix）: ジョイスティック無しのまま、自前の電池ドライバだけ戻す。
+ * これで繋がらなければ arare_saadc_fix（battery_voltage_divider_arare.c）自体が原因。 */
+#include "arare_saadc_fix.dtsi"
