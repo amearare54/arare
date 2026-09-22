@@ -11,3 +11,8 @@ endif()
 if(CONFIG_ARARE_INPUT_PROCESSOR_GESTURE)
   zephyr_library_sources(src/input_processor_gesture.c)
 endif()
+
+# 診断用（diag-R-tb ブランチ限定）
+if(CONFIG_ARARE_TB_PROBE)
+  zephyr_library_sources(src/tb_probe.c)
+endif()
