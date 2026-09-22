@@ -108,6 +108,11 @@
 
 &left_encoder {
     status = "okay";
+    /* A と B を入れ替える（2026-09-22 実測）。基板どおり A=D2・B=D3 だと、上から見て時計回りで
+     * 負の向き（sensor-bindings の2番目＝縮小）になっていた。キーマップと取説は「時計回り＝1番目
+     * （拡大）」の約束なので、部品側の向きをここで合わせる。 */
+    a-gpios = <&xiao_d 3 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+    b-gpios = <&xiao_d 2 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
 };
 
 /* 左エンコーダ・ジョイスティックの詳細設定は別ファイルに分離。
