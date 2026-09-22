@@ -62,3 +62,7 @@ config ARARE_INPUT_PROCESSOR_GESTURE
     help
       ZMK標準の input-processor-behaviors は移動量を真偽値に潰すため方向を判別できない。
       その代わりとして方向ごとに積算し、しきい値超過でタップを1回送る。
+
+# 診断用（diag-L-enc ブランチ限定）
+config ARARE_PIN_PROBE
+    bool "arare: 左ノブの A/B の電圧をログに出す（診断用）"
