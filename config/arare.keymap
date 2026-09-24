@@ -2,7 +2,7 @@
  * arare keymap — arare Studio で生成（2026-09-24）
  * 配列: USホスト向け
  *
- * ポジション順は arare.dtsi のコメント参照（47キー×4レイヤー）。
+ * ポジション順は arare.dtsi のコメント参照（47キー×5レイヤー）。
  */
 
 #include <behaviors.dtsi>
@@ -56,6 +56,17 @@
             bindings = <
 &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
 &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans
+            >;
+        };
+
+        layer_4 {
+            display-name = "L4";
+            bindings = <
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp MCLK  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp LCLK  &trans  &mkp RCLK  &trans
 &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
 &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
 &trans  &trans  &trans  &trans

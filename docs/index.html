@@ -602,7 +602,7 @@ const KEYS=[ /* [sw, x, y, w, h, rot, rx, ry] 単位=centi-keyunit(17mm/100) */
 ];
 const ROWS=[10,12,12,9,4]; // keymap整形用の行割り
 const SHIPPED={
- name:["L0","L1","L2","L3"],
+ name:["L0","L1","L2","L3","L4"],
  layers:[
   ["&kp Q","&kp W","&kp E","&kp R","&kp T","&kp Y","&kp U","&kp I","&kp O","&kp P",
    "&mt LCTRL A","&kp S","&kp D","&kp F","&kp G","&kp LS(LG(V))","&mkp LCLK","&kp H","&kp J","&kp K","&kp L","&kp MINUS",
@@ -621,6 +621,12 @@ const SHIPPED={
    "&trans","&trans","&trans","&trans"],
   ["&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans",
    "&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans",
+   "&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans",
+   "&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans",
+   "&trans","&trans","&trans","&trans"],
+  /* L4: マウス用（オートマウス）。ボールを動かした直後だけ、I=中・J=左・L=右クリック（moNa2 のマウスレイヤーと同じ並び） */
+  ["&trans","&trans","&trans","&trans","&trans","&trans","&trans","&mkp MCLK","&trans","&trans",
+   "&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&mkp LCLK","&trans","&mkp RCLK","&trans",
    "&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans",
    "&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans","&trans",
    "&trans","&trans","&trans","&trans"]
@@ -648,7 +654,7 @@ const SPD=[[1,4,"0.25×"],[1,2,"0.5×"],[3,4,"0.75×"],[1,1,"1.0×"],[5,4,"1.25�
 const TRIG=[6,8,10,12,15,20,24];
 const DEV_DEFAULT={
  tb:{cpi:800,rot:0,invx:false,invy:false,spd:3,scrollOn:false,scrollLayer:1,scrollDiv:8,natural:true,
-     autoOn:false,autoLayer:1,autoMs:800,autoIdle:300,snipeOn:false,snipeLayer:2,snipeDiv:3,awake:false},
+     autoOn:true,autoLayer:4,autoMs:800,autoIdle:300,snipeOn:false,snipeLayer:2,snipeDiv:3,awake:false},
  enc:{trig:10,steps1:12,steps2:12},
  /* ビルド構成: 選択制の3か所に何を付けたか */
  build:{encL:true,encR:true,joy:true},
@@ -705,7 +711,7 @@ const JOY_GESTURE_PRESETS=[
 const JOY_DIRS=[["gu","上"],["gd","下"],["gl","左"],["gr","右"]];
 const JOY_PUSH=[["左クリック","&mkp LCLK"],["右クリック","&mkp RCLK"],["中クリック","&mkp MCLK"],["Enter","&kp ENTER"],["Space","&kp SPACE"],["Esc","&kp ESC"]];
 const TB_PRESETS=[
- ["標準","バランスの取れた既定値",{spd:3,cpi:800,scrollOn:false,snipeOn:false,autoOn:false}],
+ ["標準","バランスの取れた既定値",{spd:3,cpi:800,scrollOn:false,snipeOn:false}],
  ["ゆっくり正確","カーソル遅め＋L2で超低速",{spd:2,cpi:800,snipeOn:true,snipeLayer:2,snipeDiv:3}],
  ["スピード","カーソル速め・高解像度",{spd:5,cpi:1200}],
  ["スクロール重視","L1でボールがホイールに",{scrollOn:true,scrollLayer:1,scrollDiv:8,natural:true}]
@@ -791,6 +797,8 @@ function load(){
     if(d && d.km && d.km.length>=1 && d.km.length<=10 && d.km.every(l=>l.length===47)){
       km=d.km; enc=d.enc||enc; encL=d.encL||{}; joyL=d.joyL||{}; mode=d.mode||"basic";
       if(d.dev)for(const g of GROUPS)if(d.dev[g])Object.assign(dev[g],d.dev[g]);
+      /* オートマウスがオフだったころの下書きは、マウス用レイヤーの指定に意味が無かった（既定 L1＝記号）。既定の L4 に寄せる */
+      normAutoLayer();
       if(d.dev&&Array.isArray(d.dev.launch)&&d.dev.launch.length===4)dev.launch=d.dev.launch;
       if(d.devs&&d.devs.length===5)devs=d.devs;
       if(Array.isArray(d.combos))combos=d.combos;
@@ -1145,9 +1153,15 @@ function select(i){
     refreshKeys(); renderDeck(); renderLiveEnc(); return;
   }
   sel=i; renderInsp(); refreshKeys();
+  if(!LIVE.on&&dev.tb.autoOn)renderDeck();   /* オートマウスの「選択中のキーを〜」を更新 */
 }
 function setBinding(b){
-  if(LIVE.on){ if(window.liveSetBinding)window.liveSetBinding(layer,sel,b); return; }
+  if(LIVE.on){
+    if(window.liveSetBinding)window.liveSetBinding(layer,sel,b);
+    if(!FOREIGN&&dev.tb.autoOn&&layer===dev.tb.autoLayer&&b!=="&trans"&&!autoKeepKeys().includes(sel))
+      setTimeout(()=>toast("マウス用レイヤーに足したキーは、ファームに登録するまでオートマウス中に押すと効きません（切断して下書きで設定 → FORGE → 書き込み直し）"),1200);
+    return;
+  }
   pushHist(); km[layer][sel]=b; save(); renderInsp(); refreshKeys();
 }
 function applyKp(code){
@@ -1291,7 +1305,8 @@ function renderLayerbar(){
     pushHist(); km.pop(); if(layer>=km.length)layer=km.length-1;
     for(const k of Object.keys(encL))if(+k>=km.length)delete encL[k];
     for(const k of Object.keys(joyL))if(+k>=km.length)delete joyL[k];
-    ["scrollLayer","autoLayer","snipeLayer"].forEach(f=>{if(dev.tb[f]>=km.length)dev.tb[f]=Math.max(1,km.length-1);});
+    ["scrollLayer","snipeLayer"].forEach(f=>{if(dev.tb[f]>=km.length)dev.tb[f]=Math.max(1,km.length-1);});
+    if(dev.tb.autoLayer>=km.length)dev.tb.autoOn=false;   /* マウス用レイヤーを消した: 次に増やしたレイヤーを黙ってマウス用にしない */
     save();
     renderLayerbar(); renderInsp(); renderDeck(); refreshKeys(); toast("最後のレイヤーを削除しました");
   });
@@ -1476,12 +1491,63 @@ function rowH(lab,small,ctl,cls){return `<div class="row${cls?" "+cls:""}"><div 
 function swH(path){return `<button class="sw${gp(path)?" on":""}" data-tg="${path}" role="switch" aria-checked="${gp(path)}" aria-label="${path}"></button>`}
 function rgH(path,min,max,step,fmt){const v=gp(path);return `<input type="range" data-rg="${path}" min="${min}" max="${max}" step="${step}" value="${v}"><span class="val" data-vf="${path}">${fmt(v)}</span>`}
 function segH(path,opts){const v=gp(path);return `<span class="seg">${opts.map(([val,l])=>`<button data-sg="${path}" data-v="${val}" class="${String(v)===String(val)?"on":""}">${l}</button>`).join("")}</span>`}
-function layerSelH(path){const v=gp(path);let o="";for(let n=1;n<km.length;n++)o+=`<option value="${n}"${n===v?" selected":""}>${layName(n)}</option>`;return `<select data-sl="${path}" data-num="1">${o||'<option value="1">L1(要追加)</option>'}</select>`}
+function layerSelH(path){const v=gp(path);let o=(v<1||v>=km.length)?`<option value="${v}" selected disabled>${layName(v)}（なし）</option>`:"";for(let n=1;n<km.length;n++)o+=`<option value="${n}"${n===v?" selected":""}>${layName(n)}</option>`;return `<select data-sl="${path}" data-num="1">${o||'<option value="1">L1(要追加)</option>'}</select>`}
 function encSelH(attr,val,extra){let o=(extra||"")+ENC_OPTS.map(([v,l])=>`<option value="${v}"${v===val?" selected":""}>${l}</option>`).join("");
   if(val&&!ENC_OPTS.some(([v])=>v===val))o+=`<option value="${val}" selected>${val}</option>`;
   return `<select ${attr}>${o}</select>`}
 
 const FMT_SPD=i=>SPD[i][2], FMT_MS=v=>v+"ms", FMT_PCT=v=>v+"%", FMT_RAW=v=>v, FMT_TRIG=i=>TRIG[i]+"/回転";
+
+/* ---- オートマウス: ボールを動かした直後だけ効くキー（マウス用レイヤーの割当） ----
+ * ファームでは、マウス用レイヤーで割り当てたキーだけを excluded-positions に入れる（genTuningR）。
+ * それ以外のキーを押すとすぐ元のレイヤーに戻り、割り当てたキーは押してもレイヤーが続く＝続けてクリックできる */
+const AUTO_CLICKS=[["左クリック","&mkp LCLK"],["右クリック","&mkp RCLK"],["中クリック","&mkp MCLK"],["戻る","&mkp MB4"],["進む","&mkp MB5"]];
+const AUTO_DEFAULT={7:"&mkp MCLK",18:"&mkp LCLK",20:"&mkp RCLK"};   /* I・J・L（moNa2 と同じ並び） */
+function autoLayerOK(){ const n=dev.tb.autoLayer; return n>0&&n<km.length; }
+/* マウス用レイヤーで割り当てたキー（▽透過以外）の位置 */
+function autoKeys(){ return autoLayerOK()?km[dev.tb.autoLayer].map((b,i)=>b!=="&trans"?i:-1).filter(i=>i>=0):[]; }
+/* 押してもオートマウスを抜けないキー＝マウス用レイヤーの割当 ＋ ベース（L0）で元からクリックのキー（ホイール押込・右クリック）
+ * ＋ 押しても文字が出ない修飾キー（⌘ など。⌘クリック・⌥クリックのため）。A（長押しで⌃）や 英数（長押しで⇧）のように
+ * タップで文字・切替が出るキーは入れない（打ちはじめでオートマウスを抜けるように） */
+const MODK=/^[LR](CTRL|SHFT|SHIFT|ALT|GUI)$/;
+function autoKeepKeys(){
+  if(!autoLayerOK())return [];
+  const set=new Set(autoKeys());
+  (km[0]||[]).forEach((b,i)=>{
+    let m;
+    if(/^&mkp /.test(b))set.add(i);
+    else if((m=b.match(/^&kp (\S+)$/))&&MODK.test(m[1]))set.add(i);
+    else if((m=b.match(/^&mt (\S+) (\S+)$/))&&MODK.test(m[1])&&MODK.test(m[2]))set.add(i);
+  });
+  return [...set].sort((a,b)=>a-b);
+}
+/* オートマウスがオフのときのマウス用レイヤーの指定は意味が無かった（旧既定 L1＝記号）。下書き・プロファイルの読み込みで既定の L4 に戻す */
+function normAutoLayer(){ if(!dev.tb.autoOn)dev.tb.autoLayer=DEV_DEFAULT.tb.autoLayer; }
+/* オートマウスをオンにしたとき、指しているのがクリック以外の割当があるレイヤー（記号など）なら既定の L4 に戻す */
+function autoLayerLooksWrong(){
+  const l=km[dev.tb.autoLayer];
+  return !!l&&!l.every(b=>b==="&trans"||/^&mkp /.test(b));
+}
+function autoMouseH(){
+  const n=dev.tb.autoLayer;
+  if(!autoLayerOK()){
+    return `<div class="desc" style="margin:4px 0 0">マウス用レイヤー（${layName(n)}）がありません。${km.length<10?"下のボタンで作ると、I・J・L が中・左・右クリックになります。":"レイヤーが上限（10）なので、上級の「マウス用レイヤー」で既存のレイヤーを選んでください。"}</div>
+      ${km.length<10?`<button class="btn ghost mini" data-automake="1" style="margin-top:6px">＋ マウス用レイヤーを作る</button>`:""}`;
+  }
+  const keys=autoKeys();
+  const what=b=>(AUTO_CLICKS.find(([,v])=>v===b)||[legend(b)])[0];
+  const chips=keys.map(i=>`<span class="cc-keys" style="justify-content:flex-start"><code>${esc(legend(km[0][i]||"&trans"))} → ${esc(what(km[n][i]))}</code><button class="kb-key" data-autoclr="${i}" title="ふつうのキーに戻す" style="padding:2px 7px">×</button></span>`).join("");
+  const target=sel>=0?`<b>${esc(legend(km[0][sel]||"&trans"))}</b>（${KEYS[sel][0]}）`:"";
+  const dis=LIVE.on?" disabled":"";
+  return `<div class="desc" style="margin:4px 0 6px">ボールを動かした直後（${layName(n)}）だけ、下のキーがクリックになります。ほかのキーを押すとすぐ元に戻ります。</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px">${chips||'<span class="desc">まだありません</span>'}</div>
+    ${LIVE.on?`<div class="desc">つないでいる間はここでは変えられません（オートマウスはファームの設定です。切断してから選び、書き出して書き込み直してください）。</div>`
+      :sel<0?`<div class="desc">ボード上でキーをクリックしてから、何にするか選んでください。</div>`
+      :`<div class="desc" style="margin-bottom:4px">${target} を、ボールを動かした直後だけ:</div>
+        <div class="btnrow" style="gap:6px">${AUTO_CLICKS.map(([l,b])=>`<button class="btn plain mini" data-autoset="${b}"${dis}>${l}</button>`).join("")}
+        ${km[n][sel]!=="&trans"?`<button class="btn plain mini" data-autoset="&trans"${dis}>ふつうのキーに戻す</button>`:""}</div>`}
+    <div class="desc" style="margin-top:6px">変えたら「FORGE」で書き出して、ファームを書き込み直すと効きます。</div>`;
+}
 
 function renderDeck(){
   const deck=document.getElementById("deck");
@@ -1509,8 +1575,10 @@ function renderDeck(){
     ${rowH("CPI（解像度）","センサーの読み取り解像度",rgH("tb.cpi",400,1600,100,FMT_RAW),"adv")}
     ${rowH("取付向き補正","90°単位。組立後に実機で合わせる",segH("tb.rot",[[0,"0°"],[90,"90°"],[180,"180°"],[270,"270°"]]),"adv")}
     ${rowH("X反転 / Y反転","",swH("tb.invx")+swH("tb.invy"),"adv")}
-    ${rowH("オートマウス","ボールを動かすと一時的に指定レイヤーへ",swH("tb.autoOn"),"adv")}
-    ${t.autoOn?rowH("　┗ レイヤー / 復帰時間","",layerSelH("tb.autoLayer")+rgH("tb.autoMs",300,2000,100,FMT_MS),"adv"):""}
+    ${rowH("オートマウス","ボールを動かした直後だけ、選んだキーがクリックになる",swH("tb.autoOn"))}
+    ${t.autoOn?autoMouseH():""}
+    ${t.autoOn?rowH("　┗ 戻るまでの時間","ボールを止めてから元のキーに戻るまで",rgH("tb.autoMs",300,2000,100,FMT_MS)):""}
+    ${t.autoOn?rowH("　┗ マウス用レイヤー","クリックを置くレイヤー",layerSelH("tb.autoLayer"),"adv"):""}
     ${t.autoOn?rowH("　┗ 誤発動防止","打鍵直後は発動しない猶予",rgH("tb.autoIdle",0,750,50,FMT_MS),"adv"):""}
     ${rowH("スナイプモード","指定レイヤーの間だけ超低速で精密操作",swH("tb.snipeOn"),"adv")}
     ${t.snipeOn?rowH("　┗ レイヤー / 減速率","",layerSelH("tb.snipeLayer")+segH("tb.snipeDiv",[[2,"1/2"],[3,"1/3"],[4,"1/4"]]),"adv"):""}
@@ -1822,7 +1890,7 @@ document.getElementById("deck").addEventListener("click",e=>{
   if(e.target.closest("[data-hudtg]")){hudSetMenuBar(!hud.menuBar); return;}
   if(e.target.closest("[data-hudprobe]")){hudProbe(false); return;}
   const sw=e.target.closest(".sw[data-tg]");
-  if(sw){pushHist(); sp(sw.dataset.tg,!gp(sw.dataset.tg)); save(); renderDeck(); renderOut(); return;}
+  if(sw){pushHist(); sp(sw.dataset.tg,!gp(sw.dataset.tg)); if(sw.dataset.tg==="tb.autoOn"&&dev.tb.autoOn&&autoLayerLooksWrong())dev.tb.autoLayer=DEV_DEFAULT.tb.autoLayer; save(); renderDeck(); renderOut(); return;}
   const bt=e.target.closest("[data-build]");
   if(bt){ pushHist(); dev.build[bt.dataset.build]=bt.dataset.v==="1"; save();
           redrawDecor(); renderDeck(); refreshKeys(); renderOut(); return; }
@@ -1831,6 +1899,28 @@ document.getElementById("deck").addEventListener("click",e=>{
     pushHist(); const raw=sg.dataset.v; sp(sg.dataset.sg,isNaN(+raw)?raw:+raw);
     if(sg.dataset.sg==="accel.preset")Object.assign(dev.accel,ACCEL_PRESETS[raw]||{});
     save(); renderDeck(); renderOut(); return;
+  }
+  const as=e.target.closest("[data-autoset]");
+  if(as){
+    if(LIVE.on||sel<0||!autoLayerOK())return;
+    pushHist(); km[dev.tb.autoLayer][sel]=as.dataset.autoset; save();
+    renderDeck(); renderInsp(); refreshKeys(); renderOut();
+    toast(as.dataset.autoset==="&trans"?`${legend(km[0][sel]||"&trans")} をふつうのキーに戻しました`:`ボールを動かした直後の ${legend(km[0][sel]||"&trans")} を ${legend(as.dataset.autoset)} にしました`);
+    return;
+  }
+  const ac=e.target.closest("[data-autoclr]");
+  if(ac){
+    if(LIVE.on||!autoLayerOK())return;
+    pushHist(); km[dev.tb.autoLayer][+ac.dataset.autoclr]="&trans"; save(); renderDeck(); renderInsp(); refreshKeys(); renderOut(); return;
+  }
+  if(e.target.closest("[data-automake]")){
+    if(LIVE.on||km.length>=10)return;
+    pushHist();
+    const l=Array(47).fill("&trans"); for(const [i,b] of Object.entries(AUTO_DEFAULT))l[+i]=b;
+    km.push(l); dev.tb.autoLayer=km.length-1; dev.tb.autoOn=true; save();
+    renderLayerbar(); renderDeck(); renderInsp(); refreshKeys(); renderOut();
+    toast(`${layName(dev.tb.autoLayer)} をマウス用レイヤーとして作りました（I・J・L＝中・左・右クリック）`);
+    return;
   }
   const jc=e.target.closest("[data-joycap]");
   if(jc){ setCapJoy(capJoyDir===jc.dataset.joycap?null:jc.dataset.joycap); jc.blur(); return; }
@@ -1864,7 +1954,7 @@ document.getElementById("deck").addEventListener("input",e=>{
 });
 document.getElementById("deck").addEventListener("change",e=>{
   if(e.target.matches("[data-rg]")){e.target._histed=false; save(); renderOut(); return;}
-  if(e.target.matches("[data-sl]")){pushHist(); sp(e.target.dataset.sl,+e.target.value); save(); renderOut(); return;}
+  if(e.target.matches("[data-sl]")){pushHist(); sp(e.target.dataset.sl,+e.target.value); save(); if(e.target.dataset.sl==="tb.autoLayer")renderDeck(); renderOut(); return;}
   if(e.target.matches("[data-encraw]")){const v=e.target.value.trim();
     if(!v.startsWith("&")){toast("ZMKの割当は & で始まります");return;}
     pushHist(); enc[+e.target.dataset.encraw]=v; save(); renderDeck(); renderOut(); return;}
@@ -1935,6 +2025,7 @@ function renderProfiles(){
     dev=JSON.parse(JSON.stringify(DEV_DEFAULT));
     for(const g of GROUPS)if(p.dev&&p.dev[g])Object.assign(dev[g],p.dev[g]);
     arr=p.arr==="jis"?"jis":"us";
+    normAutoLayer();   /* 以前のプロファイルのマウス用レイヤーの指定（旧既定 L1）を直す */
     if(layer>=km.length)layer=km.length-1; sel=-1; save();
     renderArrTg(); renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
     toast("プロファイル「"+e.target.value+"」を読み込みました");
@@ -2027,7 +2118,7 @@ function genTuningR(){
   if(fl.length)base.push(`<&zip_xy_transform (${fl.join(" | ")})>`);
   const [mu,dv]=SPD[t.spd];
   if(!(mu===1&&dv===1))base.push(`<&zip_xy_scaler ${mu} ${dv}>`);
-  if(t.autoOn)base.push(`<&zip_tb_auto_layer ${t.autoLayer} ${t.autoMs}>`);
+  if(t.autoOn&&autoLayerOK())base.push(`<&zip_tb_auto_layer ${t.autoLayer} ${t.autoMs}>`);
   const kids=[];
   if(t.scrollOn){
     const p=["<&zip_xy_to_scroll_mapper>",`<&zip_scroll_scaler 1 ${t.scrollDiv}>`];
@@ -2053,7 +2144,9 @@ ${a.on?"#include <behaviors/input_gestures_accel.dtsi>\n":""}
     zip_tb_auto_layer: zip_tb_auto_layer {
         compatible = "zmk,input-processor-temp-layer";
         #input-processor-cells = <2>;
-        require-prior-idle-ms = <${t.autoIdle}>;
+        require-prior-idle-ms = <${t.autoIdle}>;${t.autoOn&&autoKeepKeys().length?`
+        /* マウス用レイヤー（${layName(t.autoLayer)}）で割り当てたキー、元からクリックのキー、⌘などの修飾キー。押してもレイヤーが続く（ほかのキーを押すと戻る） */
+        excluded-positions = <${autoKeepKeys().join(" ")}>;`:""}
     };
 };
 ${listener}${a.on?`
@@ -3533,6 +3626,8 @@ window.liveIndexRefs=()=>{
   if(D){ for(const e of D.endpoints)if(e.value>=0)out.push(`${e.isUsb?"USB":"BT"+(e.bleProfileIndex+1)} のキーマップ: ${nm(e.value)}`);
          for(const o of D.osLayers)if(o.value>=0)out.push(`OS「${OS_NAMES_M[o.os]||o.os}」のキーマップ: ${nm(o.value)}`); }
   for(const c of (LIVE.combo&&LIVE.combo.list)||[])if(c.source!=="COMBO_SOURCE_EMPTY"&&c.layerMask)out.push(`コンボ ${c.name||c.keyPositions.join("+")}: ${bits(c.layerMask).map(nm).join("・")}`);
+  /* arare のオートマウスはファームでレイヤーの番号が決まっている（付け替えられない）。並べ替えると切り替わらなくなることがある */
+  if(!FOREIGN&&dev.tb.autoOn)out.push(`オートマウス: ${nm(dev.tb.autoLayer)}（ファームで番号が決まっているので付け替えられません。並べ替えると、ボールを止めてもマウス用レイヤーのままになることがあります）`);
   return out;
 };
 const OS_NAMES_M=["不明","Windows","macOS","Linux","iOS","Android"];

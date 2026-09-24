@@ -166,10 +166,12 @@ figcaption b{color:var(--muted); font-weight:400; text-transform:uppercase; lett
 #kmL1:checked ~ .kmbar label[for=kmL1],
 #kmL2:checked ~ .kmbar label[for=kmL2],
 #kmL3:checked ~ .kmbar label[for=kmL3]{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
+#kmL4:checked ~ .kmbar label[for=kmL4]{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
 #kmL0:checked ~ figure .klay0,
 #kmL1:checked ~ figure .klay1,
 #kmL2:checked ~ figure .klay2,
-#kmL3:checked ~ figure .klay3{display:block}
+#kmL3:checked ~ figure .klay3,
+#kmL4:checked ~ figure .klay4{display:block}
 .kkey{fill:var(--surface); stroke:var(--ink); stroke-width:1.2; opacity:.95}
 .kspec{fill:var(--raise); stroke:var(--ink)}
 .klbl{fill:var(--ink); text-anchor:middle; dominant-baseline:central; font-family:var(--mono); font-weight:500}
@@ -1334,19 +1336,22 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
   <div class="shead"><span class="snum">04</span><span class="skicker">Default keymap</span></div>
   <h2>出荷時のキーマップ</h2>
   <div class="prose">
-    <p>レイヤーは 4 つです。<span class="k">fn1</span> を押しているあいだが記号、<span class="k">fn2</span> を押しているあいだが数字と矢印。US 配列のパソコンにつないだ状態で、キーに書いてあるとおりの文字が出ます。</p>
+    <p>レイヤーは 5 つです。<span class="k">fn1</span> を押しているあいだが記号、<span class="k">fn2</span> を押しているあいだが数字と矢印。US 配列のパソコンにつないだ状態で、キーに書いてあるとおりの文字が出ます。</p>
     <p><span class="k">L3</span> は<strong>まるごと空けてあります</strong>。スティックを押しているあいだ有効になるので、よく使う操作を arare Studio で入れてください。</p>
+    <p><span class="k">L4</span> はマウス用です。<strong>ボールを動かした直後だけ自動で切り替わり</strong>、<span class="k">I</span>・<span class="k">J</span>・<span class="k">L</span> が中・左・右クリックになります。ボールを止めて 0.8 秒たつか、ほかのキーを押すと元に戻るので、文字を打つときは気にしなくて大丈夫です。どのキーを何にするかは arare Studio のトラックボール欄（オートマウス）で変えられます。</p>
   </div>
   <a class="cta" href="https://amearare54.github.io/arare/" target="_blank" rel="noopener">arare Studio を開く <span>&rarr;</span></a>
   <input type="radio" name="kmlayer" id="kmL0" checked>
   <input type="radio" name="kmlayer" id="kmL1">
   <input type="radio" name="kmlayer" id="kmL2">
   <input type="radio" name="kmlayer" id="kmL3">
+  <input type="radio" name="kmlayer" id="kmL4">
   <div class="kmbar">
     <label for="kmL0" tabindex="0">L0 &nbsp;Base</label>
     <label for="kmL1" tabindex="0">L1 &nbsp;Sym</label>
     <label for="kmL2" tabindex="0">L2 &nbsp;Num</label>
     <label for="kmL3" tabindex="0">L3 &nbsp;Free</label>
+    <label for="kmL4" tabindex="0">L4 &nbsp;Mouse</label>
     <span class="kmhint">・印はひとつ下のレイヤーがそのまま出るキーです</span>
   </div>
   <figure>
@@ -1603,6 +1608,55 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
 <circle class="ktr" cx="1232.0" cy="30.0" r="4"/>
 <circle class="ktr" cx="1285.0" cy="30.0" r="4"/>
 </g>
+<g class="klay klay4">
+<circle class="ktr" cx="61.0" cy="118.0" r="4"/>
+<circle class="ktr" cx="161.0" cy="93.0" r="4"/>
+<circle class="ktr" cx="261.0" cy="68.0" r="4"/>
+<circle class="ktr" cx="361.0" cy="86.0" r="4"/>
+<circle class="ktr" cx="461.0" cy="93.0" r="4"/>
+<circle class="ktr" cx="853.0" cy="93.0" r="4"/>
+<circle class="ktr" cx="953.0" cy="86.0" r="4"/>
+<text class="klbl k-ptr kjp" x="1053.0" y="68.0" font-size="25">中クリック</text>
+<circle class="ktr" cx="1153.0" cy="93.0" r="4"/>
+<circle class="ktr" cx="1253.0" cy="118.0" r="4"/>
+<circle class="ktr" cx="61.0" cy="218.0" r="4"/>
+<circle class="ktr" cx="161.0" cy="193.0" r="4"/>
+<circle class="ktr" cx="261.0" cy="168.0" r="4"/>
+<circle class="ktr" cx="361.0" cy="186.0" r="4"/>
+<circle class="ktr" cx="461.0" cy="193.0" r="4"/>
+<circle class="ktr" cx="561.0" cy="220.0" r="4"/>
+<circle class="ktr" cx="753.0" cy="220.0" r="4"/>
+<circle class="ktr" cx="853.0" cy="193.0" r="4"/>
+<text class="klbl k-ptr kjp" x="953.0" y="186.0" font-size="25">左クリック</text>
+<circle class="ktr" cx="1053.0" cy="168.0" r="4"/>
+<text class="klbl k-ptr kjp" x="1153.0" y="193.0" font-size="25">右クリック</text>
+<circle class="ktr" cx="1253.0" cy="218.0" r="4"/>
+<circle class="ktr" cx="61.0" cy="318.0" r="4"/>
+<circle class="ktr" cx="161.0" cy="293.0" r="4"/>
+<circle class="ktr" cx="261.0" cy="268.0" r="4"/>
+<circle class="ktr" cx="361.0" cy="286.0" r="4"/>
+<circle class="ktr" cx="461.0" cy="293.0" r="4"/>
+<circle class="ktr" cx="561.0" cy="318.0" r="4"/>
+<circle class="ktr" cx="753.0" cy="318.0" r="4"/>
+<circle class="ktr" cx="853.0" cy="293.0" r="4"/>
+<circle class="ktr" cx="953.0" cy="286.0" r="4"/>
+<circle class="ktr" cx="1053.0" cy="268.0" r="4"/>
+<circle class="ktr" cx="1153.0" cy="293.0" r="4"/>
+<circle class="ktr" cx="1253.0" cy="318.0" r="4"/>
+<circle class="ktr" cx="61.0" cy="418.0" r="4"/>
+<circle class="ktr" cx="161.0" cy="393.0" r="4"/>
+<circle class="ktr" cx="261.0" cy="368.0" r="4"/>
+<circle class="ktr" cx="361.0" cy="415.0" r="4"/>
+<circle class="ktr" cx="477.0" cy="420.0" r="4" transform="rotate(8.21 477 420)"/>
+<circle class="ktr" cx="590.0" cy="443.0" r="4" transform="rotate(18.07 590 443)"/>
+<circle class="ktr" cx="725.0" cy="443.0" r="4" transform="rotate(-18.07 725 443)"/>
+<circle class="ktr" cx="838.0" cy="420.0" r="4" transform="rotate(-8.21 838 420)"/>
+<circle class="ktr" cx="1253.0" cy="418.0" r="4"/>
+<circle class="ktr" cx="30.0" cy="30.0" r="4"/>
+<circle class="ktr" cx="83.0" cy="30.0" r="4"/>
+<circle class="ktr" cx="1232.0" cy="30.0" r="4"/>
+<circle class="ktr" cx="1285.0" cy="30.0" r="4"/>
+</g>
 </svg>
     </div>
     <figcaption><b>Fig.3</b> 出荷時キーマップ（実際のファームウェア設定から生成）</figcaption>
@@ -1615,6 +1669,7 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
       <tr><td>ホイールを回す（右）</td><td>ページ送り（PageUp / PageDown）</td></tr>
       <tr><td>ノブを押す（左）</td><td class="k">⇧⌘V</td></tr>
       <tr><td>ホイールを押す（右）</td><td>左クリック</td></tr>
+      <tr><td>ボールを動かした直後の <span class="k">I</span> / <span class="k">J</span> / <span class="k">L</span></td><td>中 / 左 / 右クリック（ボールを止めて 0.8 秒か、ほかのキーを押すと元に戻る）</td></tr>
       <tr><td>スティックを押す（左）</td><td>押しているあいだ <span class="k">L3</span> レイヤー（出荷時は空）</td></tr>
       <tr><td>スティックを倒す（左）</td><td>Mission Control / App Exposé / デスクトップの移動</td></tr>
       <tr><td>A を長押し</td><td class="k">⌃</td></tr>
