@@ -528,6 +528,7 @@
     <div class="panel dev" id="livecombo" hidden></div>
     <div class="panel dev" id="livelaunch" hidden></div>
     <div class="panel dev" id="liveprof" hidden></div>
+    <div class="panel dev" id="livehud" hidden></div>
   </div>
 </div>
 
@@ -1665,11 +1666,11 @@ function renderDeck(){
  * ローカルアプリへの接続は配信元が限られるため、公開ページ／localhost でのみ有効。 */
 const HUD_BASE="http://127.0.0.1:47800";
 const HUD_HOST_OK=["amearare54.github.io","localhost","127.0.0.1"].includes(location.hostname);
-const hud={status:"idle",menuBar:false,layerName:"",err:""};
+const hud={status:"idle",menuBar:false,layerName:"",err:"",studio:"",studioPaused:false,live:false};
 
-async function hudFetch(path,opt){
+async function hudFetch(path,opt,ms){
   const ac=new AbortController();
-  const timer=setTimeout(()=>ac.abort(),1500);
+  const timer=setTimeout(()=>ac.abort(),ms||1500);
   try{
     const r=await fetch(HUD_BASE+path,Object.assign({signal:ac.signal,cache:"no-store"},opt||{}));
     if(!r.ok)throw new Error("HTTP "+r.status);
@@ -1678,11 +1679,66 @@ async function hudFetch(path,opt){
 }
 function hudApply(d){
   hud.status="ok"; hud.menuBar=!!d.menuBar; hud.layerName=d.layerName||""; hud.err="";
+  hud.studio=d.studio||""; hud.studioPaused=!!d.studioPaused; hud.live=!!d.live;
 }
+async function hudSetLive(v){
+  try{
+    hudApply(await hudFetch("/live",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({enabled:v})}));
+    if(hudHolding)hudRenew(hudGen);   /* 接続中なら、LIVE を入れた HUD にもすぐ譲ってもらう */
+    hudRender();
+    toast(v?"ArareHUD の LIVE をオンにしました（キーボードのレイヤーに追従します）":"ArareHUD の LIVE をオフにしました");
+  }catch(e){
+    hud.status="down"; hudRender();
+    toast("切り替えに失敗しました: "+(e&&e.message||e));
+  }
+}
+/* moNa2 など（ZMK Studio 経由で HUD がつなぐキーボード）を、この画面でつなぐ間は HUD に譲ってもらう。
+ * USB は同時に1つのアプリしか開けず、Bluetooth も2つのアプリが同時に話すと応答が混ざるため。
+ * 120秒の貸し出しを30秒ごとに延長し、切断したら戻す（タブを閉じた場合も貸し出しが切れれば HUD が自分で戻る） */
+let hudHoldTimer=null, hudHolding=false, hudGen=0, hudLease=null;
+function hudResumeNow(lease){
+  hudFetch("/resume",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({lease})})
+    .then(d=>{hudApply(d);hudRender();}).catch(()=>{});
+}
+/* 1回分の貸し出し（延長）。HUD が返した id を次から渡すので、HUD はタブごとに貸し出しを見分けられる */
+function hudRenew(g){
+  return hudFetch("/release",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({seconds:120,lease:hudLease})},2500)
+    .then(d=>{
+      const l=d.lease||null;
+      /* 持ち続けない貸し出しは返す（切断後に届いた返事・重なった延長で別の id が来たとき） */
+      if(g!==hudGen){ if(l)hudResumeNow(l); return null; }
+      if(l&&hudLease&&l!==hudLease)hudResumeNow(hudLease);
+      hudLease=l||hudLease; hudApply(d); hudRender(); return l;
+    })
+    .catch(()=>null);
+}
+async function hudHold(){
+  if(!HUD_HOST_OK)return false;
+  const g=++hudGen;
+  hudHolding=true; hudLease=null;
+  clearInterval(hudHoldTimer); hudHoldTimer=null;
+  const lease=await hudRenew(g);
+  /* 返事を待つ間に切断・キャンセル・別の接続が始まったら、hudRenew がその貸し出しを返している */
+  if(g!==hudGen)return !!lease;
+  /* 30秒ごとに延長。HUD が見つからなかったときも5秒ごとに試し続ける（あとから起動された HUD にも譲ってもらう） */
+  const tick=()=>{ if(g!==hudGen)return; hudRenew(g).then(l=>{ if(g!==hudGen)return; clearTimeout(hudHoldTimer); hudHoldTimer=setTimeout(tick,l?30000:5000); }); };
+  hudHoldTimer=setTimeout(tick,lease?30000:5000);
+  return !!lease;
+}
+function hudFree(){
+  if(!hudHolding)return;
+  hudHolding=false; hudGen++;
+  clearTimeout(hudHoldTimer); hudHoldTimer=null;
+  const lease=hudLease; hudLease=null;
+  if(lease)hudResumeNow(lease);
+}
+addEventListener("pagehide",()=>{
+  if(hudHolding&&hudLease){ try{ fetch(HUD_BASE+"/resume",{method:"POST",keepalive:true,headers:{"Content-Type":"application/json"},body:JSON.stringify({lease:hudLease})}); }catch(e){} }
+});
 async function hudProbe(silent){
   if(!HUD_HOST_OK){hud.status="unsupported"; hudRender(); return;}
   hud.status="probing"; hudRender();
-  try{ hudApply(await hudFetch("/state")); }
+  try{ hudApply(await hudFetch("/state")); if(hudHolding)hudRenew(hudGen); }
   catch(e){ hud.status="down"; hud.err=String(e&&e.message||e); }
   hudRender();
   if(!silent&&hud.status==="down")toast("ArareHUD が見つかりません。アプリを起動してから再検出してください");
@@ -1698,9 +1754,24 @@ async function hudSetMenuBar(v){
   }
 }
 function hudRender(){
-  const el=document.getElementById("dev-hud");
+  hudRenderTo(document.getElementById("dev-hud"),false);
+  /* LIVE でつないだ arare 以外のキーボード（moNa2 など）にも HUD は対応している */
+  const lh=document.getElementById("livehud");
+  if(lh){
+    const show=LIVE.on&&!LIVE.locked&&!!FOREIGN&&!!LIVE.hasInputStream;
+    lh.hidden=!show;
+    if(show)hudRenderTo(lh,true); else lh.innerHTML="";
+  }
+}
+function hudRenderTo(el,live){
   if(!el)return;
-  const head=`<h3>ARARE HUD <small>レイヤーオーバーレイ</small></h3>
+  const dev=esc(LIVE.device||"このキーボード");
+  const head=live
+    ?`<h3>ARARE HUD <small>レイヤーオーバーレイ</small></h3>
+    <div class="desc">${dev} のいまのレイヤーを画面に重ねて表示する常駐アプリです。HUD は USB か Bluetooth で ${dev} からキーマップとレイヤーを直接読みます。
+    ${hud.status==="ok"?`この画面で ${dev} につないでいる間は HUD が接続を譲り、切断すると自動で表示に戻ります。`
+      :"この画面から HUD に届かないため、HUD の接続は自動では切り替わりません。メニューバーの ArareHUD で一時停止・再開してください。"}</div>`
+    :`<h3>ARARE HUD <small>レイヤーオーバーレイ</small></h3>
     <div class="desc">キーボードの現在のレイヤー（Base / Sym / Num）を画面に重ねて表示する常駐アプリです。メニューバーのアイコンを出すかどうかをここで選べます。</div>`;
   let body;
   const openBtn=`<a class="btn ghost mini" href="${HUD_BASE}/" target="_blank" rel="noopener">HUDの設定を開く ↗</a>`;
@@ -1708,8 +1779,11 @@ function hudRender(){
     body=`<div class="row"><div class="lab">この画面からは直接操作できません<small>ローカルアプリへの接続が許可されていない配信元です</small></div>
       <div class="ctl">${openBtn}</div></div>`;
   }else if(hud.status==="ok"){
-    body=`<div class="row"><div class="lab"><span class="dot live" style="display:inline-block;margin-right:6px"></span>ArareHUD に接続済み<small>現在のレイヤー: ${hud.layerName||"—"}</small></div>
+    const sub=live?(hud.studio?esc(hud.studio):"LIVE がオフです"):("現在のレイヤー: "+esc(hud.layerName||"—"));
+    body=`<div class="row"><div class="lab"><span class="dot live" style="display:inline-block;margin-right:6px"></span>ArareHUD に接続済み<small>${sub}</small></div>
         <div class="ctl"><button class="btn plain mini" data-hudprobe="1">再検出</button></div></div>
+      <div class="row"><div class="lab">LIVE（レイヤーに追従）<small>${live?`オンのあいだ HUD が ${dev} につなぎ、押しているレイヤーを表示します`:"オンのあいだ arare や moNa2 などのレイヤーに追従します（オフなら既定のレイヤーのまま）"}</small></div>
+        <div class="ctl"><button class="sw${hud.live?" on":""}" data-hudlive="1" role="switch" aria-checked="${hud.live}" aria-label="LIVE"></button></div></div>
       <div class="row"><div class="lab">メニューバーに表示<small>オフにするとアイコンが消えます（ここか、ArareHUD.app を開き直すと戻ります）</small></div>
         <div class="ctl"><button class="sw${hud.menuBar?" on":""}" data-hudtg="1" role="switch" aria-checked="${hud.menuBar}" aria-label="メニューバーに表示"></button></div></div>`;
   }else if(hud.status==="probing"){
@@ -1723,8 +1797,15 @@ function hudRender(){
   el.innerHTML=head+body;
 }
 
+/* LIVE デッキの HUD パネル */
+document.getElementById("livehud").addEventListener("click",e=>{
+  if(e.target.closest("[data-hudlive]")){hudSetLive(!hud.live); return;}
+  if(e.target.closest("[data-hudtg]")){hudSetMenuBar(!hud.menuBar); return;}
+  if(e.target.closest("[data-hudprobe]")){hudProbe(false); return;}
+});
 /* デッキのイベント（委譲） */
 document.getElementById("deck").addEventListener("click",e=>{
+  if(e.target.closest("[data-hudlive]")){hudSetLive(!hud.live); return;}
   if(e.target.closest("[data-hudtg]")){hudSetMenuBar(!hud.menuBar); return;}
   if(e.target.closest("[data-hudprobe]")){hudProbe(false); return;}
   const sw=e.target.closest(".sw[data-tg]");
@@ -2208,6 +2289,7 @@ function renderLiveDeck(){
   const on=LIVE.on&&!LIVE.locked;
   renderLiveEncPanel(); renderLiveLauncher(); renderLiveProfiles();
   renderLiveTrackball(); renderLiveCombo(); renderLiveConn();   /* 拡張モジュールがあるキーボードだけ */
+  hudRender();
   deck.hidden=!on||[...deck.querySelectorAll(".dev-grid>.panel")].every(p=>p.hidden);
   deck.querySelectorAll("details[data-dk]").forEach(d=>{ if(openDk.has(d.dataset.dk))d.open=true; });
 }
@@ -2499,7 +2581,8 @@ window.__arare={
   LIVE, renderLink, renderLayerbar, renderInsp, refreshKeys, renderDeck, toast, setForeign, renderLiveEnc, KEY_COUNT:KEYS.length, JIS_MAP,
   get layer(){return layer}, set layer(v){layer=v},
   clearSel(){sel=-1;},
-  clearCombo(){ comboCapture=null; }
+  clearCombo(){ comboCapture=null; },
+  hudHold, hudFree
 };
 renderLink();
 
@@ -2666,7 +2749,7 @@ HOME:74,PG_UP:75,DEL:76,END:77,PG_DN:78,RIGHT:79,LEFT:80,DOWN:81,UP:82,
 F13:104,F14:105,F15:106,F16:107,F17:108,F18:109,F19:110,
 LANG1:0x90,LANG2:0x91,INT1:0x87,INT2:0x88,INT3:0x89,INT4:0x8A,INT5:0x8B,NUHS:0x32,LCTRL:224,LSHFT:225,LALT:226,LGUI:227,RCTRL:228,RSHFT:229,RALT:230,RGUI:231};
 const SHIFTED={EXCL:"N1",AT:"N2",HASH:"N3",DLLR:"N4",PRCNT:"N5",CARET:"N6",AMPS:"N7",ASTRK:"N8",LPAR:"N9",RPAR:"N0",UNDER:"MINUS",PLUS:"EQUAL",LBRC:"LBKT",RBRC:"RBKT",PIPE:"BSLH",COLON:"SEMI",DQT:"SQT",TILDE:"GRAVE",QMARK:"FSLH"};
-const CONS_U={C_VOL_UP:0xE9,C_VOL_DN:0xEA,C_MUTE:0xE2,C_PP:0xCD,C_NEXT:0xB5,C_PREV:0xB6,C_BRI_UP:0x6F,C_BRI_DN:0x70};
+const CONS_U={C_VOL_UP:0xE9,C_VOL_DN:0xEA,C_MUTE:0xE2,C_PP:0xCD,C_NEXT:0xB5,C_PREV:0xB6,C_BRI_UP:0x6F,C_BRI_DN:0x70,GLOBE:0x29D};
 const MODBIT={LC:0x01,LS:0x02,LA:0x04,LG:0x08,RC:0x10,RS:0x20,RA:0x40,RG:0x80};
 function encKey(name){
   let mods=0,m;
@@ -2725,10 +2808,18 @@ async function rpc(req,opts){
  * writable.close → readable.cancel → port.close の順で、ストリームが RPC 側のパイプに
  * ロックされたままだと最初の close で例外になり port.close() まで届かない。
  * その結果 port が開いたまま残り、次の接続で "The port is already open" になる（実機で発生）。 */
-async function serialConnect(){
+async function serialConnect(held){
   const port=await navigator.serial.requestPort({});
-  try{ await port.open({baudRate:115200}); }
-  catch(t){ throw (t instanceof DOMException&&t.name==="NetworkError")?new Error("シリアルポートを開けません。他のアプリ（screen など）が使っていないか確認してください",{cause:t}):t; }
+  const gotHold=await held;   /* ArareHUD がポートを閉じ終えるのを待つ */
+  for(let i=0;;i++){
+    try{ await port.open({baudRate:115200}); break; }
+    catch(t){
+      const busy=t instanceof DOMException&&t.name==="NetworkError";
+      /* HUD に譲ってもらえたときは、手放し終わるまで少し待って開き直す */
+      if(busy&&gotHold&&i<6){ await new Promise(r=>setTimeout(r,400)); continue; }
+      throw busy?new Error("シリアルポートを開けません。ArareHUD（メニューバー →「キーボードとの接続を一時停止」）や screen などが使っていないか確認してください",{cause:t}):t;
+    }
+  }
   const info=port.getInfo();
   return {label:(info.usbVendorId||"")+":"+(info.usbProductId||""),abortController:new AbortController(),readable:port.readable,writable:port.writable,port};
 }
@@ -2753,9 +2844,10 @@ async function connect(kind){
   try{
     if(transport){ const prev=transport; transport=null; call=null; await closeTransport(prev); }
     await teardown; /* 進行中の後始末（切断・抜線）を待ってから同じポートを開きに行く */
+    const held=A.hudHold();   /* 選択画面を出すのと並行して HUD に接続を譲ってもらう */
     const core=await import(CLIENT); pbLib=core;
-    if(kind==="ble"){ t=await core.gattConnect(); }
-    else{ t=await serialConnect(); }
+    if(kind==="ble"){ t=await core.gattConnect(); await held; }
+    else{ t=await serialConnect(held); }
     transport=t; rpcTimeoutMs=RPC_TIMEOUT_MS;
     /* signal を渡さないと abort してもパイプが外れず、ストリームがロックされたまま残る */
     const conn=core.create_rpc_connection(t,{signal:t.abortController.signal});
@@ -2903,9 +2995,11 @@ async function loadRsr(){
     if(e instanceof RpcTimeout)throw e;
     /* 公式 ZMK は知らない要求に request_id=0 の RPC_NOT_FOUND を返し、クライアントは文字列 'Mismatch request IDs' を投げる。
      * どの失敗でも「拡張なし」として続ける（MetaError だけに絞らないこと） */
-    log("拡張 RPC なし（公式ファーム）"); LIVE.rsr=null; LIVE.mods={}; LIVE.tb=LIVE.combo=LIVE.conn=null; return;
+    log("拡張 RPC なし（公式ファーム）"); LIVE.rsr=null; LIVE.mods={}; LIVE.tb=LIVE.combo=LIVE.conn=null; LIVE.hasInputStream=false; return;
   }
   log("custom subsystems: "+JSON.stringify(subs.map(s=>[s.index,s.identifier])));
+  /* ArareHUD がレイヤーを追えるのは zmk__input_stream を持つキーボードだけ */
+  LIVE.hasInputStream=subs.some(s=>s.identifier==="zmk__input_stream");
   await loadMods(subs);
   const sub=subs.find(s=>s.identifier==="cormoran_rsr");
   if(!sub){LIVE.rsr=null;return;}
@@ -3476,8 +3570,9 @@ function saveLiveArr(){ try{ const all=JSON.parse(localStorage.getItem("arare-li
 function resetLive(){
   LIVE.on=false; LIVE.layers=[]; LIVE.names=[]; LIVE.layerIds=[]; clearLiveHist(); LIVE.unsaved=false; LIVE.rsr=null; LIVE.rsrBusy=false;
   LIVE.mods={}; LIVE.tb=null; LIVE.combo=null; LIVE.conn=null; LIVE.modBusy=false; LIVE.bulk=false; LIVE.layerOp=false;
-  LIVE.arr=undefined; LIVE.arrSaved=undefined; LIVE.savedIds=[];
+  LIVE.arr=undefined; LIVE.arrSaved=undefined; LIVE.savedIds=[]; LIVE.hasInputStream=false;
   if(A.clearCombo)A.clearCombo(); A.setForeign(null); A.layer=0; A.clearSel();
+  A.hudFree();
 }
 function disconnected(){
   resetLive(); rerender();
