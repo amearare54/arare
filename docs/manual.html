@@ -166,12 +166,10 @@ figcaption b{color:var(--muted); font-weight:400; text-transform:uppercase; lett
 #kmL1:checked ~ .kmbar label[for=kmL1],
 #kmL2:checked ~ .kmbar label[for=kmL2],
 #kmL3:checked ~ .kmbar label[for=kmL3]{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
-#kmL4:checked ~ .kmbar label[for=kmL4]{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
 #kmL0:checked ~ figure .klay0,
 #kmL1:checked ~ figure .klay1,
 #kmL2:checked ~ figure .klay2,
-#kmL3:checked ~ figure .klay3,
-#kmL4:checked ~ figure .klay4{display:block}
+#kmL3:checked ~ figure .klay3{display:block}
 .kkey{fill:var(--surface); stroke:var(--ink); stroke-width:1.2; opacity:.95}
 .kspec{fill:var(--raise); stroke:var(--ink)}
 .klbl{fill:var(--ink); text-anchor:middle; dominant-baseline:central; font-family:var(--mono); font-weight:500}
@@ -905,7 +903,7 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
 <path class="leadhalo" d="M-9.50,-17.30 L-2.50,-17.30 L11.00,1.20"/><path class="lead2" d="M-9.50,-17.30 L-2.50,-17.30 L11.00,1.20"/>
 <circle class="tip" cx="11.00" cy="1.20" r="0.9"/>
 <text class="lb" x="-12.00" y="-16.00" text-anchor="end">タクトスイッチ &#215;2</text>
-<text class="lbs" x="-12.00" y="-11.60" text-anchor="end">外側 RESET ／ 内側 UNLOCK</text>
+<text class="lbs" x="-12.00" y="-11.60" text-anchor="end">外側 BT1 ／ 内側 BT2</text>
 <path class="leadhalo" d="M-9.50,24.70 L-2.50,24.70 L11.85,20.35"/><path class="lead2" d="M-9.50,24.70 L-2.50,24.70 L11.85,20.35"/>
 <circle class="tip" cx="11.85" cy="20.35" r="0.9"/>
 <text class="lb" x="-12.00" y="26.00" text-anchor="end">キースイッチ</text>
@@ -925,7 +923,7 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
 <path class="leadhalo" d="M267.50,-17.30 L260.50,-17.30 L253.60,1.20"/><path class="lead2" d="M267.50,-17.30 L260.50,-17.30 L253.60,1.20"/>
 <circle class="tip" cx="253.60" cy="1.20" r="0.9"/>
 <text class="lb" x="270.00" y="-16.00" text-anchor="start">タクトスイッチ &#215;2</text>
-<text class="lbs" x="270.00" y="-11.60" text-anchor="start">内側 UNLOCK ／ 外側 RESET</text>
+<text class="lbs" x="270.00" y="-11.60" text-anchor="start">内側 BT3 ／ 外側 UNLOCK</text>
 <path class="leadhalo" d="M267.50,64.70 L260.50,64.70 L220.90,68.10"/><path class="lead2" d="M267.50,64.70 L260.50,64.70 L220.90,68.10"/>
 <circle class="tip" cx="220.90" cy="68.10" r="0.9"/>
 <text class="lb" x="270.00" y="66.00" text-anchor="start">トラックボール</text>
@@ -959,11 +957,11 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
     <thead><tr><th>各部</th><th>位置</th><th>はたらき</th></tr></thead>
     <tbody>
       <tr><td>トラックボール</td><td class="k">右</td><td>指で転がしてポインタを動かします。&#216;19 mm・光学センサー式。</td></tr>
-      <tr><td>ホイール（横型エンコーダー）</td><td class="k">右</td><td><strong>軸は左右方向。指で前後に転がします</strong>（マウスのスクロールホイールと同じ向き）。回すとページ送り、押し込みは左クリックです。</td></tr>
-      <tr><td>ノブ（縦型エンコーダー）</td><td class="k">左</td><td><strong>軸は上向き。ボリュームつまみのように水平に回します。</strong>回すと音量、押し込みは <span class="k">&#8679;&#8984;V</span>（書式なしペースト）です。</td></tr>
+      <tr><td>ホイール（横型エンコーダー）</td><td class="k">右</td><td><strong>軸は左右方向。指で前後に転がします</strong>（マウスのスクロールホイールと同じ向き）。回すとページ送り、押し込みは &#8984;V（貼り付け）です。</td></tr>
+      <tr><td>ノブ（縦型エンコーダー）</td><td class="k">左</td><td><strong>軸は上向き。ボリュームつまみのように水平に回します。</strong>回すと拡大 / 縮小（<span class="k">⌘+</span> / <span class="k">⌘-</span>）、押し込みは <span class="k">&#8679;&#8984;V</span>（書式なしペースト）です。</td></tr>
       <tr><td>スティック</td><td class="k">左</td><td><strong>トラックパッドの代わりです。</strong>2 本指・3 本指でするような操作を、親指ひとつでできるようにと載せています。<strong>倒すと、その向きのショートカットが出ます</strong>——出荷時は Mission Control とデスクトップの移動（macOS のトラックパッドの 3 本指スワイプと同じ操作）です。カーソルは動きません（それはトラックボールの担当です）。押し込むと <span class="k">L3</span> レイヤーになります。倒しはじめの重さと、どの向きに何を出すかは arare Studio から変えられます。</td></tr>
-      <tr><td>タクトスイッチ（外側）</td><td class="k">左右</td><td>RESET。動きが怪しいときに、その側だけを再起動します。</td></tr>
-      <tr><td>タクトスイッチ（内側）</td><td class="k">左右</td><td>UNLOCK。Studio からキーを書き換える前に、いちど押します。</td></tr>
+      <tr><td>タクトスイッチ（外側）</td><td class="k">左右</td><td>左は Bluetooth の接続先 1 への切り替え。右は UNLOCK で、Studio からキーを書き換える前にいちど押します。</td></tr>
+      <tr><td>タクトスイッチ（内側）</td><td class="k">左右</td><td>Bluetooth の接続先の切り替え。左が 2、右が 3 です。</td></tr>
       <tr><td>電源スイッチ</td><td class="k">左右</td><td>内側の側面にあるスライドスイッチ。左右それぞれに付いています。</td></tr>
       <tr><td>リセットスイッチ・ライトの穴</td><td class="k">左右</td><td>USB-C のとなりに小さな穴が 2 つ（&#216;1.86 mm・左右とも同じ大きさ）。マイコン基板のリセットスイッチとランプが、ここから見えます。ファームウェアを書き込むときに使います。<strong>ランプは電池残量を色で知らせます</strong>（下の「ランプの見かた」）。</td></tr>
       <tr><td>USB-C</td><td class="k">左右</td><td>充電とファームウェアの書き込みに使います。</td></tr>
@@ -1289,9 +1287,9 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
   <ol class="steps">
     <li><b>電源を入れる</b><span>左右それぞれの側面にあるスライドスイッチを、内側（ON）へ動かします。<strong>左右とも</strong>忘れずに。</span></li>
     <li><b>パソコンとつなぐ</b><span>パソコンの Bluetooth 設定を開き、一覧に出てくる <span class="k">arare</span> を選びます。左手側は右手側と自動でつながるので、パソコン側の操作は一度だけです。</span></li>
-    <li><b>つながらないときは</b><span>いちど両側の電源を切り、右手側 → 左手側の順に入れ直します。それでも見つからないときは、外側のタクトスイッチ（RESET）を左右とも一回ずつ押してください。</span></li>
+    <li><b>つながらないときは</b><span>いちど両側の電源を切り、右手側 → 左手側の順に入れ直します。それでも見つからないときは、左手の外側のタクトスイッチ（BT1）を押して、接続先を 1 に戻してください。タクトスイッチを押すと接続先が切り替わります。</span></li>
     <li><b>充電する</b><span>USB-C ケーブルをつなぐと充電されます。<strong>左右は別々の電池</strong>なので、片側ずつ充電してください。充電しながら使うこともできます。<br><strong>残量はパソコン側の Bluetooth の表示で確認します。</strong>左右とも残量を報告していて、右手側が左手側のぶんもまとめて送っています。</span></li>
-    <li><b>キーを自分用に変える</b><span><a href="#studio">arare Studio</a> をブラウザで開きます。書き換える前に、内側のタクトスイッチ（UNLOCK）を一回押してください。</span></li>
+    <li><b>キーを自分用に変える</b><span><a href="#studio">arare Studio</a> をブラウザで開きます。書き換える前に、右手の外側のタクトスイッチ（UNLOCK）を一回押してください。</span></li>
   </ol>
   <h3>ランプの見かた</h3>
   <div class="prose">
@@ -1325,7 +1323,7 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
   パーセントの数字で見たいときは、パソコン側の Bluetooth の表示で確認できます。</p></div>
 
   <h3>接続先を切り替える</h3>
-  <div class="prose"><p>Bluetooth の接続先は 5 台まで覚えられます。切り替えるキーは出荷時には割り当てていないので、よく使う 2 台以上を行き来する方は、Studio の「接続」画面から好きなキーに割り当ててください。</p></div>
+  <div class="prose"><p>Bluetooth の接続先は 5 台まで覚えられます。出荷時は左手の外側・内側と右手の内側のタクトスイッチで、接続先 1〜3 を切り替えます。4 台目・5 台目を使う方や、ほかのキーで切り替えたい方は、Studio の「接続」画面から好きなキーに割り当ててください。</p></div>
 </section>
 
 <svg class="rain" viewBox="0 0 1200 22" preserveAspectRatio="none" aria-hidden="true">
@@ -1336,22 +1334,19 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
   <div class="shead"><span class="snum">04</span><span class="skicker">Default keymap</span></div>
   <h2>出荷時のキーマップ</h2>
   <div class="prose">
-    <p>レイヤーは 5 つです。<span class="k">fn1</span> を押しているあいだが記号、<span class="k">fn2</span> を押しているあいだが数字と矢印。US 配列のパソコンにつないだ状態で、キーに書いてあるとおりの文字が出ます。</p>
-    <p><span class="k">L3</span> は<strong>まるごと空けてあります</strong>。スティックを押しているあいだ有効になるので、よく使う操作を arare Studio で入れてください。</p>
-    <p><span class="k">L4</span> はマウス用です。<strong>ボールを動かした直後だけ自動で切り替わり</strong>、<span class="k">I</span>・<span class="k">J</span>・<span class="k">L</span> が中・左・右クリックになります。ボールを止めて 0.8 秒たつか、ほかのキーを押すと元に戻るので、文字を打つときは気にしなくて大丈夫です。どのキーを何にするかは arare Studio のトラックボール欄（オートマウス）で変えられます。</p>
+    <p>レイヤーは 4 つです。<span class="k">fn1</span> を押しているあいだが記号、<span class="k">fn2</span> を押しているあいだが数字と矢印。US 配列のパソコンにつないだ状態で、キーに書いてあるとおりの文字が出ます。</p>
+    <p><span class="k">L3</span> はスティックを押しているあいだ有効になるマウス用です。<span class="k">J</span>・<span class="k">L</span> が左・右クリック、<span class="k">K</span> が <span class="k">⇧⌘V</span>（書式なしで貼り付け）になります。</p>
   </div>
   <a class="cta" href="https://amearare54.github.io/arare/" target="_blank" rel="noopener">arare Studio を開く <span>&rarr;</span></a>
   <input type="radio" name="kmlayer" id="kmL0" checked>
   <input type="radio" name="kmlayer" id="kmL1">
   <input type="radio" name="kmlayer" id="kmL2">
   <input type="radio" name="kmlayer" id="kmL3">
-  <input type="radio" name="kmlayer" id="kmL4">
   <div class="kmbar">
     <label for="kmL0" tabindex="0">L0 &nbsp;Base</label>
     <label for="kmL1" tabindex="0">L1 &nbsp;Sym</label>
     <label for="kmL2" tabindex="0">L2 &nbsp;Num</label>
-    <label for="kmL3" tabindex="0">L3 &nbsp;Free</label>
-    <label for="kmL4" tabindex="0">L4 &nbsp;Mouse</label>
+    <label for="kmL3" tabindex="0">L3 &nbsp;Mouse</label>
     <span class="kmhint">・印はひとつ下のレイヤーがそのまま出るキーです</span>
   </div>
   <figure>
@@ -1424,7 +1419,7 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
 <text class="klbl k-kp" x="361.0" y="186.0" font-size="38">F</text>
 <text class="klbl k-kp" x="461.0" y="193.0" font-size="38">G</text>
 <text class="klbl k-combo" x="561.0" y="220.0" font-size="38">⇧⌘V</text>
-<text class="klbl k-ptr kjp" x="753.0" y="220.0" font-size="25">左クリック</text>
+<text class="klbl k-combo" x="753.0" y="220.0" font-size="38">⌘V</text>
 <text class="klbl k-kp" x="853.0" y="193.0" font-size="38">H</text>
 <text class="klbl k-kp" x="953.0" y="186.0" font-size="38">J</text>
 <text class="klbl k-kp" x="1053.0" y="168.0" font-size="38">K</text>
@@ -1437,7 +1432,7 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
 <text class="klbl k-kp" x="461.0" y="293.0" font-size="38">B</text>
 <text class="klbl k-fn" x="561.0" y="310.0" font-size="38">fn2</text>
 <text class="ksub" x="561.0" y="340.0" font-size="15">レイヤー 2</text>
-<text class="klbl k-ptr kjp" x="753.0" y="318.0" font-size="25">右クリック</text>
+<text class="klbl k-combo" x="753.0" y="318.0" font-size="38">⌘C</text>
 <text class="klbl k-kp" x="853.0" y="293.0" font-size="38">N</text>
 <text class="klbl k-kp" x="953.0" y="286.0" font-size="38">M</text>
 <text class="klbl k-kp" x="1053.0" y="268.0" font-size="38">,</text>
@@ -1516,8 +1511,8 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
 <circle class="ktr" cx="261.0" cy="68.0" r="4"/>
 <circle class="ktr" cx="361.0" cy="86.0" r="4"/>
 <circle class="ktr" cx="461.0" cy="93.0" r="4"/>
-<circle class="ktr" cx="853.0" cy="93.0" r="4"/>
-<circle class="ktr" cx="953.0" cy="86.0" r="4"/>
+<text class="klbl k-combo" x="853.0" y="93.0" font-size="38">⇧⌘3</text>
+<text class="klbl k-combo" x="953.0" y="86.0" font-size="38">⇧⌘4</text>
 <text class="klbl k-kp" x="1053.0" y="68.0" font-size="38">7</text>
 <text class="klbl k-kp" x="1153.0" y="93.0" font-size="38">8</text>
 <text class="klbl k-kp" x="1253.0" y="118.0" font-size="38">9</text>
@@ -1551,8 +1546,8 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
 <circle class="ktr" cx="361.0" cy="415.0" r="4"/>
 <circle class="ktr" cx="477.0" cy="420.0" r="4" transform="rotate(8.21 477 420)"/>
 <circle class="ktr" cx="590.0" cy="443.0" r="4" transform="rotate(18.07 590 443)"/>
-<circle class="ktr" cx="725.0" cy="443.0" r="4" transform="rotate(-18.07 725 443)"/>
-<circle class="ktr" cx="838.0" cy="420.0" r="4" transform="rotate(-8.21 838 420)"/>
+<text class="klbl k-combo" x="725.0" y="443.0" font-size="38" transform="rotate(-18.07 725 443)">⌃←</text>
+<text class="klbl k-combo" x="838.0" y="420.0" font-size="38" transform="rotate(-8.21 838 420)">⌃→</text>
 <text class="klbl k-kp" x="1253.0" y="418.0" font-size="38">0</text>
 <circle class="ktr" cx="30.0" cy="30.0" r="4"/>
 <circle class="ktr" cx="83.0" cy="30.0" r="4"/>
@@ -1578,57 +1573,8 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
 <circle class="ktr" cx="561.0" cy="220.0" r="4"/>
 <circle class="ktr" cx="753.0" cy="220.0" r="4"/>
 <circle class="ktr" cx="853.0" cy="193.0" r="4"/>
-<circle class="ktr" cx="953.0" cy="186.0" r="4"/>
-<circle class="ktr" cx="1053.0" cy="168.0" r="4"/>
-<circle class="ktr" cx="1153.0" cy="193.0" r="4"/>
-<circle class="ktr" cx="1253.0" cy="218.0" r="4"/>
-<circle class="ktr" cx="61.0" cy="318.0" r="4"/>
-<circle class="ktr" cx="161.0" cy="293.0" r="4"/>
-<circle class="ktr" cx="261.0" cy="268.0" r="4"/>
-<circle class="ktr" cx="361.0" cy="286.0" r="4"/>
-<circle class="ktr" cx="461.0" cy="293.0" r="4"/>
-<circle class="ktr" cx="561.0" cy="318.0" r="4"/>
-<circle class="ktr" cx="753.0" cy="318.0" r="4"/>
-<circle class="ktr" cx="853.0" cy="293.0" r="4"/>
-<circle class="ktr" cx="953.0" cy="286.0" r="4"/>
-<circle class="ktr" cx="1053.0" cy="268.0" r="4"/>
-<circle class="ktr" cx="1153.0" cy="293.0" r="4"/>
-<circle class="ktr" cx="1253.0" cy="318.0" r="4"/>
-<circle class="ktr" cx="61.0" cy="418.0" r="4"/>
-<circle class="ktr" cx="161.0" cy="393.0" r="4"/>
-<circle class="ktr" cx="261.0" cy="368.0" r="4"/>
-<circle class="ktr" cx="361.0" cy="415.0" r="4"/>
-<circle class="ktr" cx="477.0" cy="420.0" r="4" transform="rotate(8.21 477 420)"/>
-<circle class="ktr" cx="590.0" cy="443.0" r="4" transform="rotate(18.07 590 443)"/>
-<circle class="ktr" cx="725.0" cy="443.0" r="4" transform="rotate(-18.07 725 443)"/>
-<circle class="ktr" cx="838.0" cy="420.0" r="4" transform="rotate(-8.21 838 420)"/>
-<circle class="ktr" cx="1253.0" cy="418.0" r="4"/>
-<circle class="ktr" cx="30.0" cy="30.0" r="4"/>
-<circle class="ktr" cx="83.0" cy="30.0" r="4"/>
-<circle class="ktr" cx="1232.0" cy="30.0" r="4"/>
-<circle class="ktr" cx="1285.0" cy="30.0" r="4"/>
-</g>
-<g class="klay klay4">
-<circle class="ktr" cx="61.0" cy="118.0" r="4"/>
-<circle class="ktr" cx="161.0" cy="93.0" r="4"/>
-<circle class="ktr" cx="261.0" cy="68.0" r="4"/>
-<circle class="ktr" cx="361.0" cy="86.0" r="4"/>
-<circle class="ktr" cx="461.0" cy="93.0" r="4"/>
-<circle class="ktr" cx="853.0" cy="93.0" r="4"/>
-<circle class="ktr" cx="953.0" cy="86.0" r="4"/>
-<text class="klbl k-ptr kjp" x="1053.0" y="68.0" font-size="25">中クリック</text>
-<circle class="ktr" cx="1153.0" cy="93.0" r="4"/>
-<circle class="ktr" cx="1253.0" cy="118.0" r="4"/>
-<circle class="ktr" cx="61.0" cy="218.0" r="4"/>
-<circle class="ktr" cx="161.0" cy="193.0" r="4"/>
-<circle class="ktr" cx="261.0" cy="168.0" r="4"/>
-<circle class="ktr" cx="361.0" cy="186.0" r="4"/>
-<circle class="ktr" cx="461.0" cy="193.0" r="4"/>
-<circle class="ktr" cx="561.0" cy="220.0" r="4"/>
-<circle class="ktr" cx="753.0" cy="220.0" r="4"/>
-<circle class="ktr" cx="853.0" cy="193.0" r="4"/>
 <text class="klbl k-ptr kjp" x="953.0" y="186.0" font-size="25">左クリック</text>
-<circle class="ktr" cx="1053.0" cy="168.0" r="4"/>
+<text class="klbl k-combo" x="1053.0" y="168.0" font-size="38">⇧⌘V</text>
 <text class="klbl k-ptr kjp" x="1153.0" y="193.0" font-size="25">右クリック</text>
 <circle class="ktr" cx="1253.0" cy="218.0" r="4"/>
 <circle class="ktr" cx="61.0" cy="318.0" r="4"/>
@@ -1668,14 +1614,16 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
       <tr><td>ノブを回す（左）</td><td>拡大 / 縮小（<span class="k">⌘+</span> / <span class="k">⌘-</span>）</td></tr>
       <tr><td>ホイールを回す（右）</td><td>ページ送り（PageUp / PageDown）</td></tr>
       <tr><td>ノブを押す（左）</td><td class="k">⇧⌘V</td></tr>
-      <tr><td>ホイールを押す（右）</td><td>左クリック</td></tr>
-      <tr><td>ボールを動かした直後の <span class="k">I</span> / <span class="k">J</span> / <span class="k">L</span></td><td>中 / 左 / 右クリック（ボールを止めて 0.8 秒か、ほかのキーを押すと元に戻る）</td></tr>
-      <tr><td>スティックを押す（左）</td><td>押しているあいだ <span class="k">L3</span> レイヤー（出荷時は空）</td></tr>
+      <tr><td>ホイールを押す（右）</td><td><span class="k">⌘V</span>（貼り付け）</td></tr>
+      <tr><td>ホイールの下のキー（右）</td><td><span class="k">⌘C</span>（コピー）</td></tr>
+      <tr><td>スティックを押す（左）</td><td>押しているあいだ <span class="k">L3</span>（<span class="k">J</span>・<span class="k">L</span> が左・右クリック、<span class="k">K</span> が <span class="k">⇧⌘V</span>）</td></tr>
       <tr><td>スティックを倒す（左）</td><td>Mission Control / App Exposé / デスクトップの移動</td></tr>
       <tr><td>A を長押し</td><td class="k">⌃</td></tr>
       <tr><td>英数 を長押し</td><td class="k">⇧</td></tr>
       <tr><td>Ctrl を長押し</td><td class="k">⌥</td></tr>
       <tr><td>タクトスイッチ 4 つ</td><td>Bluetooth の接続先 1〜3 の切り替えと <span class="k">UNLOCK</span></td></tr>
+      <tr><td><span class="k">fn2</span> ＋ <span class="k">Y</span> / <span class="k">U</span></td><td><span class="k">⇧⌘3</span> / <span class="k">⇧⌘4</span>（スクリーンショット）</td></tr>
+      <tr><td><span class="k">fn2</span> ＋ <span class="k">⏎</span> / <span class="k">⌫</span></td><td><span class="k">⌃←</span> / <span class="k">⌃→</span>（デスクトップの移動）</td></tr>
       <tr><td><span class="k">fn1</span> ＋ タクトスイッチ</td><td><span class="k">F13</span>〜<span class="k">F16</span>（Mac 側でアプリの起動に割り当てられます）</td></tr>
     </tbody>
   </table>
@@ -1789,7 +1737,7 @@ footer .mono{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text
 <circle cx="590" cy="443" r="44" fill="none" stroke="var(--line-2)" stroke-width="6"/>
 </svg><div class="viscap">click a key &#183; live to device</div></div></div>
   </div>
-  <div class="note"><b>書き換える前に UNLOCK。</b>安全のため、キーボードは通常「書き換え禁止」の状態になっています。内側のタクトスイッチ（UNLOCK）を一回押してから、Studio の接続ボタンを押してください。<br>なお <b>UNLOCK のキーを全部つぶさないでください</b>。押せる UNLOCK がひとつもなくなると、ファームウェアを書き込み直すまで編集できなくなります。</div>
+  <div class="note"><b>書き換える前に UNLOCK。</b>安全のため、キーボードは通常「書き換え禁止」の状態になっています。右手の外側のタクトスイッチ（UNLOCK）を一回押してから、Studio の接続ボタンを押してください。<br>なお <b>UNLOCK のキーを全部つぶさないでください</b>。押せる UNLOCK がひとつもなくなると、ファームウェアを書き込み直すまで編集できなくなります。</div>
 </section>
 
 </main>

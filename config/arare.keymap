@@ -2,7 +2,7 @@
  * arare keymap — arare Studio で生成（2026-09-24）
  * 配列: USホスト向け
  *
- * ポジション順は arare.dtsi のコメント参照（47キー×5レイヤー）。
+ * ポジション順は arare.dtsi のコメント参照（47キー×4レイヤー）。
  */
 
 #include <behaviors.dtsi>
@@ -19,8 +19,8 @@
             display-name = "L0";
             bindings = <
 &kp Q  &kp W  &kp E  &kp R  &kp T  &kp Y  &kp U  &kp I  &kp O  &kp P
-&mt LCTRL A  &kp S  &kp D  &kp F  &kp G  &kp LS(LG(V))  &mkp LCLK  &kp H  &kp J  &kp K  &kp L  &kp MINUS
-&kp Z  &kp X  &kp C  &kp V  &kp B  &mo 2  &mkp RCLK  &kp N  &kp M  &kp COMMA  &kp DOT  &kp AT
+&mt LCTRL A  &kp S  &kp D  &kp F  &kp G  &kp LS(LG(V))  &kp LG(V)  &kp H  &kp J  &kp K  &kp L  &kp MINUS
+&kp Z  &kp X  &kp C  &kp V  &kp B  &mo 2  &kp LG(C)  &kp N  &kp M  &kp COMMA  &kp DOT  &kp AT
 &mt LSHFT LANG2  &mt LALT LCTRL  &kp LGUI  &kp SPACE  &mo 1  &mo 3  &kp ENTER  &kp BSPC  &kp LANG1
 &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &studio_unlock
             >;
@@ -42,10 +42,10 @@
         layer_2 {
             display-name = "L2";
             bindings = <
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &kp N7  &kp N8  &kp N9
+&trans  &trans  &trans  &trans  &trans  &kp LS(LG(N3))  &kp LS(LG(N4))  &kp N7  &kp N8  &kp N9
 &trans  &trans  &trans  &trans  &trans  &trans  &trans  &kp UP  &trans  &kp N4  &kp N5  &kp N6
 &trans  &trans  &trans  &trans  &trans  &trans  &kp LEFT  &kp DOWN  &kp RIGHT  &kp N1  &kp N2  &kp N3
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &kp N0
+&trans  &trans  &trans  &trans  &trans  &trans  &kp LC(LEFT)  &kp LC(RIGHT)  &kp N0
 &trans  &trans  &trans  &trans
             >;
             sensor-bindings = <&inc_dec_kp C_BRI_UP C_BRI_DN>, <&inc_dec_kp C_VOL_UP C_VOL_DN>;
@@ -55,18 +55,7 @@
             display-name = "L3";
             bindings = <
 &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans
-            >;
-        };
-
-        layer_4 {
-            display-name = "L4";
-            bindings = <
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp MCLK  &trans  &trans
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp LCLK  &trans  &mkp RCLK  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp LCLK  &kp LS(LG(V))  &mkp RCLK  &trans
 &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
 &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
 &trans  &trans  &trans  &trans
