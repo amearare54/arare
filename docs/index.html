@@ -1666,7 +1666,7 @@ function renderDeck(){
  * ローカルアプリへの接続は配信元が限られるため、公開ページ／localhost でのみ有効。 */
 const HUD_BASE="http://127.0.0.1:47800";
 const HUD_HOST_OK=["amearare54.github.io","localhost","127.0.0.1"].includes(location.hostname);
-const hud={status:"idle",menuBar:false,layerName:"",err:"",studio:"",studioPaused:false,live:false};
+const hud={status:"idle",menuBar:false,layerName:"",err:"",studio:"",studioPaused:false,live:false,panelVisible:false};
 
 async function hudFetch(path,opt,ms){
   const ac=new AbortController();
@@ -1679,7 +1679,16 @@ async function hudFetch(path,opt,ms){
 }
 function hudApply(d){
   hud.status="ok"; hud.menuBar=!!d.menuBar; hud.layerName=d.layerName||""; hud.err="";
-  hud.studio=d.studio||""; hud.studioPaused=!!d.studioPaused; hud.live=!!d.live;
+  hud.studio=d.studio||""; hud.studioPaused=!!d.studioPaused; hud.live=!!d.live; hud.panelVisible=!!d.panelVisible;
+}
+async function hudSetPanel(v){
+  try{
+    hudApply(await hudFetch("/panel",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({visible:v})}));
+    hudRender();
+  }catch(e){
+    hud.status="down"; hudRender();
+    toast("切り替えに失敗しました: "+(e&&e.message||e));
+  }
 }
 async function hudSetLive(v){
   try{
@@ -1782,7 +1791,9 @@ function hudRenderTo(el,live){
     const sub=live?(hud.studio?esc(hud.studio):"LIVE がオフです"):("現在のレイヤー: "+esc(hud.layerName||"—"));
     body=`<div class="row"><div class="lab"><span class="dot live" style="display:inline-block;margin-right:6px"></span>ArareHUD に接続済み<small>${sub}</small></div>
         <div class="ctl"><button class="btn plain mini" data-hudprobe="1">再検出</button></div></div>
-      <div class="row"><div class="lab">LIVE（レイヤーに追従）<small>${live?`オンのあいだ HUD が ${dev} につなぎ、押しているレイヤーを表示します`:"オンのあいだ arare や moNa2 などのレイヤーに追従します（オフなら既定のレイヤーのまま）"}</small></div>
+      <div class="row"><div class="lab">HUD を表示<small>レイヤーが変わっても勝手には出ません。ここで出し入れします</small></div>
+        <div class="ctl"><button class="sw${hud.panelVisible?" on":""}" data-hudpanel="1" role="switch" aria-checked="${hud.panelVisible}" aria-label="HUD を表示"></button></div></div>
+      <div class="row"><div class="lab">LIVE（レイヤーに追従）<small>${live?`オンのあいだ HUD が ${dev} につなぎ、表示中の HUD が押しているレイヤーに切り替わります`:"オンのあいだ、表示中の HUD が arare や moNa2 などのレイヤーに切り替わります（オフなら既定のレイヤーのまま）"}</small></div>
         <div class="ctl"><button class="sw${hud.live?" on":""}" data-hudlive="1" role="switch" aria-checked="${hud.live}" aria-label="LIVE"></button></div></div>
       <div class="row"><div class="lab">メニューバーに表示<small>オフにするとアイコンが消えます（ここか、ArareHUD.app を開き直すと戻ります）</small></div>
         <div class="ctl"><button class="sw${hud.menuBar?" on":""}" data-hudtg="1" role="switch" aria-checked="${hud.menuBar}" aria-label="メニューバーに表示"></button></div></div>`;
@@ -1799,12 +1810,14 @@ function hudRenderTo(el,live){
 
 /* LIVE デッキの HUD パネル */
 document.getElementById("livehud").addEventListener("click",e=>{
+  if(e.target.closest("[data-hudpanel]")){hudSetPanel(!hud.panelVisible); return;}
   if(e.target.closest("[data-hudlive]")){hudSetLive(!hud.live); return;}
   if(e.target.closest("[data-hudtg]")){hudSetMenuBar(!hud.menuBar); return;}
   if(e.target.closest("[data-hudprobe]")){hudProbe(false); return;}
 });
 /* デッキのイベント（委譲） */
 document.getElementById("deck").addEventListener("click",e=>{
+  if(e.target.closest("[data-hudpanel]")){hudSetPanel(!hud.panelVisible); return;}
   if(e.target.closest("[data-hudlive]")){hudSetLive(!hud.live); return;}
   if(e.target.closest("[data-hudtg]")){hudSetMenuBar(!hud.menuBar); return;}
   if(e.target.closest("[data-hudprobe]")){hudProbe(false); return;}
