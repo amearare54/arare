@@ -243,7 +243,13 @@
   .seg button{border:none; background:var(--card2); font-family:var(--mono); font-size:10.5px; padding:6px 9px; cursor:pointer; color:var(--mute)}
   .seg button.on{background:var(--ink); color:#fff}
   /* LIVE のエンコーダー設定（拡張モジュール対応のキーボードだけ） */
-  .liveenc{margin-top:16px}
+  .livedeck{margin-top:16px}
+  .livedeck .livenote{font-size:11px; color:var(--mute)}
+  #liveenc,#livelaunch,#liveconn,#livecombo{grid-column:1/-1}
+  .livedeck .seg{flex-wrap:wrap}
+  .livedeck .row{flex-wrap:wrap}
+  .livedeck .row .ctl{flex:1 1 auto; min-width:0; justify-content:flex-end}
+  .livedeck details summary{list-style:revert}
   .liveenc .encrows{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr)); column-gap:28px}
   .liveenc .row{flex-wrap:wrap}
   .liveenc .row .lab{flex:0 0 auto; white-space:nowrap}
@@ -511,7 +517,19 @@
   </div>
 </div>
 
-<div class="panel dev liveenc" id="liveenc" hidden></div>
+<div class="livedeck" id="livedeck" hidden>
+  <div class="deck-head"><h2>⚙ DEVICE <span style="color:var(--accent)">TUNING</span> <span class="badge">LIVE</span></h2>
+    <span class="livenote">つないでいるキーボードに直接書きます。できる項目だけ出ます</span></div>
+  <div class="dev-grid">
+    <div class="panel dev liveenc" id="liveenc" hidden></div>
+    <div class="panel dev" id="livetb" hidden></div>
+    <div class="panel dev" id="livemt" hidden></div>
+    <div class="panel dev" id="liveconn" hidden></div>
+    <div class="panel dev" id="livecombo" hidden></div>
+    <div class="panel dev" id="livelaunch" hidden></div>
+    <div class="panel dev" id="liveprof" hidden></div>
+  </div>
+</div>
 
 <div class="deck" id="deck">
   <div class="deck-head">
@@ -708,9 +726,18 @@ const layName=n=>"L"+n;
 /* キーボード本体から来る文字列（層名・デバイス名・behavior 名など）を innerHTML に入れるときは必ず通す */
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]);
 /* 割当の中の層の参照（&mo 2 など）。arare 以外を LIVE で見ているときは本体の層名で出す（番号は層 id で、arare の L 番号と一致しないため） */
-const refName=n=>{ if(LIVE.on&&FOREIGN){const i=LIVE.layerIds.indexOf(n); if(i>=0&&LIVE.names[i])return LIVE.names[i];} return layName(n); };
+const refName=n=>{ if(LIVE.on){const i=LIVE.layerIds.indexOf(n); if(i>=0&&LIVE.names[i])return LIVE.names[i];} return layName(n); };
+/* いまの配列の向き: LIVE 中は本体ごと（LIVE.arr）、オフラインは下書き（arr） */
+const curArr=()=>LIVE.on?(LIVE.arr||"us"):arr;
+/* 本体から読んだ割当は Shift つきの記号を正規の名前（CARET 等）で返すので、JIS 表示用に別名も引けるようにする */
+const SHIFT_NAME={N1:"EXCL",N2:"AT",N3:"HASH",N4:"DLLR",N5:"PRCNT",N6:"CARET",N7:"AMPS",N8:"ASTRK",N9:"LPAR",N0:"RPAR",
+ MINUS:"UNDER",EQUAL:"PLUS",LBKT:"LBRC",RBKT:"RBRC",BSLH:"PIPE",SEMI:"COLON",SQT:"DQT",GRAVE:"TILDE",FSLH:"QMARK"};
 function keyGlyph(code){
-  if(arr==="jis"&&INV_JIS[code])code=INV_JIS[code]; // JISモード中は「JISホストで実際に出る記号」を表示
+  if(curArr()==="jis"){ // JISモード中は「JISホストで実際に出る記号」を表示
+    const sm=code.match(/^LS\((\w+)\)$/), alias=sm&&SHIFT_NAME[sm[1]];
+    if(INV_JIS[code])code=INV_JIS[code];
+    else{ const inv=Object.keys(INV_JIS).find(k=>{const m=k.match(/^LS\((\w+)\)$/); return m&&SHIFT_NAME[m[1]]===code;}); if(inv)code=INV_JIS[inv]; else if(alias&&INV_JIS["LS("+sm[1]+")"])code=INV_JIS["LS("+sm[1]+")"]; }
+  }
   let mods="",m;
   while((m=code.match(/^(LS|LC|LA|LG|RS|RC|RA|RG)\((.+)\)$/))){ mods+=MODG[m[1]]; code=m[2]; }
   return mods+(GLYPH[code]||code);
@@ -735,7 +762,20 @@ function legend(b){
   if((m=b.match(/^&lt (\d+) (.+)$/)))return refName(+m[1])+"/"+keyGlyph(m[2]);
   if((m=b.match(/^&mo (\d+)$/)))return"→"+refName(+m[1]);
   if((m=b.match(/^&tog (\d+)$/)))return"⇄"+refName(+m[1]);
-  if((m=b.match(/^&mkp (\w+)$/)))return{LCLK:"CLK·L",RCLK:"CLK·R",MCLK:"CLK·M"}[m[1]]||m[1];
+  if((m=b.match(/^&to (\d+)$/)))return"⤳"+refName(+m[1]);
+  if((m=b.match(/^&sl (\d+)$/)))return"1×"+refName(+m[1]);
+  if((m=b.match(/^&sk (.+)$/)))return"1×"+keyGlyph(m[1]);
+  if((m=b.match(/^&kt (.+)$/)))return"⇵"+keyGlyph(m[1]);
+  if(b==="&caps_word")return"CAPSW";
+  if(b==="&key_repeat")return"REP";
+  if(b==="&gresc")return"ESC`";
+  if((m=b.match(/^&ext_power EP_(\w+)$/)))return"PWR "+m[1];
+  if(b==="&bt BT_CLR_ALL")return"BT×ALL";
+  if((m=b.match(/^&bt BT_DISC (\d)$/)))return"BT"+(+m[1]+1)+"切";
+  if((m=b.match(/^&mkp (\w+)$/)))return{LCLK:"CLK·L",RCLK:"CLK·R",MCLK:"CLK·M",MB4:"CLK·4",MB5:"CLK·5"}[m[1]]||m[1];
+  /* 本体固有の動作は、本体が教えてくれた名前で出す */
+  if((m=b.match(/^#(\d+)\((-?\d+),(-?\d+)\)$/))){const n=window.liveBehaviorName?window.liveBehaviorName(+m[1]):"";
+    return n?(n.length>8?n.slice(0,7)+"…":n)+(+m[2]||+m[3]?"·"+m[2]:""):b;}
   return b.replace(/^&/,"");
 }
 
@@ -945,7 +985,7 @@ function refreshKeys(){
     t.setAttribute("font-size",(curKeys()[i][3]||100)<80?11:(long>4?11:long>2?13:16));
     g.classList.toggle("sel",i===sel);
     g.classList.toggle("combo-pick",!!(comboCapture&&comboCapture.keys.includes(i)));
-    if(LIVE.on){ g.classList.toggle("edited",LIVE.dirty.has(layer+":"+i)); }
+    if(LIVE.on){ g.classList.toggle("edited",LIVE.dirty.has(LIVE.layerIds[layer]+":"+i)); }
     else{
       const ref=layer<SHIPPED.layers.length?SHIPPED.layers[layer][i]:"&trans";
       g.classList.toggle("edited",km[layer][i]!==ref);
@@ -982,15 +1022,30 @@ function tactReco(){
   return a;
 }
 const SPECIAL=[["▽ 透過","&trans"],["✕ 無効","&none"],["CLK·L","&mkp LCLK"],["CLK·R","&mkp RCLK"],["CLK·M","&mkp MCLK"],
- ["BT接続先1","&bt BT_SEL 0"],["BT接続先2","&bt BT_SEL 1"],["BT接続先3","&bt BT_SEL 2"],["BT次へ","&bt BT_NXT"],
+ ["CLK·4（戻る）","&mkp MB4"],["CLK·5（進む）","&mkp MB5"],
+ ["BT接続先1","&bt BT_SEL 0"],["BT接続先2","&bt BT_SEL 1"],["BT接続先3","&bt BT_SEL 2"],["BT接続先4","&bt BT_SEL 3"],["BT接続先5","&bt BT_SEL 4"],
+ ["BT次へ","&bt BT_NXT"],["BT前へ","&bt BT_PRV"],
  ["出力→USB","&out OUT_USB"],["出力→BLE","&out OUT_BLE"],["出力⇄切替","&out OUT_TOG"],
- ["RESET","&sys_reset"],["BOOT","&bootloader"],["UNLOCK","&studio_unlock"],["BT消去","&bt BT_CLR"]];
+ ["Caps Word","&caps_word"],["直前キーを繰返す","&key_repeat"],["ESC / `","&gresc"],
+ ["RESET","&sys_reset"],["BOOT","&bootloader"],["UNLOCK","&studio_unlock"],["BT消去","&bt BT_CLR"],["BT全消去","&bt BT_CLR_ALL"]];
 const TACT_RECO=[["BT接続先1","&bt BT_SEL 0"],["BT接続先2","&bt BT_SEL 1"],["BT接続先3","&bt BT_SEL 2"],["BT次へ","&bt BT_NXT"],["BTペア解除","&bt BT_CLR"],
  ["アプリ用 F13","&kp F13"],["アプリ用 F14","&kp F14"],["アプリ用 F15","&kp F15"],["アプリ用 F16","&kp F16"],["RESET","&sys_reset"],["UNLOCK","&studio_unlock"]];
 function layerSpecials(){
-  const a=[], L=LIVE.on?LIVE.layers.length:km.length;
-  for(let n=1;n<L;n++){a.push(["→"+layName(n),"&mo "+n]);a.push(["⇄"+layName(n),"&tog "+n]);}
+  const a=[];
+  if(LIVE.on){
+    /* LIVE では層の参照は層 id、表示は本体の層名 */
+    LIVE.layerIds.forEach((id,i)=>{ if(!i)return; const n=LIVE.names[i]||("L"+i);
+      a.push(["→"+n,"&mo "+id],["⇄"+n,"&tog "+id],["⤳"+n,"&to "+id],["1×"+n,"&sl "+id]); });
+    a.push(["⤳"+(LIVE.names[0]||"L0"),"&to "+(LIVE.layerIds[0]??0)]);
+    return a;
+  }
+  for(let n=1;n<km.length;n++){a.push(["→"+layName(n),"&mo "+n]);a.push(["⇄"+layName(n),"&tog "+n]);}
   return a;
+}
+/* LIVE: 本体固有の動作（引数なし）をボタンにする。標準の動作は上の一覧で出すので除く */
+function deviceBehaviorSpecials(){
+  if(!LIVE.on||!window.liveDeviceBehaviors)return [];
+  return window.liveDeviceBehaviors().map(b=>["◆ "+b.name,`#${b.id}(0,0)`]);
 }
 /* ================= 押して設定（ショートカット記録） =================
  * 実際にキーを押すと、その組み合わせをそのまま割当にする。
@@ -1086,7 +1141,7 @@ function select(i){
   if(comboCapture){
     const k=comboCapture.keys.indexOf(i);
     k>=0?comboCapture.keys.splice(k,1):comboCapture.keys.push(i);
-    refreshKeys(); renderDeck(); return;
+    refreshKeys(); renderDeck(); renderLiveEnc(); return;
   }
   sel=i; renderInsp(); refreshKeys();
 }
@@ -1095,7 +1150,7 @@ function setBinding(b){
   pushHist(); km[layer][sel]=b; save(); renderInsp(); refreshKeys();
 }
 function applyKp(code){
-  if(arr==="jis")code=jisKey(code); // JISモード中は選んだ記号がJISホストでそのまま出るコードに変換
+  if(curArr()==="jis")code=jisKey(code); // JISモード中は選んだ記号がJISホストでそのまま出るコードに変換
   let c=code;
   if(modState.LG)c=`LG(${c})`; if(modState.LA)c=`LA(${c})`; if(modState.LC)c=`LC(${c})`; if(modState.LS)c=`LS(${c})`;
   if(holdSel==="none") setBinding(`&kp ${c}`);
@@ -1122,7 +1177,8 @@ function renderInsp(){
         <option value="LCTRL">⌃ ホールドでCtrl</option>
         <option value="LALT">⌥ ホールドでOption</option>
         <option value="LGUI">⌘ ホールドでCmd</option>
-        ${curKm().map((_,n)=>n?`<option value="lt${n}">ホールドで ${layName(n)} レイヤー</option>`:"").join("")}
+        ${LIVE.on?LIVE.layerIds.map((id,i)=>i?`<option value="lt${id}">ホールドで ${esc(LIVE.names[i]||"L"+i)} レイヤー</option>`:"").join("")
+          :curKm().map((_,n)=>n?`<option value="lt${n}">ホールドで ${layName(n)} レイヤー</option>`:"").join("")}
       </select>
       <div class="sec">押して設定</div>
       <button class="btn ghost mini" id="capbtn" style="width:100%">⌨ 押して設定</button>
@@ -1143,7 +1199,9 @@ function renderInsp(){
       <div class="kb-grid">${tactReco().map(([l,b])=>`<button class="kb-key" data-b="${b}" style="grid-column:span 2">${l}</button>`).join("")}</div>
       <div class="desc" style="margin:6px 0 0;font-size:10.5px;color:var(--mute);line-height:1.55">BT＝接続先の切替。アプリ起動は F13〜F15 を割当て、Mac側でそのキーにアプリを紐づけます。<b>UNLOCKは1つ残すのがおすすめ</b>。</div>`:""}
       <div class="sec"${!FOREIGN&&sel>=43?"":' style="margin-top:0"'}>特殊割当（そのままセット）</div>
-      <div class="kb-grid">${[...deviceSpecials(),...SPECIAL,...layerSpecials()].map(([l,b])=>`<button class="kb-key" data-b="${b}" style="grid-column:span 2">${l}</button>`).join("")}</div>
+      <div class="kb-grid">${[...deviceSpecials(),...SPECIAL,...layerSpecials()].filter(([,b])=>!LIVE.on||!window.liveCanEncode||window.liveCanEncode(b)).map(([l,b])=>`<button class="kb-key" data-b="${b}" style="grid-column:span 2">${esc(l)}</button>`).join("")}</div>
+      ${deviceBehaviorSpecials().length?`<div class="sec">この本体の動作</div>
+      <div class="kb-grid">${deviceBehaviorSpecials().map(([l,b])=>`<button class="kb-key" data-b="${b}" style="grid-column:span 2" title="${esc(l)}">${esc(l)}</button>`).join("")}</div>`:""}
     </div>
     </div>`;
   box.querySelector("#bindnow").textContent=(curKm()[layer][sel]||"&trans")+"   →  "+legend(curKm()[layer][sel]||"&trans");
@@ -1169,11 +1227,44 @@ function renderInsp(){
 function renderLayerbar(){
   const bar=document.getElementById("layerbar");
   if(LIVE.on){
+    const busy=LIVE.bulk||LIVE.layerOp||LIVE.locked, dis=busy?" disabled":"";
     bar.innerHTML=LIVE.layers.map((_,n)=>`<button class="chip${n===layer?" on":""}" data-l="${n}">${esc(LIVE.names[n]||layName(n))}</button>`).join("")
-      +'<span class="livechip">● LIVE</span><span class="hint" id="edithint"></span>';
+      +'<div class="rail-util">'
+      +`<button class="chip util" id="lvrename" title="表示中のレイヤーの名前を変える"${dis}>✎</button>`
+      +`<button class="chip util" id="lvcopy" title="表示中のレイヤーを別のレイヤーへ写す"${dis}>⧉</button>`
+      +(curArr()!=="jis"?`<button class="chip util" id="lvjis" title="表示中のレイヤーをJIS配列用に変換して別のレイヤーへ写す"${dis}>JIS</button>`:"")
+      +(LIVE.availableLayers>0?`<button class="chip util" id="lvadd" title="レイヤーを追加（本体の空き ${LIVE.availableLayers}）"${dis}>＋</button>`:"")
+      +(LIVE.layers.length>1?`<button class="chip util" id="lvdel" title="表示中のレイヤーを削除"${dis}>－</button>`:"")
+      +(layer>0?`<button class="chip util" id="lvleft" title="表示中のレイヤーを左へ（優先度を下げる）"${dis}>◀</button>`:"")
+      +(layer<LIVE.layers.length-1?`<button class="chip util" id="lvright" title="表示中のレイヤーを右へ（優先度を上げる）"${dis}>▶</button>`:"")
+      +`<button class="chip util" id="undobtn" title="元に戻す（⌘Z）"${dis}>↶</button>`
+      +'</div><span class="livechip">● LIVE</span><span class="hint" id="edithint"></span>';
     bar.querySelectorAll(".chip[data-l]").forEach(c=>c.addEventListener("click",()=>{
       layer=+c.dataset.l; renderLayerbar(); renderInsp(); refreshKeys(); renderLiveEnc();
     }));
+    const on=(id,f)=>{const b=bar.querySelector("#"+id); if(b)b.addEventListener("click",f);};
+    const nmax=LIVE.maxNameLen?LIVE.maxNameLen-1:0;
+    on("lvrename",()=>promptModal(`${esc(LIVE.names[layer])} の名前を変える`,
+      `本体に保存される名前です${nmax?`（英数${nmax}文字・日本語${Math.floor(nmax/3)}文字まで）`:""}。「キーボードに保存」で確定します。<b>名前の変更は「破棄」では戻りません</b>（戻すときはもう一度名前を変えてください）。`,
+      LIVE.names[layer],v=>{
+        if(!v||v===LIVE.names[layer])return;
+        if(nmax&&new TextEncoder().encode(v).length>nmax){toast(`名前が長すぎます（英数${nmax}文字・日本語${Math.floor(nmax/3)}文字まで）`);return false;}
+        window.liveRenameLayer(layer,v); }));
+    on("lvcopy",()=>pickLayerModal(`${esc(LIVE.names[layer])} を写す先`,"写し先のレイヤーの割当が、表示中のレイヤーと同じになります（保存前なら「破棄」で戻せます）。",
+      layer,dst=>window.liveCopyLayer(layer,dst)));
+    on("lvjis",()=>pickLayerModal(`${esc(LIVE.names[layer])} を JIS 用に変換して写す先`,"記号キーを JIS 配列の Mac で同じ記号が出るキーへ置き換えて写します。",
+      layer,dst=>window.liveCopyLayer(layer,dst,"jis")));
+    on("lvadd",()=>window.liveAddLayer());
+    const refsNote=()=>{const r=window.liveIndexRefs?window.liveIndexRefs():[];
+      return r.length?`<br><br>次の設定はレイヤーの並び順で指しているので、<b>「キーボードに保存」したときに新しい並びへ付け替えます</b>:<br>・${r.map(esc).join("<br>・")}`:"";};
+    on("lvdel",()=>confirmModal(`${esc(LIVE.names[layer])} を削除しますか？`,"このレイヤーへ切り替えるキーがあると、押しても何も起きなくなります。保存前なら「破棄」で戻せます。"+refsNote(),
+      "削除する",()=>window.liveRemoveLayer(layer)));
+    const move=(d)=>{const r=window.liveIndexRefs?window.liveIndexRefs():[];
+      if(!r.length){window.liveMoveLayer(layer,layer+d);return;}
+      confirmModal(`${esc(LIVE.names[layer])} を${d<0?"左":"右"}へ動かしますか？`,"レイヤーの優先度が変わります。"+refsNote(),"動かす",()=>window.liveMoveLayer(layer,layer+d));};
+    on("lvleft",()=>move(-1));
+    on("lvright",()=>move(1));
+    on("undobtn",undo);
     return;
   }
   bar.innerHTML=km.map((_,n)=>`<button class="chip${n===layer?" on":""}" data-l="${n}">${layName(n)}</button>`).join("")
@@ -1223,11 +1314,24 @@ renderLayerbar();
 
 /* ================= 配列（US⇄JIS）の切替 — ヘッダーの menu bar から ================= */
 function renderArrTg(){
-  document.querySelectorAll("#arrtg button").forEach(b=>b.classList.toggle("on",b.dataset.a===arr));
+  document.querySelectorAll("#arrtg button").forEach(b=>b.classList.toggle("on",b.dataset.a===curArr()));
 }
 function switchArr(v){
-  if(v===arr)return;
-  if(LIVE.on){toast("LIVE接続中は配列を切替できません（切断してから切替えてください）");return;}
+  if(v===curArr())return;
+  if(LIVE.on){
+    if(LIVE.bulk||LIVE.layerOp||LIVE.locked)return;
+    confirmModal(v==="jis"?"JIS 配列用に切り替えますか？":"US 配列用に切り替えますか？",
+      "キーボード本体の全レイヤーの記号キーを書き換えます。確定は「キーボードに保存」、やめるなら「破棄」。",
+      "切り替える",async()=>{
+        const r=await window.liveSwitchArr(v);
+        if(!r)return;
+        if(r.aborted){toast("本体へ送れない割当があるので切り替えませんでした: "+r.badList.slice(0,4).join(", "));return;}
+        if(!r.err)LIVE.arr=v;   /* 下書き（オフライン）の配列とは別に持つ。保存するまで確定しない */
+        renderArrTg(); renderLayerbar(); renderInsp(); refreshKeys();
+        toast(r.err?`途中で止まりました（${r.ok}件まで）。↶ で戻せます: ${r.err}`:`${v==="jis"?"JIS":"US"} 配列用に書き換えました（${r.ok}件）。よければ「キーボードに保存」`);
+      });
+    return;
+  }
   pushHist();
   const tr=v==="jis"?jisTranslate:usTranslate;
   km=km.map(l=>l.map(tr));
@@ -2002,6 +2106,36 @@ function resetAll(){
   renderArrTg(); renderLayerbar(); renderInsp(); renderDeck(); refreshKeys();
   toast("初期配置に戻しました（⌘Zで取り消せます・プロファイルは残ります）");
 }
+/* 汎用のモーダル: 確認 / レイヤーを選ぶ / 文字を入れる */
+function openModal(html,onOk){
+  const bg=document.createElement("div"); bg.className="modal-bg";
+  bg.innerHTML=`<div class="modal" role="dialog" aria-modal="true">${html}
+    <div class="btnrow"><button class="btn plain" data-m="x">キャンセル</button><button class="btn primary" data-m="ok">OK</button></div></div>`;
+  document.body.append(bg);
+  const close=()=>{bg.remove(); removeEventListener("keydown",key);};
+  const key=e=>{ if(e.isComposing||e.keyCode===229)return; if(e.key==="Escape")close(); if(e.key==="Enter"&&e.target.tagName!=="SELECT"){e.preventDefault(); ok();}};
+  const ok=()=>{const r=onOk(bg); if(r!==false)close();};
+  addEventListener("keydown",key);
+  bg.addEventListener("click",e=>{if(e.target===bg)close();});
+  bg.querySelector('[data-m="x"]').addEventListener("click",close);
+  bg.querySelector('[data-m="ok"]').addEventListener("click",ok);
+  (bg.querySelector("input,select")||bg.querySelector('[data-m="ok"]')).focus();
+  return bg;
+}
+function confirmModal(title,desc,okLabel,onOk){
+  const bg=openModal(`<h4>${title}</h4><p>${desc}</p>`,()=>{onOk();});
+  bg.querySelector('[data-m="ok"]').textContent=okLabel;
+}
+function pickLayerModal(title,desc,except,onPick){
+  const opts=LIVE.names.map((n,i)=>i===except?"":`<option value="${i}">${esc(n)}</option>`).join("");
+  openModal(`<h4>${title}</h4><p>${desc}</p><select id="mPick" style="margin:-6px 0 14px">${opts}</select>`,
+    bg=>{onPick(+bg.querySelector("#mPick").value);});
+}
+function promptModal(title,desc,val,onOk){
+  const bg=openModal(`<h4>${title}</h4><p>${desc}</p><input type="text" id="mText" style="margin:-6px 0 14px" spellcheck="false">`,
+    bg=>onOk(bg.querySelector("#mText").value.trim()));
+  bg.querySelector("#mText").value=val||"";
+}
 function confirmReset(){
   const bg=document.createElement("div"); bg.className="modal-bg";
   bg.innerHTML=`<div class="modal" role="dialog" aria-modal="true">
@@ -2027,7 +2161,8 @@ document.getElementById("resetbtn").addEventListener("click",confirmReset);
 const PAGES_URL="https://amearare54.github.io/arare/";
 /* ---- LIVE: エンコーダー設定（本体が cormoran_rsr を持つときだけ出る。書くと即キーボードに保存） ---- */
 let encSensor=0;
-function renderLiveEnc(){
+function renderLiveEnc(){ renderLiveDeck(); }
+function renderLiveEncPanel(){
   const box=document.getElementById("liveenc");
   const R=LIVE.on&&!LIVE.locked&&LIVE.rsr&&LIVE.rsr.sensors.length?LIVE.rsr:null;  /* センサーが無いファームでは出さない */
   box.hidden=!R;
@@ -2066,6 +2201,271 @@ function renderLiveEnc(){
   }));
   box.querySelectorAll("[data-encswap]").forEach(b=>b.addEventListener("click",()=>window.liveRsrSet(encSensor,+b.dataset.encswap,"swap")));
 }
+/* LIVE の設定デッキ（対応している項目だけ出す） */
+function renderLiveDeck(){
+  const deck=document.getElementById("livedeck");
+  const openDk=new Set([...deck.querySelectorAll("details[data-dk][open]")].map(d=>d.dataset.dk));
+  const on=LIVE.on&&!LIVE.locked;
+  renderLiveEncPanel(); renderLiveLauncher(); renderLiveProfiles();
+  renderLiveTrackball(); renderLiveCombo(); renderLiveConn();   /* 拡張モジュールがあるキーボードだけ */
+  deck.hidden=!on||[...deck.querySelectorAll(".dev-grid>.panel")].every(p=>p.hidden);
+  deck.querySelectorAll("details[data-dk]").forEach(d=>{ if(openDk.has(d.dataset.dk))d.open=true; });
+}
+
+/* ---- LIVE: トラックボール（cormoran_rip の入力プロセッサ ＋ pmw3610 のセンサー設定） ---- */
+const OS_NAMES=["不明","Windows","macOS","Linux","iOS","Android"];
+function liveLayerOpts(cur,extra){ /* value = レイヤーの並び順（index） */
+  return (extra||[]).map(([v,l])=>`<option value="${v}"${v===cur?" selected":""}>${l}</option>`).join("")
+    +LIVE.names.map((n,i)=>`<option value="${i}"${i===cur?" selected":""}>${esc(n)}</option>`).join("");
+}
+function renderLiveTrackball(){
+  const el=document.getElementById("livetb"), T=LIVE.tb;
+  const show=LIVE.on&&!LIVE.locked&&!!T;
+  el.hidden=!show; if(!show){el.innerHTML="";return;}
+  const dis=LIVE.modBusy?" disabled":"";
+  /* 個別の読み出し（Get）はファームの版によって「スクロール変換」を常に false で返すので、名前でも見分ける */
+  const isScr=p=>p.xyToScrollEnabled||/scr/i.test(p.name);
+  const ptr=T.procs.find(p=>!isScr(p))||null, scr=T.procs.find(isScr)||null;
+  const ratioSel=(p,attr)=>{
+    const i=SPD.findIndex(([m,d])=>m===p.scaleMultiplier&&d===p.scaleDivisor);
+    return `<select ${attr}${dis}>${i<0?`<option selected value="">いま ${p.scaleMultiplier}/${p.scaleDivisor}</option>`:""}${SPD.map(([m,d,l],j)=>`<option value="${j}"${j===i?" selected":""}>${l}</option>`).join("")}</select>`;
+  };
+  const sw=(on,attr)=>`<button class="sw${on?" on":""}" ${attr} role="switch" aria-checked="${!!on}"${dis}></button>`;
+  const V=T.sensor&&T.sensor.vals;
+  let h=`<h3>TRACKBALL <small>${esc(LIVE.device)}</small></h3>
+    <div class="desc">カーソルの速さ・スクロール・オートマウス。変えると<b>その場でキーボードに保存</b>されます。</div>`;
+  if(ptr)h+=rowH("ポインタ速度","カーソルが動く速さ",ratioSel(ptr,`data-tbratio="${ptr.id}"`));
+  if(V&&V.cpi!==undefined){
+    const opts=[];for(let c=200;c<=3200;c+=200)opts.push(c);
+    h+=rowH("CPI（解像度）","センサーの読み取り解像度（200刻み）",`<select data-tbcpi="1"${dis}>${opts.includes(V.cpi)?"":`<option selected>${V.cpi}</option>`}${opts.map(c=>`<option value="${c}"${c===V.cpi?" selected":""}>${c}</option>`).join("")}</select>`);
+  }
+  if(scr){
+    const bits=scr.activeLayers>>>0;
+    h+=rowH("スクロールモード","選んだレイヤーの間はボールがホイールになる",`<span class="seg">${LIVE.names.map((n,i)=>`<button data-tbscrl="${i}" class="${bits&(1<<i)?"on":""}"${dis}>${esc(n)}</button>`).join("")}</span>`);
+    h+=rowH("　┗ スクロール速度","",ratioSel(scr,`data-tbratio="${scr.id}"`));
+    h+=rowH("　┗ ナチュラル方向","向きを逆にする（Mac のトラックパッドと同じ向きに）",sw(scr.yInvert,`data-tbnat="${scr.id}"`));
+  }
+  if(ptr){
+    h+=rowH("オートマウス","ボールを動かすと一時的に指定レイヤーへ",sw(ptr.tempLayerEnabled,`data-tbauto="${ptr.id}"`));
+    if(ptr.tempLayerEnabled){
+      const li=LIVE.layerIds.indexOf(ptr.tempLayerLayer);
+      h+=rowH("　┗ レイヤー","",`<select data-tbautolayer="${ptr.id}"${dis}>${liveLayerOpts(li)}</select>`);
+      const opt=(arr,cur,f)=>arr.includes(cur)?arr:[...arr,cur].sort((a,b)=>a-b);
+      h+=rowH("　┗ 復帰時間","ボールを止めてから戻るまで",`<select data-tbautodeact="${ptr.id}"${dis}>${opt([300,500,800,1000,1500,2000],ptr.tempLayerDeactivationDelayMs).map(v=>`<option value="${v}"${v===ptr.tempLayerDeactivationDelayMs?" selected":""}>${v}ms</option>`).join("")}</select>`);
+      h+=rowH("　┗ 誤発動防止","打鍵直後は発動しない猶予",`<select data-tbautoact="${ptr.id}"${dis}>${opt([0,100,200,300,500,750],ptr.tempLayerActivationDelayMs).map(v=>`<option value="${v}"${v===ptr.tempLayerActivationDelayMs?" selected":""}>${v}ms</option>`).join("")}</select>`);
+    }
+  }
+  if(V){
+    h+=`<details data-dk="tbsens" style="margin-top:6px"><summary class="desc" style="cursor:pointer">取付向きの補正・応答優先</summary>`;
+    if(V.swap_xy!==undefined)h+=rowH("X と Y を入れ替え","90° 回して付けたとき",sw(V.swap_xy,`data-tbsens="swap_xy"`));
+    if(V.invert_x!==undefined)h+=rowH("X反転","左右が逆に動くとき",sw(V.invert_x,`data-tbsens="invert_x"`));
+    if(V.invert_y!==undefined)h+=rowH("Y反転","上下が逆に動くとき",sw(V.invert_y,`data-tbsens="invert_y"`));
+    if(V.force_awake!==undefined)h+=rowH("応答優先（force-awake）","反応は速くなるが電池消費が増える",sw(V.force_awake,`data-tbsens="force_awake"`));
+    h+=`</details>`;
+  }
+  h+=`<div class="desc" style="margin-top:8px">加速度・スナイプは、このキーボードのファームに実行時の設定が無いため変えられません。</div>`;
+  el.innerHTML=h;
+  const P=id=>T.procs.find(p=>p.id===id);
+  el.querySelectorAll("[data-tbratio]").forEach(x=>x.addEventListener("change",()=>{ if(x.value==="")return; const [m,d]=SPD[+x.value]; window.liveRipSet(+x.dataset.tbratio,{scaleMultiplier:m,scaleDivisor:d}); }));
+  el.querySelectorAll("[data-tbcpi]").forEach(x=>x.addEventListener("change",()=>window.liveSensorSet("cpi",+x.value)));
+  el.querySelectorAll("[data-tbscrl]").forEach(x=>x.addEventListener("click",()=>{ const b=scr.activeLayers>>>0, bit=1<<+x.dataset.tbscrl; const nb=(b^bit)>>>0;
+    if(!nb){toast("スクロールにするレイヤーを1つ以上残してください（0 は全レイヤーの意味になります）");return;} window.liveRipSet(scr.id,{activeLayers:nb}); }));
+  el.querySelectorAll("[data-tbnat]").forEach(x=>x.addEventListener("click",()=>{ const p=P(+x.dataset.tbnat); window.liveRipSet(p.id,{yInvert:!p.yInvert}); }));
+  el.querySelectorAll("[data-tbauto]").forEach(x=>x.addEventListener("click",()=>{ const p=P(+x.dataset.tbauto); window.liveRipSet(p.id,{tempLayerEnabled:!p.tempLayerEnabled}); }));
+  el.querySelectorAll("[data-tbautolayer]").forEach(x=>x.addEventListener("change",()=>window.liveRipSet(+x.dataset.tbautolayer,{tempLayerLayer:LIVE.layerIds[+x.value]})));
+  el.querySelectorAll("[data-tbautodeact]").forEach(x=>x.addEventListener("change",()=>window.liveRipSet(+x.dataset.tbautodeact,{tempLayerDeactivationDelayMs:+x.value})));
+  el.querySelectorAll("[data-tbautoact]").forEach(x=>x.addEventListener("change",()=>window.liveRipSet(+x.dataset.tbautoact,{tempLayerActivationDelayMs:+x.value})));
+  el.querySelectorAll("[data-tbsens]").forEach(x=>x.addEventListener("click",()=>{ const k=x.dataset.tbsens; window.liveSensorSet(k,!V[k]); }));
+}
+
+/* ---- LIVE: コンボ（cormoran__runtime_combo） ---- */
+function renderLiveCombo(){
+  const el=document.getElementById("livecombo");
+  const list=window.liveComboView?window.liveComboView():null;
+  const show=LIVE.on&&!LIVE.locked&&!!list;
+  el.hidden=!show; if(!show){el.innerHTML="";return;}
+  const dis=LIVE.modBusy?" disabled":"", G=LIVE.combo.global;
+  const base=LIVE.layers[0]||[];
+  const tsel=(c)=>`<select data-cbtime="${c.index}"${dis}>${[[0,"全体に従う"],[30,"30ms"],[50,"50ms"],[80,"80ms"]].concat([30,50,80,0].includes(c.timeoutMs)?[]:[[c.timeoutMs,c.timeoutMs+"ms"]]).map(([v,l])=>`<option value="${v}"${v===c.timeoutMs?" selected":""}>${l}</option>`).join("")}</select>`;
+  const rows=list.map(c=>`<div class="row"${c.enabled?"":' style="opacity:.55"'}>
+      <div class="lab">${c.keyPositions.map(k=>esc(legend(base[k]||"&trans"))).join(" + ")}<small>${c.name?esc(c.name)+" · ":""}POS ${c.keyPositions.join(",")}${c.enabled?"":" · 無効"}${c.source==="COMBO_SOURCE_DEFAULT"?" · 出荷時":""}</small></div>
+      <div class="ctl">
+        <input type="text" data-cbbind="${c.index}" value="${esc(c.zmk)}" style="width:150px;padding:5px 7px;font-size:10.5px;font-family:var(--mono)" spellcheck="false"${dis}>
+        ${tsel(c)}
+        ${c.source==="COMBO_SOURCE_RUNTIME"?`<button class="kb-key" data-cbreset="${c.index}" title="削除する"${dis}>×</button>`
+          :c.enabled?`<button class="kb-key" data-cbdel="${c.index}" title="無効にする"${dis}>×</button>`:`<button class="kb-key" data-cbon="${c.index}" title="有効に戻す"${dis}>↺</button>`}
+        ${c.source==="COMBO_SOURCE_OVERRIDDEN"?`<button class="kb-key" data-cbreset="${c.index}" title="出荷時の設定に戻す"${dis}>⟲</button>`:""}
+      </div></div>`).join("");
+  const cap=comboCapture&&comboCapture.live;
+  el.innerHTML=`<h3>COMBO <small>同時押し（最大 ${G.maxCombo|0} 個）</small></h3>
+    <div class="desc">2キー以上の同時押しに動作を割当（例: I+O → ESC）。動作欄は ZMK 記法（&amp;kp ESC など）。変えると<b>その場でキーボードに保存</b>されます。</div>
+    ${rows||'<div class="desc">まだコンボはありません。</div>'}
+    ${cap?`<div class="row"><div class="lab">キーを選択中… <b>${comboCapture.keys.length}個</b><small>上のボードでキーをクリック（もう一度で解除）</small></div>
+      <div class="ctl"><button class="btn primary mini" id="lvcbdone"${dis}>確定</button><button class="btn plain mini" id="lvcbcancel">キャンセル</button></div></div>`
+      :`<button class="btn ghost mini" id="lvcbadd" style="margin-top:8px"${dis}>＋ ボードでキーを選んで追加</button>`}
+    <div class="row"><div class="lab">判定時間（全体）<small>この時間内に押されたら同時押しとみなす</small></div>
+      <div class="ctl"><select id="lvcbglobal"${dis}>${[30,50,80,100].concat([30,50,80,100].includes(G.timeoutMs)?[]:[G.timeoutMs]).map(v=>`<option value="${v}"${v===G.timeoutMs?" selected":""}>${v}ms</option>`).join("")}</select></div></div>`;
+  const C=i=>list.find(c=>c.index===i);
+  el.querySelectorAll("[data-cbbind]").forEach(x=>x.addEventListener("change",()=>{ const c=C(+x.dataset.cbbind), v=x.value.trim();
+    if(!v.startsWith("&")&&!v.startsWith("#")){toast("ZMKの割当は & で始まります");return;}
+    window.liveComboSet({index:c.index,keys:c.keyPositions,zmk:v,timeout:c.timeoutMs}); }));
+  el.querySelectorAll("[data-cbtime]").forEach(x=>x.addEventListener("change",()=>{ const c=C(+x.dataset.cbtime); window.liveComboSet({index:c.index,keys:c.keyPositions,zmk:c.zmk,timeout:+x.value}); }));
+  el.querySelectorAll("[data-cbdel]").forEach(x=>x.addEventListener("click",()=>window.liveComboDelete(+x.dataset.cbdel)));
+  el.querySelectorAll("[data-cbon]").forEach(x=>x.addEventListener("click",()=>{ const c=C(+x.dataset.cbon); window.liveComboSet({index:c.index,keys:c.keyPositions,zmk:c.zmk,timeout:c.timeoutMs,enabled:true}); }));
+  el.querySelectorAll("[data-cbreset]").forEach(x=>x.addEventListener("click",()=>window.liveComboReset(+x.dataset.cbreset)));
+  const add=el.querySelector("#lvcbadd");
+  if(add)add.addEventListener("click",()=>{comboCapture={keys:[],live:true}; refreshKeys(); renderLiveEnc(); toast("ボード上でコンボにするキーをクリックしてください");});
+  const done=el.querySelector("#lvcbdone");
+  if(done)done.addEventListener("click",()=>{ if(comboCapture.keys.length<2){toast("2キー以上選んでください");return;}
+    const keys=[...comboCapture.keys].sort((a,b)=>a-b); comboCapture=null; refreshKeys();
+    window.liveComboSet({keys,zmk:"&kp ESC",timeout:0,enabled:true}); toast("追加しました。動作（&kp ESC）を編集してください"); });
+  const cc=el.querySelector("#lvcbcancel");
+  if(cc)cc.addEventListener("click",()=>{comboCapture=null; refreshKeys(); renderLiveEnc();});
+  const g=el.querySelector("#lvcbglobal");
+  if(g)g.addEventListener("change",()=>window.liveComboTimeout(+g.value));
+}
+
+/* ---- LIVE: 接続先（cormoran_ble）と接続先ごとのキーマップ（cormoran__default_layer） ---- */
+function renderLiveConn(){
+  const el=document.getElementById("liveconn"), C=LIVE.conn;
+  const show=LIVE.on&&!LIVE.locked&&!!C;
+  el.hidden=!show; if(!show){el.innerHTML="";return;}
+  const dis=LIVE.modBusy?" disabled":"", D=C.dl;
+  const epFor=(ble,idx)=>D?D.endpoints.find(e=>ble?(!e.isUsb&&e.bleProfileIndex===idx):e.isUsb):null;
+  /* 既定レイヤーにできるのはファームの MIN〜MAX だけ（範囲外を選ぶと層が外れなくなる） */
+  const RG=window.liveDefaultRange?window.liveDefaultRange():null;
+  const inRange=i=>!RG||(i>=RG.min&&i<=RG.max);
+  const dlOpts=(cur,extra)=>extra.map(([v,l])=>`<option value="${v}"${v===cur?" selected":""}>${l}</option>`).join("")
+    +LIVE.names.map((n,i)=>inRange(i)||i===cur?`<option value="${i}"${i===cur?" selected":""}${inRange(i)?"":" disabled"}>${esc(n)}${inRange(i)?"":"（範囲外）"}</option>`:"").join("");
+  const dlSel=(ep)=>ep?`<select data-dlep="${ep.index}"${dis}>${dlOpts(ep.value,[[-1,"指定しない（そのまま）"]].concat(D.osDetectionAvailable?[[-2,"OS で決める"]]:[]))}</select>`:"—";
+  const cards=(C.profiles||[]).map(p=>{
+    const n=p.index, ep=epFor(true,n);
+    const st=p.isOpen?"空き":p.isConnected?"接続中":"ペア済み";
+    return `<div class="conn-card${p.isOpen?" idle":""}">
+      <div class="cc-head"><span class="cc-num">${n+1}</span>
+        <input type="text" data-blename="${n}" value="${esc(p.name)}" placeholder="${p.isOpen?"（ペアリングすると付けられます）":"例: MacBook Pro"}"${p.isOpen?" disabled":dis}></div>
+      <div class="cc-row"><span>状態</span><span>${st}${p.isActive?" · 使用中":""}</span></div>
+      ${D?`<div class="cc-row"><span>キーマップ</span>${dlSel(ep)}</div>`:""}
+      <div class="cc-row"><span>切替キー</span><span class="cc-keys">${liveKeyRefs("&bt BT_SEL "+n)}</span></div>
+      <div class="btnrow" style="gap:6px">
+        <button class="btn plain mini" data-bleassign="${n}">選択中のキーに切替キーを割当</button>
+        ${p.isActive?"":`<button class="btn plain mini" data-bleswitch="${n}"${dis}>この接続先へ切替</button>`}
+        ${p.isOpen?"":`<button class="btn plain mini" data-bleunpair="${n}"${dis}>ペア解除</button>`}
+      </div></div>`;}).join("");
+  const usb=epFor(false);
+  el.innerHTML=`<h3>接続 <small>CONNECTIONS — 接続先の管理と切り替え</small></h3>
+    <div class="conn-status">
+      <div class="cs-cell"><span>アクティブな接続</span><b>${esc(LIVE.device)}（${LIVE.transport}）</b></div>
+      ${D?`<div class="cs-cell"><span>判定した OS</span><b>${OS_NAMES[D.currentOs]||"—"}</b></div>`:""}
+      ${C.priority?`<div class="cs-cell"><span>出力の優先</span><b><select data-bleprio="1"${dis}><option value="OUTPUT_PRIORITY_USB"${C.priority==="OUTPUT_PRIORITY_USB"?" selected":""}>USB &gt; BLE</option><option value="OUTPUT_PRIORITY_BLE"${C.priority==="OUTPUT_PRIORITY_BLE"?" selected":""}>BLE &gt; USB</option></select></b></div>`:""}
+    </div>
+    <div class="desc">接続先（BT 1〜5）ごとに名前と<b>キーマップ（その接続先で使うベースのレイヤー）</b>を設定できます。切替キーでその接続先に切り替えると、キーマップも自動で切り替わります（Mac⇄Windows⇄iPad 等）。${D&&RG?`選べるのはファームで決まっている ${esc(LIVE.names[RG.min]||"L"+RG.min)}〜${esc(LIVE.names[RG.max]||"L"+RG.max)} のレイヤーです。JIS の接続先にしたいときは、この範囲のレイヤー（例: ${esc(LIVE.names[RG.max]||"")}）へ「JIS」ボタンで変換して写してから選んでください。`:""}${D?"":"<br>このキーボードには接続先ごとのキーマップの機能がありません。"}</div>
+    <div class="conn-grid">${cards}
+      ${usb?`<div class="conn-card"><div class="cc-head"><span class="cc-num">U</span><b style="font-size:12px">USB</b></div>
+        <div class="cc-row"><span>キーマップ</span>${dlSel(usb)}</div></div>`:""}
+    </div>
+    ${D&&D.osDetectionAvailable?`<details data-dk="oslayers" style="margin-top:10px"><summary class="desc" style="cursor:pointer">「OS で決める」にしたときの OS ごとのキーマップ</summary>
+      ${D.osLayers.map(o=>rowH(OS_NAMES[o.os]||("OS "+o.os),"",`<select data-dlos="${o.os}"${dis}>${dlOpts(o.value,[[-1,"指定しない"]])}</select>`)).join("")}</details>`:""}
+    <div class="cc-row" style="margin-top:10px;border-top:1px dashed var(--line);padding-top:10px">
+      <span>出力先（USB⇄BLE）の手動切替</span>
+      <span class="cc-keys">
+        <button class="btn plain mini" data-lvassignout="&amp;out OUT_USB">USBへ</button>
+        <button class="btn plain mini" data-lvassignout="&amp;out OUT_BLE">BLEへ</button>
+        <button class="btn plain mini" data-lvassignout="&amp;out OUT_TOG">⇄切替</button>
+      </span></div>
+    <div class="desc" style="margin:4px 0 0">ボタンを押すと、<b>選択中のキー</b>にその切替を割り当てます。</div>`;
+  el.querySelectorAll("[data-blename]").forEach(x=>x.addEventListener("change",()=>{ const v=x.value.trim();
+    if(new TextEncoder().encode(v).length>31){toast("名前が長すぎます（全角10文字くらいまで）");return;} window.liveBleName(+x.dataset.blename,v); }));
+  el.querySelectorAll("[data-bleswitch]").forEach(x=>x.addEventListener("click",()=>window.liveBleSwitch(+x.dataset.bleswitch)));
+  el.querySelectorAll("[data-bleunpair]").forEach(x=>x.addEventListener("click",()=>{ const n=+x.dataset.bleunpair;
+    confirmModal(`BT${n+1} のペアリングを解除しますか？`,"この接続先の機器とは、もう一度ペアリングし直すまでつながりません。","解除する",()=>window.liveBleUnpair(n)); }));
+  el.querySelectorAll("[data-bleassign]").forEach(x=>x.addEventListener("click",()=>{
+    if(sel<0){toast("先にボード上で割り当てたいキーをクリックしてください");return;} setBinding("&bt BT_SEL "+x.dataset.bleassign); setTimeout(renderLiveEnc,400); }));
+  el.querySelectorAll("[data-bleprio]").forEach(x=>x.addEventListener("change",()=>window.liveBlePriority(x.value)));
+  el.querySelectorAll("[data-dlep]").forEach(x=>x.addEventListener("change",()=>window.liveEndpointLayer(+x.dataset.dlep,+x.value)));
+  el.querySelectorAll("[data-dlos]").forEach(x=>x.addEventListener("change",()=>window.liveOsLayer(+x.dataset.dlos,+x.value)));
+  el.querySelectorAll("[data-lvassignout]").forEach(x=>x.addEventListener("click",()=>{
+    if(sel<0){toast("先にボード上で割り当てたいキーをクリックしてください");return;} setBinding(x.dataset.lvassignout.replace("&amp;","&")); }));
+}
+function liveKeyRefs(b){
+  const out=[]; LIVE.layers.forEach((l,li)=>l.forEach((x,i)=>{if(x===b)out.push(`<code>${esc(LIVE.names[li])}·K${String(i).padStart(2,"0")}</code>`);}));
+  return out.length?out.join(" "):"<em>未割当</em>";
+}
+
+/* ---- LIVE: ランチャー（F13〜F16 を Mac 側でアプリ / URL に結びつける）。arare 以外のキーボード用 ---- */
+function renderLiveLauncher(){
+  const el=document.getElementById("livelaunch");
+  const show=LIVE.on&&!LIVE.locked&&!!FOREIGN;
+  el.hidden=!show; if(!show){el.innerHTML="";return;}
+  const where=k=>{const out=[]; LIVE.layers.forEach((l,li)=>l.forEach((b,i)=>{if(b==="&kp "+k)out.push(esc(LIVE.names[li])+"·K"+String(i).padStart(2,"0"));})); return out;};
+  const cards=TACT_HOTKEY.map((k,n)=>{
+    const l=dev.launch[n], refs=where(k);
+    const sel=["keep","app","url"].map(v=>`<option value="${v}"${l.kind===v?" selected":""}>${v==="keep"?"使わない":v==="app"?"アプリを開く":"URLを開く"}</option>`).join("");
+    return `<div class="lc-card">
+      <div class="lc-t">${k}<small>${refs.length?"このキーボードの "+refs.join(" / "):"このキーボードにはまだ割り当てていません"}</small></div>
+      <select data-lvlckind="${n}">${sel}</select>
+      ${l.kind==="keep"?"":`<input type="text" data-lvlctarget="${n}" value="${esc(l.target)}" placeholder="${l.kind==="url"?"https://example.com":"Safari"}" list="applist2" spellcheck="false">`}
+      <button class="btn plain mini" data-lvlcassign="${k}" style="margin-top:7px">選択中のキーに ${k} を割当</button>
+    </div>`;}).join("");
+  const kb=launcherKarabiner();
+  el.innerHTML=`<h3>LAUNCHER <small>F13〜F16 でアプリ / URL を開く</small></h3>
+    <div class="desc">キーボード自身はアプリを開けないので、<b>めったに使わないキー（F13〜F16）を送り、Mac 側でアプリや URL に結びつけます</b>。キーはボードで選んでから「割当」。</div>
+    <datalist id="applist2">${APP_SUGGEST.map(a=>`<option value="${esc(a)}">`).join("")}</datalist>
+    <div class="lc-grid">${cards}</div>
+    ${kb?`<div class="desc" style="margin:12px 0 6px"><b>Mac 側</b>: ショートカット.app で「App を開く / URL を開く」を作り、キーボードショートカットに該当の F キーを登録。または下の JSON を Karabiner-Elements の <code style="font-family:var(--mono)">~/.config/karabiner/assets/complex_modifications/arare.json</code> に保存して有効化。</div>
+    <pre class="out" style="max-height:200px;margin:0">${kb.replace(/</g,"&lt;")}</pre>
+    <div class="btnrow" style="margin-top:8px"><button class="btn ghost mini" id="lvlccopy">この設定をコピー</button></div>`:""}`;
+  el.querySelectorAll("[data-lvlckind]").forEach(s=>s.addEventListener("change",()=>{dev.launch[+s.dataset.lvlckind].kind=s.value; save(); renderLiveLauncher();}));
+  el.querySelectorAll("[data-lvlctarget]").forEach(i=>i.addEventListener("change",()=>{dev.launch[+i.dataset.lvlctarget].target=i.value; save(); renderLiveLauncher();}));
+  el.querySelectorAll("[data-lvlcassign]").forEach(b=>b.addEventListener("click",()=>{
+    if(sel<0){toast("先にボード上で割り当てたいキーをクリックしてください");return;}
+    setBinding("&kp "+b.dataset.lvlcassign); setTimeout(renderLiveLauncher,400);
+  }));
+  const c=el.querySelector("#lvlccopy");
+  if(c)c.addEventListener("click",async()=>{try{await navigator.clipboard.writeText(launcherKarabiner()); toast("コピーしました");}catch(e){toast("コピーできませんでした");}});
+}
+
+/* ---- LIVE: プロファイル（本体の状態をこのブラウザに保存して、あとで書き戻す） ---- */
+function liveProfiles(){try{return (JSON.parse(localStorage.getItem("arare-live-profiles"))||{})[LIVE.device]||{};}catch(e){return {};}}
+function setLiveProfiles(ps){
+  try{const all=JSON.parse(localStorage.getItem("arare-live-profiles"))||{}; all[LIVE.device]=ps; localStorage.setItem("arare-live-profiles",JSON.stringify(all));}
+  catch(e){toast("このブラウザには保存できませんでした");}
+}
+function renderLiveProfiles(){
+  const el=document.getElementById("liveprof");
+  const show=LIVE.on&&!LIVE.locked;
+  el.hidden=!show; if(!show){el.innerHTML="";return;}
+  const ps=liveProfiles(), names=Object.keys(ps).sort();
+  el.innerHTML=`<h3>PROFILES <small>${esc(LIVE.device)} の状態を丸ごと保存</small></h3>
+    <div class="desc">いまのキーマップ${LIVE.rsr?"とエンコーダー":""}を<b>このブラウザに</b>名前をつけて保存し、あとで書き戻せます（試す前の控えに）。書き戻したキーマップは「キーボードに保存」で確定。</div>
+    <div class="row"><div class="lab">保存する</div><div class="ctl"><input type="text" id="lvpname" placeholder="名前" style="width:140px;padding:6px 8px;font-size:11px"><button class="btn plain mini" id="lvpsave">保存</button></div></div>
+    ${names.length?names.map(n=>`<div class="row"><div class="lab">${esc(n)}<small>${esc(ps[n].at||"")} · ${ps[n].layers.length} レイヤー${ps[n].rsr?"・エンコーダー":""}</small></div>
+      <div class="ctl"><button class="btn plain mini" data-lvpload="${esc(n)}">書き戻す</button><button class="kb-key" data-lvpdel="${esc(n)}" title="削除">×</button></div></div>`).join("")
+      :'<div class="desc">まだ保存したプロファイルはありません。</div>'}`;
+  el.querySelector("#lvpsave").addEventListener("click",()=>{
+    const n=el.querySelector("#lvpname").value.trim()||new Date().toLocaleString("ja-JP");
+    const ps=liveProfiles();
+    ps[n]={at:new Date().toLocaleString("ja-JP"),layers:LIVE.names.map((name,i)=>({name,bindings:LIVE.layers[i].slice()})),
+      rsr:window.liveRsrSnapshot?window.liveRsrSnapshot():null};
+    setLiveProfiles(ps); renderLiveProfiles(); toast(`プロファイル「${n}」を保存しました（このブラウザ内）`);
+  });
+  el.querySelectorAll("[data-lvpdel]").forEach(b=>b.addEventListener("click",()=>{const ps=liveProfiles(); delete ps[b.dataset.lvpdel]; setLiveProfiles(ps); renderLiveProfiles();}));
+  el.querySelectorAll("[data-lvpload]").forEach(b=>b.addEventListener("click",()=>{
+    const n=b.dataset.lvpload, p=liveProfiles()[n]; if(!p)return;
+    confirmModal(`「${esc(n)}」を書き戻しますか？`,`キーマップはレイヤー名で対応させて書きます（保存前なら「破棄」で戻せます）。${p.rsr?"<b>エンコーダーは書いた時点で本体に保存されます。</b>":""}`,"書き戻す",async()=>{
+      const ch=[], used=new Set(), target=[];
+      p.layers.forEach((pl,pi)=>{const li=LIVE.names.indexOf(pl.name); if(li>=0&&!used.has(li)){used.add(li); target[pi]=li;}});
+      if(p.layers.length===LIVE.layers.length)p.layers.forEach((pl,pi)=>{ if(target[pi]===undefined&&!used.has(pi)){used.add(pi); target[pi]=pi;} });
+      p.layers.forEach((pl,pi)=>{const li=target[pi]; if(li===undefined)return;
+        pl.bindings.forEach((s,pos)=>{if(pos<LIVE.layers[li].length)ch.push({layer:li,pos,s});});});
+      const r=await window.liveWriteMany(ch);
+      let enc="";
+      if(p.rsr&&window.liveRsrRestore){const e=await window.liveRsrRestore(p.rsr); enc=`・エンコーダー ${e}件`;}
+      toast(`「${n}」を書き戻しました（キー ${r.ok}件${enc}${r.bad?`・書けなかった ${r.bad}件`:""}）。よければ「キーボードに保存」`);
+      renderLiveDeck();
+    });
+  }));
+}
 function renderLink(){
   const el=document.getElementById("linkbar");
   const hasAPI=!!(navigator.bluetooth||navigator.serial);
@@ -2096,9 +2496,10 @@ function renderLink(){
   }
 }
 window.__arare={
-  LIVE, renderLink, renderLayerbar, renderInsp, refreshKeys, renderDeck, toast, setForeign, renderLiveEnc, KEY_COUNT:KEYS.length,
+  LIVE, renderLink, renderLayerbar, renderInsp, refreshKeys, renderDeck, toast, setForeign, renderLiveEnc, KEY_COUNT:KEYS.length, JIS_MAP,
   get layer(){return layer}, set layer(v){layer=v},
-  clearSel(){sel=-1;}
+  clearSel(){sel=-1;},
+  clearCombo(){ comboCapture=null; }
 };
 renderLink();
 
@@ -2263,7 +2664,7 @@ ENTER:40,ESC:41,BSPC:42,TAB:43,SPACE:44,MINUS:45,EQUAL:46,LBKT:47,RBKT:48,BSLH:4
 F1:58,F2:59,F3:60,F4:61,F5:62,F6:63,F7:64,F8:65,F9:66,F10:67,F11:68,F12:69,
 HOME:74,PG_UP:75,DEL:76,END:77,PG_DN:78,RIGHT:79,LEFT:80,DOWN:81,UP:82,
 F13:104,F14:105,F15:106,F16:107,F17:108,F18:109,F19:110,
-LANG1:0x90,LANG2:0x91,LCTRL:224,LSHFT:225,LALT:226,LGUI:227,RCTRL:228,RSHFT:229,RALT:230,RGUI:231};
+LANG1:0x90,LANG2:0x91,INT1:0x87,INT2:0x88,INT3:0x89,INT4:0x8A,INT5:0x8B,NUHS:0x32,LCTRL:224,LSHFT:225,LALT:226,LGUI:227,RCTRL:228,RSHFT:229,RALT:230,RGUI:231};
 const SHIFTED={EXCL:"N1",AT:"N2",HASH:"N3",DLLR:"N4",PRCNT:"N5",CARET:"N6",AMPS:"N7",ASTRK:"N8",LPAR:"N9",RPAR:"N0",UNDER:"MINUS",PLUS:"EQUAL",LBRC:"LBKT",RBRC:"RBKT",PIPE:"BSLH",COLON:"SEMI",DQT:"SQT",TILDE:"GRAVE",QMARK:"FSLH"};
 const CONS_U={C_VOL_UP:0xE9,C_VOL_DN:0xEA,C_MUTE:0xE2,C_PP:0xCD,C_NEXT:0xB5,C_PREV:0xB6,C_BRI_UP:0x6F,C_BRI_DN:0x70};
 const MODBIT={LC:0x01,LS:0x02,LA:0x04,LG:0x08,RC:0x10,RS:0x20,RA:0x40,RG:0x80};
@@ -2288,10 +2689,15 @@ function decKey(p){
 }
 
 /* --- 挙動(behavior)マップ: displayName → 当アプリの記法 --- */
-const NAME_MATCH=[["&studio_unlock","studio unlock"],["&bootloader","bootloader"],["&sys_reset","reset"],
- ["&kp","key press"],["&mt","mod-tap"],["&lt","layer tap"],["&mo","momentary layer"],["&tog","toggle layer"],["&to","to layer"],
- ["&trans","transparent"],["&none","none"],["&mkp","mouse button"],["&bt","bluetooth"],["&out","output"]];
-let B={},BID={}; // B["&kp"]=id / BID[id]={key,displayName}
+/* ZMK v0.3 の behaviors/*.dtsi の display-name（完全一致で照合する。部分一致だと
+ * "Key Press" が "Mouse Key Press" に、"Toggle Layer" が "Toggle Layer On" に化けることがある） */
+const NAME_EXACT={"key press":"&kp","mod-tap":"&mt","layer-tap":"&lt","momentary layer":"&mo","toggle layer":"&tog",
+ "to layer":"&to","sticky layer":"&sl","sticky key":"&sk","key toggle":"&kt","caps word":"&caps_word","key repeat":"&key_repeat",
+ "grave/escape":"&gresc","transparent":"&trans","none":"&none","mouse key press":"&mkp","bluetooth":"&bt",
+ "output selection":"&out","reset":"&sys_reset","bootloader":"&bootloader","studio unlock":"&studio_unlock","external power":"&ext_power"};
+/* 古い版・フォークの表示名（完全一致が無いときだけ使う） */
+const NAME_LEGACY=[["&lt","layer tap"],["&mkp","mouse button"],["&out","output"]];
+let B={},BID={},BMETA={}; // B["&kp"]=id / BID[id]=表示名 / BMETA[id]=引数の定義
 
 let call=null, transport=null, notifAbort=null;
 const RPC_TIMEOUT_MS=5000;          /* 接続確立まで（無応答の相手を早く見切る） */
@@ -2388,6 +2794,7 @@ async function watchNotifications(conn,t){
       const lsc=value.core?.lockStateChanged;
       if(lsc!==undefined){
         LIVE.locked=(lsc!==1);
+        if(LIVE.locked){ if(A.clearCombo)A.clearCombo(); document.querySelectorAll(".modal-bg").forEach(m=>m.remove()); }
         if(!LIVE.locked)await hydrate();
         A.layer=0; A.clearSel(); rerender();
         A.toast(LIVE.locked?"ロックされました":"ロック解除 — LIVE編集モード");
@@ -2397,28 +2804,39 @@ async function watchNotifications(conn,t){
   if(transport!==t)return;            /* 他所で既に後始末済み（切断・再接続・抜線） */
   transport=null; call=null; await closeTransport(t); disconnected();
 }
+/* 本体のキーマップを読み直す（層の数・名前・割当）。availableLayers は「あと何層足せるか」 */
+async function reloadKeymap(){
+  const km=(await rpc({keymap:{getKeymap:true}})).keymap?.getKeymap||{};
+  const layers=km.layers||[];
+  LIVE.layerIds=layers.map(l=>l.id);
+  LIVE.names=layers.map((l,i)=>l.name||("L"+i));
+  LIVE.layers=layers.map(l=>(l.bindings||[]).map(decodeBinding));
+  LIVE.availableLayers=km.availableLayers|0;
+  LIVE.maxNameLen=km.maxLayerNameLength|0;
+}
 async function hydrate(){
   B={};BID={};
   const lb=await rpc({behaviors:{listAllBehaviors:true}});
   const ids=lb.behaviors?.listAllBehaviors?.behaviors||[];
   for(const id of ids){
-    const d=await rpc({behaviors:{getBehaviorDetails:{behaviorId:id}}},{quiet:true});
-    const dn=(d.behaviors?.getBehaviorDetails?.displayName||"").toLowerCase();
-    for(const [key,pat] of NAME_MATCH){
-      if(B[key]===undefined && dn.includes(pat)){B[key]=id; break;}
-    }
-    BID[id]=d.behaviors?.getBehaviorDetails?.displayName||("#"+id);
+    const d=(await rpc({behaviors:{getBehaviorDetails:{behaviorId:id}}},{quiet:true})).behaviors?.getBehaviorDetails||{};
+    BID[id]=d.displayName||("#"+id); BMETA[id]=d.metadata||[];
+    const key=NAME_EXACT[(d.displayName||"").toLowerCase()];
+    if(key&&B[key]===undefined)B[key]=id;
+  }
+  for(const [key,pat] of NAME_LEGACY){
+    if(B[key]!==undefined)continue;
+    const hit=ids.find(id=>(BID[id]||"").toLowerCase().includes(pat)&&!Object.values(B).includes(id));
+    if(hit!==undefined)B[key]=hit;
   }
   log("behaviors: "+JSON.stringify(B));
-  const kr=await rpc({keymap:{getKeymap:true}});
-  const layers=kr.keymap?.getKeymap?.layers||[];
-  LIVE.layerIds=layers.map(l=>l.id);
-  LIVE.names=layers.map((l,i)=>l.name||("L"+i));
-  LIVE.layers=layers.map(l=>(l.bindings||[]).map(decodeBinding));
+  await reloadKeymap();
   LIVE.dirty.clear();
   await loadLayout((LIVE.layers[0]||[]).length);
   const us=await rpc({keymap:{checkUnsavedChanges:true}});
   LIVE.unsaved=!!us.keymap?.checkUnsavedChanges;
+  clearLiveHist(); LIVE.savedIds=LIVE.layerIds.slice();
+  LIVE.arr=LIVE.arrSaved!==undefined?LIVE.arrSaved:loadLiveArr(); LIVE.arrSaved=LIVE.arr;   /* 破棄なら保存時点の向きへ戻す */
   await loadRsr();
 }
 
@@ -2485,9 +2903,10 @@ async function loadRsr(){
     if(e instanceof RpcTimeout)throw e;
     /* 公式 ZMK は知らない要求に request_id=0 の RPC_NOT_FOUND を返し、クライアントは文字列 'Mismatch request IDs' を投げる。
      * どの失敗でも「拡張なし」として続ける（MetaError だけに絞らないこと） */
-    log("拡張 RPC なし（公式ファーム）"); LIVE.rsr=null; return;
+    log("拡張 RPC なし（公式ファーム）"); LIVE.rsr=null; LIVE.mods={}; LIVE.tb=LIVE.combo=LIVE.conn=null; return;
   }
   log("custom subsystems: "+JSON.stringify(subs.map(s=>[s.index,s.identifier])));
+  await loadMods(subs);
   const sub=subs.find(s=>s.identifier==="cormoran_rsr");
   if(!sub){LIVE.rsr=null;return;}
   try{
@@ -2575,6 +2994,204 @@ window.liveRsrSet=async(sensor,li,v)=>{
     if(!(e instanceof RpcTimeout)){ try{await rsrReadAll(R);}catch(_){} }
   }finally{ LIVE.rsrBusy=false; A.renderLiveEnc(); }
 };
+/* ================= 拡張モジュール（DYA 系: cormoran の custom subsystem） =================
+ * proto は vendor/dya-protos.js（各リポジトリの .proto）を実行時に parse して符号化する。
+ * 対応: トラックボール（cormoran_rip + cormoran__pmw3610 の設定）/ コンボ / BLE 接続先 / 接続先ごとの既定レイヤー */
+const MOD_DEF={
+  cormoran_rip:["rip","cormoran.rip"],
+  cormoran_custom_settings:["custom_settings","cormoran.zmk.custom_settings"],
+  cormoran__runtime_combo:["runtime_combo","cormoran.runtime_combo"],
+  cormoran_ble:["ble","zmk.ble_management"],
+  cormoran__default_layer:["default_layer","cormoran.default_layer"],
+  cormoran__pmw3610:["pmw3610","cormoran.pmw3610"],
+};
+let PROTO_ROOTS=null;
+async function modRoot(file){
+  if(!PROTO_ROOTS){ const {PROTOS}=await import("./vendor/dya-protos.js"); PROTO_ROOTS={}; for(const k in PROTOS)PROTO_ROOTS[k]=pbLib.protobuf.parse(PROTOS[k]).root; }
+  return PROTO_ROOTS[file];
+}
+/* M: LIVE.mods の1エントリ {index,file,pkg,root}。応答の error は例外にする */
+async function mcall(M,obj){
+  const Req=M.root.lookupType(M.pkg+".Request"), Res=M.root.lookupType(M.pkg+".Response");
+  const msg=Req.fromObject(obj);   /* enum は名前（文字列）で渡してよい。fromObject が数値に直す */
+  const err=Req.verify(msg); if(err)throw new Error("要求の形が不正: "+err);
+  const r=await rpc({custom:{call:{subsystemIndex:M.index,payload:Req.encode(msg).finish()}}},{quiet:true});
+  const d=Res.toObject(Res.decode(r.custom?.call?.payload||new Uint8Array()),{enums:String,longs:Number,defaults:true});
+  if(d.error)throw new Error(d.error.message||"エラー");
+  return d;
+}
+async function loadMods(subs){
+  const mods={}, byId=Object.fromEntries(subs.map(s=>[s.identifier,s.index]));
+  LIVE.tb=LIVE.combo=LIVE.conn=null;
+  try{
+    for(const [id,[file,pkg]] of Object.entries(MOD_DEF)){
+      if(byId[id]===undefined)continue;
+      mods[id]={index:byId[id],file,pkg,root:await modRoot(file)};
+    }
+    mods.pmwIndex=byId["cormoran__pmw3610"];
+  }catch(e){ log("拡張モジュールの定義を読めませんでした "+(e&&e.message||e)); LIVE.mods={}; LIVE.tb=LIVE.combo=LIVE.conn=null; return; }
+  LIVE.mods=mods;
+  for(const f of [loadTrackball,loadCombos,loadConnections]){
+    try{ await f(); }catch(e){ if(e instanceof RpcTimeout)throw e; log("拡張モジュールの読み込み失敗 "+(e&&e.message||e)); }
+  }
+}
+/* ---- トラックボール: 入力プロセッサ（cormoran_rip）とセンサー設定（custom_settings 経由の pmw3610） ---- */
+async function loadTrackball(){
+  const M=LIVE.mods.cormoran_rip; LIVE.tb=null;
+  const tb={procs:[],sensor:null};
+  if(M){
+    /* Get を id=0 から、エラーになるまで（List は通知で返るので使わない） */
+    for(let id=0;id<16;id++){
+      let r; try{ r=await mcall(M,{getInputProcessor:{id}}); }catch(e){ if(e instanceof RpcTimeout)throw e; break; }
+      const p=r.getInputProcessor?.processor; if(!p||!p.name)break;
+      tb.procs.push(p);
+    }
+  }
+  const C=LIVE.mods.cormoran_custom_settings, pi=LIVE.mods.pmwIndex;
+  if(C&&pi!==undefined){
+    /* センサーの設定キーは「項目@センサー名」。名前は pmw3610 の GetInfo（settings_id）で取り、無理なら候補を試す */
+    const keys=["cpi","force_awake","swap_xy","invert_x","invert_y"], vals={};
+    let sid=null;
+    const PM=LIVE.mods.cormoran__pmw3610;
+    if(PM){ try{ const d=(await mcall(PM,{getInfo:{source:0}})).getInfo?.devices||[]; if(d[0]&&d[0].settingsId)sid=d[0].settingsId; }catch(e){ if(e instanceof RpcTimeout)throw e; } }
+    for(const cand of sid?[]:["tball","trackball","tb","0"]){
+      try{ const r=await mcall(C,{getSetting:{setting:{customSubsystemIndex:pi,key:"cpi@"+cand,source:0},requireMeta:true}}); if(r.getSetting?.setting){sid=cand; break;} }
+      catch(e){ if(e instanceof RpcTimeout)throw e; }
+    }
+    if(sid){
+      for(const k of keys){
+        try{ const r=await mcall(C,{getSetting:{setting:{customSubsystemIndex:pi,key:k+"@"+sid,source:0}}}); const v=r.getSetting?.setting?.value;
+          if(v)vals[k]=k==="cpi"?(v.int32Value|0):!!v.boolValue; }
+        catch(e){ if(e instanceof RpcTimeout)throw e; }
+      }
+      tb.sensor={sid,vals};
+    }
+  }
+  if(tb.procs.length||tb.sensor)LIVE.tb=tb;
+}
+async function ripRefresh(id){
+  const r=await mcall(LIVE.mods.cormoran_rip,{getInputProcessor:{id}});
+  const p=r.getInputProcessor?.processor; if(p){const i=LIVE.tb.procs.findIndex(x=>x.id===id); if(i>=0)LIVE.tb.procs[i]=p;}
+}
+/* 入力プロセッサの1項目を書く。PERSIST で書き、すぐ SaveAll で確定する（既定では60秒後の保存のため） */
+const RIP_SET={scaleMultiplier:["setScaleMultiplier","value"],scaleDivisor:["setScaleDivisor","value"],rotationDegrees:["setRotation","value"],
+  tempLayerEnabled:["setTempLayerEnabled","enabled"],tempLayerLayer:["setTempLayerLayer","layer"],tempLayerActivationDelayMs:["setTempLayerActivationDelay","activationDelayMs"],
+  tempLayerDeactivationDelayMs:["setTempLayerDeactivationDelay","deactivationDelayMs"],activeLayers:["setActiveLayers","layers"],
+  xyToScrollEnabled:["setXyToScrollEnabled","enabled"],xySwapEnabled:["setXySwapEnabled","enabled"],xInvert:["setXInvert","invert"],yInvert:["setYInvert","invert"]};
+window.liveRipSet=async(id,changes)=>{
+  const M=LIVE.mods.cormoran_rip; if(!M||LIVE.modBusy)return;
+  LIVE.modBusy=true; A.renderLiveEnc();
+  try{
+    for(const [k,v] of Object.entries(changes)){ const [req,field]=RIP_SET[k]; await mcall(M,{[req]:{id,[field]:v}}); }
+    let saved=true;
+    try{ await mcall(M,{saveAllSettings:{}}); }catch(e){ if(e instanceof RpcTimeout)throw e; saved=false; log("SaveAll 非対応（60秒後に保存） "+e.message); }
+    await ripRefresh(id);
+    A.toast(saved?"トラックボールの設定を変えました（キーボードに保存済み）":"トラックボールの設定を変えました（約60秒後に本体へ保存されます。それまで電源を切らないでください）");
+  }catch(e){ A.toast("トラックボール設定エラー: "+(e&&e.message||e)); }
+  finally{ LIVE.modBusy=false; A.renderLiveEnc(); }
+};
+window.liveSensorSet=async(k,v)=>{
+  const C=LIVE.mods.cormoran_custom_settings, T=LIVE.tb; if(!C||!T||!T.sensor||LIVE.modBusy)return;
+  LIVE.modBusy=true; A.renderLiveEnc();
+  try{
+    const value=typeof v==="boolean"?{boolValue:v}:{int32Value:v|0};
+    await mcall(C,{writeSetting:{setting:{customSubsystemIndex:LIVE.mods.pmwIndex,key:k+"@"+T.sensor.sid,source:0},value,mode:"SETTING_WRITE_MODE_PERSIST"}});
+    const r=await mcall(C,{getSetting:{setting:{customSubsystemIndex:LIVE.mods.pmwIndex,key:k+"@"+T.sensor.sid,source:0}}});
+    const nv=r.getSetting?.setting?.value; if(nv)T.sensor.vals[k]=typeof v==="boolean"?!!nv.boolValue:(nv.int32Value|0);
+    A.toast("センサーの設定を変えました（キーボードに保存済み）");
+  }catch(e){ A.toast("センサー設定エラー: "+(e&&e.message||e)); }
+  finally{ LIVE.modBusy=false; A.renderLiveEnc(); }
+};
+/* ---- コンボ（cormoran__runtime_combo）。書き込みは persist=true（即保存） ---- */
+async function loadCombos(){
+  const M=LIVE.mods.cormoran__runtime_combo; LIVE.combo=null; if(!M)return;
+  const g=(await mcall(M,{getGlobalSettings:{}})).getGlobalSettings?.settings||{};
+  let list=[];
+  if((g.maxCombo|0)<=16){ list=(await mcall(M,{listCombos:{}})).listCombos?.combos||[]; }
+  else{ for(let i=0;i<g.maxCombo;i++){ try{ const c=(await mcall(M,{getCombo:{index:i}})).getCombo?.combo; if(c)list.push(c); }catch(e){ if(e instanceof RpcTimeout)throw e; } } }
+  LIVE.combo={global:g,list};
+}
+const comboBinding=c=>c.behavior?decodeBinding({behaviorId:c.behavior.behaviorId,param1:c.behavior.param1,param2:c.behavior.param2}):"";
+window.liveComboView=()=>LIVE.combo?LIVE.combo.list.filter(c=>c.source!=="COMBO_SOURCE_EMPTY").map(c=>({...c,zmk:comboBinding(c)})):null;
+async function comboOp(fn,okMsg){
+  if(LIVE.modBusy||!LIVE.mods.cormoran__runtime_combo||!LIVE.combo)return; LIVE.modBusy=true; A.renderLiveEnc();
+  try{ await fn(LIVE.mods.cormoran__runtime_combo); await loadCombos(); A.toast(okMsg); }
+  catch(e){ A.toast("コンボ設定エラー: "+(e&&e.message||e)); try{await loadCombos();}catch(_){} }
+  finally{ LIVE.modBusy=false; A.renderLiveEnc(); }
+}
+/* keys: 位置の配列 / zmk: 割当（ZMK 記法）/ timeout: 0=全体に従う / index 未指定なら空きスロットへ */
+window.liveComboSet=(c)=>comboOp(async M=>{
+  const b=encodeBinding(c.zmk); if(!b)throw new Error("この割当はコンボに使えません: "+c.zmk);
+  let index=c.index;
+  if(index===undefined){
+    const used=new Set(LIVE.combo.list.filter(x=>x.source!=="COMBO_SOURCE_EMPTY").map(x=>x.index));
+    index=[...Array(LIVE.combo.global.maxCombo|0).keys()].find(i=>!used.has(i));
+    if(index===undefined)throw new Error("空きがありません（最大 "+LIVE.combo.global.maxCombo+" 個）");
+  }
+  const cur=LIVE.combo.list.find(x=>x.index===index)||{};
+  const enabled=c.enabled!==undefined?c.enabled:(cur.enabled!==undefined&&cur.source!=="COMBO_SOURCE_EMPTY"?cur.enabled:true);
+  await mcall(M,{setCombo:{index,keyPositions:c.keys,behavior:b,layerMask:cur.layerMask|0,enabled,persist:true,
+    timeoutMs:c.timeout|0,requirePriorIdleMs:cur.requirePriorIdleMs|0,slowReleaseOverride:cur.slowReleaseOverride||"SLOW_RELEASE_OVERRIDE_INHERIT"}});
+  if(c.name!==undefined)await mcall(M,{setComboName:{index,name:c.name,persist:true}});
+},"コンボを保存しました（キーボードに保存済み）");
+window.liveComboDelete=(index)=>comboOp(M=>mcall(M,{deleteCombo:{index,persist:true}}),"コンボを無効にしました（キーボードに保存済み）");
+window.liveComboReset=(index)=>comboOp(M=>mcall(M,{resetCombo:{index}}),"コンボを出荷時に戻しました");
+window.liveComboTimeout=(ms)=>comboOp(M=>mcall(M,{setTimeoutMs:{timeoutMs:ms|0,persist:true}}),"コンボの判定時間を変えました");
+/* ---- 接続先（cormoran_ble）と接続先ごとの既定レイヤー（cormoran__default_layer） ---- */
+async function loadConnections(){
+  const Bm=LIVE.mods.cormoran_ble, D=LIVE.mods.cormoran__default_layer; LIVE.conn=null;
+  if(!Bm&&!D)return;
+  const c={};
+  if(Bm){
+    const r=await mcall(Bm,{getProfiles:{}}); c.profiles=r.getProfiles?.profiles||[]; c.maxProfiles=r.getProfiles?.maxProfiles|0;
+    try{ c.priority=(await mcall(Bm,{getOutputPriority:{}})).getOutputPriority?.priority; }catch(e){ if(e instanceof RpcTimeout)throw e; }
+  }
+  if(D)c.dl=(await mcall(D,{getState:{}})).state||null;
+  LIVE.conn=c;
+}
+async function connOp(fn,okMsg){
+  if(LIVE.modBusy||!LIVE.conn)return; LIVE.modBusy=true; A.renderLiveEnc();
+  try{ await fn(); await loadConnections(); if(okMsg)A.toast(okMsg); }
+  catch(e){ A.toast("接続設定エラー: "+(e&&e.message||e)); try{await loadConnections();}catch(_){} }
+  finally{ LIVE.modBusy=false; A.renderLiveEnc(); }
+}
+window.liveBleName=(index,name)=>connOp(async()=>{ const r=await mcall(LIVE.mods.cormoran_ble,{setProfileName:{index,name}}); if(!r.setProfileName?.success)throw new Error("名前を保存できませんでした"); },"接続先の名前を変えました");
+window.liveBleSwitch=(index)=>connOp(async()=>{ const r=await mcall(LIVE.mods.cormoran_ble,{switchProfile:{index}}); if(!r.switchProfile?.success)throw new Error("切り替えられませんでした"); },`BT${index+1} に切り替えました`);
+window.liveBleUnpair=(index)=>connOp(async()=>{ const r=await mcall(LIVE.mods.cormoran_ble,{unpairProfile:{index}}); if(!r.unpairProfile?.success)throw new Error("解除できませんでした"); },`BT${index+1} のペアリングを解除しました`);
+window.liveBlePriority=(p)=>connOp(async()=>{ const r=await mcall(LIVE.mods.cormoran_ble,{setOutputPriority:{priority:p}}); if(!r.setOutputPriority?.success)throw new Error("変えられませんでした"); },"出力の優先を変えました");
+/* 既定レイヤーにできる範囲（ファームの MIN〜MAX）。「Change Default Layer」の引数の範囲から読む */
+window.liveDefaultRange=()=>{
+  const id=Object.keys(BID).find(k=>BID[k]==="Change Default Layer"); if(id===undefined)return null;
+  for(const set of BMETA[id]||[]){ const p1=(set.param1||[])[0], p2=(set.param2||[])[0];
+    if(p1&&p1.constant===0&&p2&&p2.range)return {min:p2.range.min|0,max:p2.range.max|0}; }
+  return null;
+};
+/* value: -1=指定しない / -2=OS で決める / 0..=レイヤーの並び順（index） */
+window.liveEndpointLayer=(endpointIndex,value)=>connOp(async()=>{ await mcall(LIVE.mods.cormoran__default_layer,{setEndpointLayer:{endpointIndex,value}}); },"接続先ごとのキーマップを変えました（キーボードに保存済み）");
+window.liveOsLayer=(os,value)=>connOp(async()=>{ await mcall(LIVE.mods.cormoran__default_layer,{setOsLayer:{os,value}}); },"OS ごとのキーマップを変えました");
+/* プロファイル用: エンコーダーの割当の控えと書き戻し（層は id で対応。書くと本体で即保存） */
+window.liveRsrSnapshot=()=>LIVE.rsr?JSON.parse(JSON.stringify(LIVE.rsr.bind)):null;
+window.liveRsrRestore=async(snap)=>{
+  const R=LIVE.rsr; if(!R||!snap||LIVE.rsrBusy)return 0;
+  LIVE.rsrBusy=true; A.renderLiveEnc(); let n=0;
+  try{ try{
+    for(const [sensor,list] of Object.entries(snap)){
+      if(!R.sensors.some(x=>x.index===+sensor))continue;
+      for(const lb of list){
+        if(!LIVE.layerIds.includes(lb.layer))continue;
+        const cur=(R.bind[sensor]||[]).find(x=>x.layer===lb.layer)||{};
+        const cw=lb.cw||{behaviorId:0}, ccw=lb.ccw||{behaviorId:0};
+        if(cur.cw&&cur.ccw&&rsrSame(cur.cw,cw)&&rsrSame(cur.ccw,ccw))continue;
+        const r1=await rsrCall(R,{cw:{sensor:+sensor,layer:lb.layer,binding:cw}});
+        const r2=await rsrCall(R,{ccw:{sensor:+sensor,layer:lb.layer,binding:ccw}});
+        if(r1.setCw?.success&&r2.setCcw?.success)n++; else log(`エンコーダーの書き戻しを本体が拒否: s${sensor} L${lb.layer}`);
+      }
+    }
+    await rsrReadAll(R);
+  }catch(e){ A.toast("エンコーダーの書き戻しエラー: "+(e&&e.message||e)); } }
+  finally{ LIVE.rsrBusy=false; A.renderLiveEnc(); }
+  return n;
+};
 /* 物理レイアウトを本体から読む。arare なら従来の図（装飾つき）、それ以外は本体の座標で描き直す */
 async function loadLayout(nKeys){
   let keys=null;
@@ -2602,84 +3219,265 @@ function decodeBinding(b){
     case "&mo":return "&mo "+p1;
     case "&tog":return "&tog "+p1;
     case "&to":return "&to "+p1;
-    case "&trans":return "&trans";
-    case "&none":return "&none";
-    case "&mkp":return "&mkp "+({1:"LCLK",2:"RCLK",4:"MCLK"}[p1]||p1);
-    case "&sys_reset":return "&sys_reset";
-    case "&bootloader":return "&bootloader";
-    case "&studio_unlock":return "&studio_unlock";
-    case "&bt":return p1===3?("&bt BT_SEL "+p2):p1===0?"&bt BT_CLR":p1===1?"&bt BT_NXT":p1===2?"&bt BT_PRV":rawBind(b);
-    case "&out":return p1===0?"&out OUT_TOG":p1===1?"&out OUT_USB":p1===2?"&out OUT_BLE":rawBind(b);
+    case "&sl":return "&sl "+p1;
+    case "&sk":{const n=decKey(p1); return n?"&sk "+n:rawBind(b);}
+    case "&kt":{const n=decKey(p1); return n?"&kt "+n:rawBind(b);}
+    case "&trans":case "&none":case "&sys_reset":case "&bootloader":case "&studio_unlock":
+    case "&caps_word":case "&key_repeat":case "&gresc":return key;
+    case "&mkp":return MKP_NAME[p1]?"&mkp "+MKP_NAME[p1]:rawBind(b);
+    case "&bt":return p1===3?("&bt BT_SEL "+p2):p1===5?("&bt BT_DISC "+p2):BT_NAME[p1]?"&bt "+BT_NAME[p1]:rawBind(b);
+    case "&out":return OUT_NAME[p1]?"&out "+OUT_NAME[p1]:rawBind(b);
+    case "&ext_power":return EP_NAME[p1]?"&ext_power "+EP_NAME[p1]:rawBind(b);
     default:return rawBind(b);
   }
 }
-function rawBind(b){return `#${b.behaviorId}(${b.param1},${b.param2})`;}
+function rawBind(b){return `#${b.behaviorId}(${b.param1>>>0},${b.param2>>>0})`;}
+/* 画面側から使う: 本体の動作名 / その割当を本体へ送れるか / 本体固有の「引数なし」の動作 */
+window.liveBehaviorName=id=>BID[id]||"";
+window.liveCanEncode=s=>!!encodeBinding(s);
+/* センサー（エンコーダー）用の動作はキーに割り当てても何も起きないので出さない */
+const SENSOR_ONLY=/^rsr_|^mouse_scroll$|^mouse_move$|^enc_/i;
+window.liveDeviceBehaviors=()=>{
+  const std=new Set(Object.values(B));
+  const noParams=meta=>!meta.length||meta.every(set=>(set.param1||[]).every(d=>d.nil!==undefined)&&(set.param2||[]).every(d=>d.nil!==undefined));
+  return Object.keys(BID).map(Number).filter(id=>!std.has(id)&&!SENSOR_ONLY.test(BID[id])&&noParams(BMETA[id]||[]))
+    .map(id=>({id,name:BID[id]})).sort((x,y)=>x.name.localeCompare(y.name));
+};
+/* 引数の名前 ⇄ 値（ZMK v0.3 の dt-bindings: pointing.h / bt.h / outputs.h / ext_power.h） */
+const MKP_NAME={1:"LCLK",2:"RCLK",4:"MCLK",8:"MB4",16:"MB5"}, MKP_VAL=Object.fromEntries(Object.entries(MKP_NAME).map(([v,k])=>[k,+v]));
+const BT_NAME={0:"BT_CLR",1:"BT_NXT",2:"BT_PRV",4:"BT_CLR_ALL"}, BT_VAL=Object.fromEntries(Object.entries(BT_NAME).map(([v,k])=>[k,+v]));
+const OUT_NAME={0:"OUT_TOG",1:"OUT_USB",2:"OUT_BLE"}, OUT_VAL=Object.fromEntries(Object.entries(OUT_NAME).map(([v,k])=>[k,+v]));
+const EP_NAME={0:"EP_OFF",1:"EP_ON",2:"EP_TOG"}, EP_VAL=Object.fromEntries(Object.entries(EP_NAME).map(([v,k])=>[k,+v]));
 function encodeBinding(s){
   let m;
-  if(s==="&trans"&&B["&trans"]!=null)return {behaviorId:B["&trans"],param1:0,param2:0};
-  if(s==="&none"&&B["&none"]!=null)return {behaviorId:B["&none"],param1:0,param2:0};
-  if(s==="&sys_reset"&&B["&sys_reset"]!=null)return {behaviorId:B["&sys_reset"],param1:0,param2:0};
-  if(s==="&bootloader"&&B["&bootloader"]!=null)return {behaviorId:B["&bootloader"],param1:0,param2:0};
-  if(s==="&studio_unlock"&&B["&studio_unlock"]!=null)return {behaviorId:B["&studio_unlock"],param1:0,param2:0};
-  if((m=s.match(/^&kp (.+)$/))&&B["&kp"]!=null){const c=encKey(m[1]); if(c!=null)return {behaviorId:B["&kp"],param1:c,param2:0};}
-  if((m=s.match(/^&mo (\d+)$/))&&B["&mo"]!=null)return {behaviorId:B["&mo"],param1:+m[1],param2:0};
-  if((m=s.match(/^&tog (\d+)$/))&&B["&tog"]!=null)return {behaviorId:B["&tog"],param1:+m[1],param2:0};
-  if((m=s.match(/^&mt (\S+) (.+)$/))&&B["&mt"]!=null){const a=encKey(m[1]),c=encKey(m[2]); if(a!=null&&c!=null)return {behaviorId:B["&mt"],param1:a,param2:c};}
-  if((m=s.match(/^&lt (\d+) (.+)$/))&&B["&lt"]!=null){const c=encKey(m[2]); if(c!=null)return {behaviorId:B["&lt"],param1:+m[1],param2:c};}
-  if((m=s.match(/^&mkp (\w+)$/))&&B["&mkp"]!=null){const btn={LCLK:1,RCLK:2,MCLK:4}[m[1]]; if(btn)return {behaviorId:B["&mkp"],param1:btn,param2:0};}
-  if((m=s.match(/^&bt BT_SEL (\d)$/))&&B["&bt"]!=null)return {behaviorId:B["&bt"],param1:3,param2:+m[1]};
-  if(s==="&bt BT_CLR"&&B["&bt"]!=null)return {behaviorId:B["&bt"],param1:0,param2:0};
-  if(s==="&bt BT_NXT"&&B["&bt"]!=null)return {behaviorId:B["&bt"],param1:1,param2:0};
-  if(s==="&bt BT_PRV"&&B["&bt"]!=null)return {behaviorId:B["&bt"],param1:2,param2:0};
-  if(s==="&out OUT_TOG"&&B["&out"]!=null)return {behaviorId:B["&out"],param1:0,param2:0};
-  if(s==="&out OUT_USB"&&B["&out"]!=null)return {behaviorId:B["&out"],param1:1,param2:0};
-  if(s==="&out OUT_BLE"&&B["&out"]!=null)return {behaviorId:B["&out"],param1:2,param2:0};
+  const bind=(k,p1=0,p2=0)=>B[k]!=null?{behaviorId:B[k],param1:p1>>>0,param2:p2>>>0}:null;
+  /* 引数の無いもの */
+  if(["&trans","&none","&sys_reset","&bootloader","&studio_unlock","&caps_word","&key_repeat","&gresc"].includes(s))return bind(s);
+  if((m=s.match(/^&(kp|sk|kt) (.+)$/))){const c=encKey(m[2]); return c!=null?bind("&"+m[1],c):null;}
+  if((m=s.match(/^&(mo|tog|to|sl) (\d+)$/)))return bind("&"+m[1],+m[2]);
+  if((m=s.match(/^&mt (\S+) (.+)$/))){const a=encKey(m[1]),c=encKey(m[2]); return a!=null&&c!=null?bind("&mt",a,c):null;}
+  if((m=s.match(/^&lt (\d+) (.+)$/))){const c=encKey(m[2]); return c!=null?bind("&lt",+m[1],c):null;}
+  if((m=s.match(/^&mkp (\w+)$/))&&MKP_VAL[m[1]]!=null)return bind("&mkp",MKP_VAL[m[1]]);
+  if((m=s.match(/^&bt BT_SEL (\d)$/)))return bind("&bt",3,+m[1]);
+  if((m=s.match(/^&bt BT_DISC (\d)$/)))return bind("&bt",5,+m[1]);
+  if((m=s.match(/^&bt (\w+)$/))&&BT_VAL[m[1]]!=null)return bind("&bt",BT_VAL[m[1]]);
+  if((m=s.match(/^&out (\w+)$/))&&OUT_VAL[m[1]]!=null)return bind("&out",OUT_VAL[m[1]]);
+  if((m=s.match(/^&ext_power (\w+)$/))&&EP_VAL[m[1]]!=null)return bind("&ext_power",EP_VAL[m[1]]);
+  /* 本体固有の動作（名前つきで出したもの）: #id(p1,p2) */
+  if((m=s.match(/^#(\d+)\((-?\d+),(-?\d+)\)$/))&&BID[+m[1]]!==undefined)return {behaviorId:+m[1],param1:(+m[2])>>>0,param2:(+m[3])>>>0};
   return null;
 }
 window.liveConnect=connect;
+/* ---- LIVE の書き込み。層は id で扱う（並び順 index は並べ替え・削除で変わるため）。表示用の index は idxOf で引く ---- */
+const idxOf=id=>LIVE.layerIds.indexOf(id);
+function liveBusy(quiet){
+  if(!LIVE.on)return true;
+  if(LIVE.locked){ if(!quiet)A.toast("ロック中です。キーボードのUNLOCKキーを押してください"); return true; }
+  if(LIVE.bulk||LIVE.layerOp){ if(!quiet)A.toast("書き込み中です。終わるまでお待ちください"); return true; }
+  return false;
+}
+const liveHist=[];
+function histPush(e){ liveHist.push(e); if(liveHist.length>80)liveHist.shift(); }
+function clearLiveHist(){ liveHist.length=0; LIVE.dirty.clear(); }
 window.liveSetBinding=async(layer,pos,s)=>{
-  if(LIVE.locked){A.toast("ロック中です。キーボードのUNLOCKキーを押してください");return;}
+  if(liveBusy())return;
   const b=encodeBinding(s);
   if(!b){A.toast("この割当はLIVEモード未対応です: "+s);return;}
+  const id=LIVE.layerIds[layer]; if(id===undefined)return;
   try{
-    const r=await rpc({keymap:{setLayerBinding:{layerId:LIVE.layerIds[layer],keyPosition:pos,binding:b}}});
+    const r=await rpc({keymap:{setLayerBinding:{layerId:id,keyPosition:pos,binding:b}}});
     const code=r.keymap?.setLayerBinding;
     if(code===0){
-      liveHist.push({layer,pos,old:LIVE.layers[layer][pos]}); if(liveHist.length>80)liveHist.shift();
-      LIVE.layers[layer][pos]=s; LIVE.dirty.add(layer+":"+pos); LIVE.unsaved=true;
+      const li=idxOf(id); if(li<0)return;
+      histPush({id,pos,old:LIVE.layers[li][pos]});
+      LIVE.layers[li][pos]=s; LIVE.dirty.add(id+":"+pos); LIVE.unsaved=true;
       A.renderInsp(); A.refreshKeys(); A.renderLink();
     }else{
       A.toast("キーボードが割当を拒否しました (code "+code+")");
     }
   }catch(e){A.toast("送信エラー: "+(e&&e.message||e));}
 };
-const liveHist=[];
 window.liveUndo=async()=>{
+  if(liveBusy())return;
   const h=liveHist.pop();
   if(!h){A.toast("戻せるLIVE操作がありません");return;}
+  if(h.group){
+    const n=await liveWriteMany(h.group.slice().reverse().map(g=>({id:g.id,pos:g.pos,s:g.old})),{noHist:true});
+    A.toast(n.err?`途中で止まりました（戻せたのは ${n.ok}件）: ${n.err}`:`まとめて戻しました ↶（${n.ok}件）`); return;
+  }
+  const li=idxOf(h.id);
+  if(li<0){A.toast("そのレイヤーはもうありません（戻せません）");return;}
   const b=encodeBinding(h.old);
   if(!b){A.toast("この割当はLIVEで戻せません: "+h.old);return;}
   try{
-    const r=await rpc({keymap:{setLayerBinding:{layerId:LIVE.layerIds[h.layer],keyPosition:h.pos,binding:b}}});
+    const r=await rpc({keymap:{setLayerBinding:{layerId:h.id,keyPosition:h.pos,binding:b}}});
     if(r.keymap?.setLayerBinding===0){
-      LIVE.layers[h.layer][h.pos]=h.old; LIVE.dirty.delete(h.layer+":"+h.pos);
+      LIVE.layers[li][h.pos]=h.old; LIVE.dirty.delete(h.id+":"+h.pos);
       A.renderInsp(); A.refreshKeys(); A.renderLink(); A.toast("1つ戻しました ↶（キーボードに送信済み）");
     }
   }catch(e){A.toast("undo送信エラー: "+(e&&e.message||e));}
 };
+/* 複数キーを順に書く。changes は {layer(index) か id, pos, s}。変わらないものは送らない。1つの undo 単位として記録する。
+ * atomic: 1つでも本体へ送れない割当があれば、何も書かずに止める（変換の途中で半端にならないように） */
+async function liveWriteMany(changes,opts){
+  opts=opts||{};
+  const uniq=new Map();
+  for(const c of changes){ const id=c.id!==undefined?c.id:LIVE.layerIds[c.layer]; if(id===undefined)continue; uniq.set(id+":"+c.pos,{id,pos:c.pos,s:c.s}); }
+  const todo=[...uniq.values()].filter(c=>{const li=idxOf(c.id); return li>=0&&LIVE.layers[li][c.pos]!==undefined&&LIVE.layers[li][c.pos]!==c.s;});
+  const unenc=todo.filter(c=>!encodeBinding(c.s));
+  if(opts.atomic&&unenc.length)return {ok:0,bad:unenc.length,skip:0,aborted:true,badList:[...new Set(unenc.map(c=>c.s))]};
+  const done=[], bad=[]; let err=null;
+  LIVE.bulk=true; A.renderLayerbar(); A.renderInsp(); A.renderLink(); A.renderLiveEnc();
+  try{
+    for(let i=0;i<todo.length;i++){
+      const c=todo[i], b=encodeBinding(c.s);
+      if(!b){bad.push(c.s);continue;}
+      const r=await rpc({keymap:{setLayerBinding:{layerId:c.id,keyPosition:c.pos,binding:b}}},{quiet:true});
+      if(r.keymap?.setLayerBinding!==0){bad.push(c.s);continue;}
+      const li=idxOf(c.id);
+      done.push({id:c.id,pos:c.pos,old:LIVE.layers[li][c.pos]});
+      LIVE.layers[li][c.pos]=c.s; LIVE.dirty.add(c.id+":"+c.pos); LIVE.unsaved=true;
+      if(i%12===11)A.toast(`書き込み中… ${i+1}/${todo.length}`);
+    }
+  }catch(e){ err=e&&e.message||String(e); }
+  finally{
+    LIVE.bulk=false;
+    if(done.length&&!opts.noHist)histPush({group:done});
+    A.renderInsp(); A.refreshKeys(); A.renderLink(); A.renderLayerbar(); A.renderLiveEnc();
+  }
+  if(bad.length)log("書けなかった割当: "+[...new Set(bad)].join(", "));
+  return {ok:done.length,bad:bad.length,skip:changes.length-todo.length,err};
+}
+window.liveWriteMany=liveWriteMany;
+/* ---- US⇄JIS の変換は HID の数値で行う（本体から読んだ割当は CARET など正規の名前で来るため、文字列の表では引けない） ---- */
+function jisNumMap(to){
+  const m=new Map();
+  for(const [us,j] of Object.entries(A.JIS_MAP||{})){ const a=encKey(us), b=encKey(j); if(a==null||b==null)continue; to==="jis"?m.set(a>>>0,b>>>0):m.set(b>>>0,a>>>0); }
+  return m;
+}
+const SHIFT_BITS=0x22;  /* LS|RS は記号そのものの一部なので残す。それ以外の修飾（⌘ など）は付け直す */
+function trKey(name,m){
+  const c=encKey(name); if(c==null)return name;
+  const extra=(c>>>24)&~SHIFT_BITS&0xFF, base=(c&~(extra<<24))>>>0;
+  const t=m.get(base); if(t==null)return name;
+  return decKey((t|(extra<<24))>>>0)||name;
+}
+function trBinding(s,m){
+  let x;
+  if((x=s.match(/^&(kp|sk|kt) (.+)$/)))return `&${x[1]} ${trKey(x[2],m)}`;
+  if((x=s.match(/^&mt (\S+) (.+)$/)))return `&mt ${x[1]} ${trKey(x[2],m)}`;
+  if((x=s.match(/^&lt (\d+) (.+)$/)))return `&lt ${x[1]} ${trKey(x[2],m)}`;
+  return s;
+}
+/* 層の中身を別の層へ写す（to="jis" なら記号を JIS 用に変換して） */
+window.liveCopyLayer=async(src,dst,to)=>{
+  if(liveBusy())return;
+  const m=to?jisNumMap(to):null, dstId=LIVE.layerIds[dst];
+  const r=await liveWriteMany(LIVE.layers[src].map((s,pos)=>({id:dstId,pos,s:m?trBinding(s,m):s})),{atomic:true});
+  if(r.aborted){A.toast("本体へ送れない割当があるので写しませんでした: "+r.badList.slice(0,4).join(", "));return;}
+  A.toast(r.err?`途中で止まりました（${r.ok}件まで）: ${r.err}`:`${LIVE.names[src]} → ${LIVE.names[idxOf(dstId)]} に写しました（${r.ok}件）。よければ「キーボードに保存」`);
+};
+/* 全レイヤーの記号キーを US⇄JIS 変換する。全部送れるときだけ書く */
+window.liveSwitchArr=async(to)=>{
+  if(liveBusy())return null;
+  const m=jisNumMap(to), ch=[];
+  LIVE.layers.forEach((l,li)=>l.forEach((s,pos)=>ch.push({layer:li,pos,s:trBinding(s,m)})));
+  return await liveWriteMany(ch,{atomic:true});
+};
+/* 層の操作（名前・追加・削除・並べ替え）は1つずつ */
+async function layerOp(fn){
+  if(liveBusy())return;
+  LIVE.layerOp=true; A.renderLayerbar();
+  try{ await fn(); }
+  catch(e){ if(!(e instanceof RpcTimeout))A.toast("レイヤー操作エラー: "+(e&&e.message||e)); }
+  finally{ LIVE.layerOp=false; A.renderLayerbar(); }
+}
+window.liveRenameLayer=(li,name)=>layerOp(async()=>{
+  const max=LIVE.maxNameLen|0;
+  if(max&&new TextEncoder().encode(name).length>max-1){A.toast("名前が長すぎます");return;}  /* 本体は上限以上だと応答しなくなる */
+  const r=(await rpc({keymap:{setLayerProps:{layerId:LIVE.layerIds[li],name}}})).keymap?.setLayerProps;
+  if(r!==0){A.toast("名前を変えられませんでした（code "+r+"）");return;}
+  LIVE.names[li]=name; LIVE.unsaved=true; A.renderInsp(); A.renderLink(); A.refreshKeys(); A.renderLiveEnc();
+});
+window.liveAddLayer=()=>layerOp(async()=>{
+  const r=(await rpc({keymap:{addLayer:{}}})).keymap?.addLayer||{};
+  if(!r.ok){A.toast("レイヤーを追加できません（空きがありません）");return;}
+  await reloadKeymap(); LIVE.unsaved=true; A.layer=r.ok.index; A.clearSel(); rerender();
+  const empty=(LIVE.layers[r.ok.index]||[]).every(b=>b==="&trans");
+  A.toast(`${LIVE.names[r.ok.index]} を追加しました`+(empty?"（全キー ▽透過）":"（以前の割当が残っています）"));
+});
+window.liveRemoveLayer=(li)=>layerOp(async()=>{
+  const r=(await rpc({keymap:{removeLayer:{layerIndex:li}}})).keymap?.removeLayer||{};
+  if(!r.ok){A.toast("このレイヤーは削除できません（code "+r.err+"）");return;}
+  await reloadKeymap(); LIVE.unsaved=true; A.layer=Math.max(0,Math.min(li,LIVE.layers.length-1)); A.clearSel(); rerender();
+  A.toast("レイヤーを削除しました（保存前なら「破棄」で戻せます）");
+});
+window.liveMoveLayer=(from,to)=>layerOp(async()=>{
+  const r=(await rpc({keymap:{moveLayer:{startIndex:from,destIndex:to}}})).keymap?.moveLayer||{};
+  if(!r.ok){A.toast("並べ替えできませんでした（code "+r.err+"）");return;}
+  await reloadKeymap(); LIVE.unsaved=true; A.layer=to; A.clearSel(); rerender();
+});
+/* 並び順（index）で層を指している拡張モジュールの設定を洗い出す（並べ替え・削除の確認に出す） */
+window.liveIndexRefs=()=>{
+  const out=[], nm=i=>LIVE.names[i]||("L"+i);
+  const bits=v=>{const r=[]; for(let i=0;i<32;i++)if((v>>>0)&(1<<i))r.push(i); return r;};
+  for(const p of (LIVE.tb&&LIVE.tb.procs)||[])if(p.activeLayers)out.push(`トラックボール「${p.name}」: ${bits(p.activeLayers).map(nm).join("・")}`);
+  const D=LIVE.conn&&LIVE.conn.dl;
+  if(D){ for(const e of D.endpoints)if(e.value>=0)out.push(`${e.isUsb?"USB":"BT"+(e.bleProfileIndex+1)} のキーマップ: ${nm(e.value)}`);
+         for(const o of D.osLayers)if(o.value>=0)out.push(`OS「${OS_NAMES_M[o.os]||o.os}」のキーマップ: ${nm(o.value)}`); }
+  for(const c of (LIVE.combo&&LIVE.combo.list)||[])if(c.source!=="COMBO_SOURCE_EMPTY"&&c.layerMask)out.push(`コンボ ${c.name||c.keyPositions.join("+")}: ${bits(c.layerMask).map(nm).join("・")}`);
+  return out;
+};
+const OS_NAMES_M=["不明","Windows","macOS","Linux","iOS","Android"];
+/* 保存した時点の層の並び（id）と今の並びを比べ、index で層を指している設定を付け替える。保存に成功したときだけ呼ぶ */
+async function remapIndexRefs(){
+  const old=LIVE.savedIds||[], map=old.map(id=>idxOf(id));
+  if(map.every((v,i)=>v===i))return 0;
+  const tr=i=>(i>=0&&i<map.length)?map[i]:i, trBits=v=>{let n=0; for(let i=0;i<32;i++)if((v>>>0)&(1<<i)){const j=tr(i); if(j>=0)n|=1<<j;} return n>>>0;};
+  let n=0;
+  const M=LIVE.mods.cormoran_rip;
+  if(M)for(const p of (LIVE.tb&&LIVE.tb.procs)||[]){ const nb=trBits(p.activeLayers); if(p.activeLayers&&nb!==(p.activeLayers>>>0)){ await mcall(M,{setActiveLayers:{id:p.id,layers:nb}}); n++; } }
+  if(M&&n){ try{await mcall(M,{saveAllSettings:{}});}catch(e){ if(e instanceof RpcTimeout)throw e; } }
+  const D=LIVE.mods.cormoran__default_layer, S=LIVE.conn&&LIVE.conn.dl;
+  if(D&&S){
+    for(const e of S.endpoints)if(e.value>=0&&tr(e.value)!==e.value){ await mcall(D,{setEndpointLayer:{endpointIndex:e.index,value:tr(e.value)}}); n++; }
+    for(const o of S.osLayers)if(o.value>=0&&tr(o.value)!==o.value){ await mcall(D,{setOsLayer:{os:o.os,value:tr(o.value)}}); n++; }
+  }
+  const C=LIVE.mods.cormoran__runtime_combo;
+  if(C)for(const c of (LIVE.combo&&LIVE.combo.list)||[]){ if(c.source==="COMBO_SOURCE_EMPTY"||!c.layerMask)continue; const nb=trBits(c.layerMask);
+    if(nb!==(c.layerMask>>>0)){ await mcall(C,{setCombo:{index:c.index,keyPositions:c.keyPositions,behavior:c.behavior,layerMask:nb,enabled:c.enabled,persist:true,
+      timeoutMs:c.timeoutMs|0,requirePriorIdleMs:c.requirePriorIdleMs|0,slowReleaseOverride:c.slowReleaseOverride||"SLOW_RELEASE_OVERRIDE_INHERIT"}}); n++; } }
+  if(n){ for(const f of [loadTrackball,loadCombos,loadConnections]){ try{await f();}catch(e){ if(e instanceof RpcTimeout)throw e; } } }
+  return n;
+}
 window.liveSave=async()=>{
-  try{await rpc({keymap:{saveChanges:true}}); LIVE.unsaved=false; LIVE.dirty.clear();
-    A.renderLink(); A.refreshKeys(); A.toast("キーボードに保存しました（電源を切っても残ります）");}
-  catch(e){A.toast("保存エラー: "+(e&&e.message||e));}
+  if(liveBusy())return;
+  try{
+    const r=(await rpc({keymap:{saveChanges:true}})).keymap?.saveChanges;
+    if(r&&r.err!==undefined&&r.err!==0)throw new Error("本体が保存できませんでした（code "+r.err+"）");
+    let moved=0; try{ moved=await remapIndexRefs(); }catch(e){ if(e instanceof RpcTimeout)throw e; A.toast("レイヤーの並びに合わせた設定の付け替えに失敗: "+(e&&e.message||e)); }
+    LIVE.savedIds=LIVE.layerIds.slice(); LIVE.arrSaved=LIVE.arr; saveLiveArr();
+    LIVE.unsaved=!!(await rpc({keymap:{checkUnsavedChanges:true}})).keymap?.checkUnsavedChanges; LIVE.dirty.clear();
+    A.renderLink(); A.refreshKeys(); A.renderLiveEnc();
+    A.toast((LIVE.unsaved?"保存しましたが、未保存の変更が残っています":"キーボードに保存しました（電源を切っても残ります）")+(moved?`。レイヤーの並びに合わせて ${moved}件の設定を付け替えました`:""));
+  }catch(e){A.toast("保存エラー: "+(e&&e.message||e));}
 };
 window.liveDiscard=async()=>{
-  try{await rpc({keymap:{discardChanges:true}}); await hydrate(); rerender(); A.toast("変更を破棄しました");}
-  catch(e){A.toast("破棄エラー: "+(e&&e.message||e));}
+  if(liveBusy())return;
+  try{
+    await rpc({keymap:{discardChanges:true}}); await hydrate();
+    A.layer=Math.max(0,Math.min(A.layer,LIVE.layers.length-1)); A.clearSel(); rerender(); A.toast("変更を破棄しました");
+  }catch(e){A.toast("破棄エラー: "+(e&&e.message||e));}
 };
+/* 本体ごとの「このキーマップは US / JIS どちら向けか」（本体には保存されないので、ブラウザに覚える） */
+function loadLiveArr(){ try{ return (JSON.parse(localStorage.getItem("arare-live-arr"))||{})[LIVE.device]||"us"; }catch(e){ return "us"; } }
+function saveLiveArr(){ try{ const all=JSON.parse(localStorage.getItem("arare-live-arr"))||{}; all[LIVE.device]=LIVE.arr||"us"; localStorage.setItem("arare-live-arr",JSON.stringify(all)); }catch(e){} }
 /* 接続まわりの状態を未接続に戻す（切断・抜線・接続失敗で共通） */
 function resetLive(){
-  LIVE.on=false; LIVE.layers=[]; LIVE.names=[]; LIVE.layerIds=[]; LIVE.dirty.clear(); LIVE.unsaved=false; LIVE.rsr=null; LIVE.rsrBusy=false;
-  A.setForeign(null); A.layer=0; A.clearSel();
+  LIVE.on=false; LIVE.layers=[]; LIVE.names=[]; LIVE.layerIds=[]; clearLiveHist(); LIVE.unsaved=false; LIVE.rsr=null; LIVE.rsrBusy=false;
+  LIVE.mods={}; LIVE.tb=null; LIVE.combo=null; LIVE.conn=null; LIVE.modBusy=false; LIVE.bulk=false; LIVE.layerOp=false;
+  LIVE.arr=undefined; LIVE.arrSaved=undefined; LIVE.savedIds=[];
+  if(A.clearCombo)A.clearCombo(); A.setForeign(null); A.layer=0; A.clearSel();
 }
 function disconnected(){
   resetLive(); rerender();
