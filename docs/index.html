@@ -96,6 +96,8 @@
   }
   #hoverinfo{color:var(--ink); min-height:1.2em}
   svg.board{display:block; width:100%; height:auto}
+  /* arare 以外を接続中は、arare 専用の設定・書き出しを隠す（LIVE のキーマップ編集だけ使う） */
+  body.foreign #deck, body.foreign .forge{display:none}
 
   /* keys (SVG) */
   .key rect.cap{fill:var(--card2); stroke:var(--line); stroke-width:1.6; rx:9;
@@ -240,6 +242,17 @@
   .seg{display:flex; border:1px solid var(--line); border-radius:9px; overflow:hidden}
   .seg button{border:none; background:var(--card2); font-family:var(--mono); font-size:10.5px; padding:6px 9px; cursor:pointer; color:var(--mute)}
   .seg button.on{background:var(--ink); color:#fff}
+  /* LIVE のエンコーダー設定（拡張モジュール対応のキーボードだけ） */
+  .liveenc{margin-top:16px}
+  .liveenc .encrows{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr)); column-gap:28px}
+  .liveenc .row{flex-wrap:wrap}
+  .liveenc .row .lab{flex:0 0 auto; white-space:nowrap}
+  .liveenc .row .ctl{flex:1 1 200px; min-width:0; flex-wrap:nowrap}
+  .liveenc .row.cur .lab{color:var(--accent); font-weight:700}
+  .liveenc .row select{flex:0 1 auto; min-width:0; max-width:260px}
+  .liveenc .swapbtn{border:1px solid var(--line); background:var(--card2); border-radius:8px; padding:5px 9px; font-size:12px; cursor:pointer}
+  .liveenc .swapbtn:hover{border-color:var(--ink)}
+  .liveenc .seg{margin:2px 0 8px; width:max-content}
   /* 接続（CONNECTIONS）パネル */
   #dev-devices{grid-column:1/-1}
   #dev-launch{grid-column:1/-1}
@@ -486,7 +499,7 @@
   <div class="panel board-panel">
     <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
     <div class="board-meta">
-      <span>PHYSICAL LAYOUT · 1:1 FROM PCB</span>
+      <span id="layoutsrc">PHYSICAL LAYOUT · 1:1 FROM PCB</span>
       <span id="hoverinfo"></span>
       <span>SAT / PDS / LAT</span>
     </div>
@@ -497,6 +510,8 @@
     <div class="empty"><span class="big">arare</span>キーをクリックすると<br>ここで割当を編集できます</div>
   </div>
 </div>
+
+<div class="panel dev liveenc" id="liveenc" hidden></div>
 
 <div class="deck" id="deck">
   <div class="deck-head">
@@ -690,6 +705,10 @@ const GLYPH={MINUS:"-",EQUAL:"=",COMMA:",",DOT:".",AT:"@",FSLH:"/",BSLH:"\\",SEM
  C_VOL_UP:"VOL+",C_VOL_DN:"VOL−",C_MUTE:"MUTE",C_PP:"⏯",C_NEXT:"⏭",C_PREV:"⏮",C_BRI_UP:"BRI+",C_BRI_DN:"BRI−"};
 const MODG={LS:"⇧",LC:"⌃",LA:"⌥",LG:"⌘",RS:"⇧",RC:"⌃",RA:"⌥",RG:"⌘"};
 const layName=n=>"L"+n;
+/* キーボード本体から来る文字列（層名・デバイス名・behavior 名など）を innerHTML に入れるときは必ず通す */
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]);
+/* 割当の中の層の参照（&mo 2 など）。arare 以外を LIVE で見ているときは本体の層名で出す（番号は層 id で、arare の L 番号と一致しないため） */
+const refName=n=>{ if(LIVE.on&&FOREIGN){const i=LIVE.layerIds.indexOf(n); if(i>=0&&LIVE.names[i])return LIVE.names[i];} return layName(n); };
 function keyGlyph(code){
   if(arr==="jis"&&INV_JIS[code])code=INV_JIS[code]; // JISモード中は「JISホストで実際に出る記号」を表示
   let mods="",m;
@@ -713,9 +732,9 @@ function legend(b){
   if((m=b.match(/^&bt_dev(\d)$/)))return"▸"+((devs&&devs[+m[1]]&&devs[+m[1]].name)||("DEV"+(+m[1]+1)));
   if((m=b.match(/^&kp (.+)$/)))return keyGlyph(m[1]);
   if((m=b.match(/^&mt (\S+) (.+)$/)))return keyGlyph(m[1])+"/"+keyGlyph(m[2]);
-  if((m=b.match(/^&lt (\d+) (.+)$/)))return layName(+m[1])+"/"+keyGlyph(m[2]);
-  if((m=b.match(/^&mo (\d+)$/)))return"→"+layName(+m[1]);
-  if((m=b.match(/^&tog (\d+)$/)))return"⇄"+layName(+m[1]);
+  if((m=b.match(/^&lt (\d+) (.+)$/)))return refName(+m[1])+"/"+keyGlyph(m[2]);
+  if((m=b.match(/^&mo (\d+)$/)))return"→"+refName(+m[1]);
+  if((m=b.match(/^&tog (\d+)$/)))return"⇄"+refName(+m[1]);
   if((m=b.match(/^&mkp (\w+)$/)))return{LCLK:"CLK·L",RCLK:"CLK·R",MCLK:"CLK·M"}[m[1]]||m[1];
   return b.replace(/^&/,"");
 }
@@ -792,7 +811,74 @@ load();
 const NS="http://www.w3.org/2000/svg";
 const board=document.getElementById("board");
 function el(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;}
+/* arare 以外（moNa2 など）を LIVE 接続したときは、キーボード本体から読んだ物理レイアウトで描く */
+let FOREIGN=null, FOREIGN_DECOR=null;
+function curKeys(){return FOREIGN||KEYS;}
+/* 本体が返す配置が「簡略な格子」のキーボードは、実物の形に差し替えて描く（arare と見比べられるように）。
+ * moNa2: 本体（sayu-hub 系ファーム）は 42キーを格子で返す。実物の形は hindee/zmk-config-moNa2-dyaStudio の
+ * mona2.dtsi（列のずれ・親指の回転 ±10°/±20°）から、エンコーダーとトラボの目印を除いて同じ並び順に写したもの。
+ * 形が一致したときだけ差し替える（別の並びのファームなら本体の値のまま） */
+const KNOWN_LAYOUTS={
+  mona2:{
+    grid:[[0,0],[100,0],[200,0],[300,0],[400,0],[800,0],[900,0],[1000,0],[1100,0],[1200,0],
+      [0,100],[100,100],[200,100],[300,100],[400,100],[700,100],[800,100],[900,100],[1000,100],[1100,100],[1200,100],
+      [0,200],[100,200],[200,200],[300,200],[400,200],[500,200],[700,200],[800,200],[900,200],[1000,200],[1100,200],[1200,200],
+      [0,300],[100,300],[200,300],[300,300],[400,300],[500,300],[700,300],[800,300],[1200,300]],
+    real:[[0,37],[100,12],[200,0],[300,12],[400,24],[800,24],[900,12],[1000,0],[1100,12],[1200,37],
+      [0,137],[100,112],[200,100],[300,112],[400,124],[700,137],[800,124],[900,112],[1000,100],[1100,112],[1200,137],
+      [0,237],[100,212],[200,200],[300,212],[400,224],[500,237],[700,237],[800,224],[900,212],[1000,200],[1100,212],[1200,237],
+      [0,337],[100,312],[200,300],[325,332],[442,333,10,437,350],[550,353,20,550,387],[655,390,-20,650,387],[763,480,-10,0,350],[1200,337]],
+    decor:{enc:{x:550,y:187,r:34},tb:{x:1075,y:392,r:66}},
+  },
+};
+function knownLayout(keys,name){
+  for(const id in KNOWN_LAYOUTS){
+    const K=KNOWN_LAYOUTS[id];
+    if(!new RegExp(id,"i").test(name)||keys.length!==K.grid.length)continue;
+    if(!keys.every((k,i)=>k[1]===K.grid[i][0]&&k[2]===K.grid[i][1]))continue;
+    return {keys:keys.map((k,i)=>{const [x,y,rot=0,rx=0,ry=0]=K.real[i]; return [k[0],x,y,100,100,rot,rx,ry];}),decor:K.decor};
+  }
+  return null;
+}
+function setForeign(keys,name){
+  FOREIGN_DECOR=null;
+  if(keys){const kn=knownLayout(keys,name||""); if(kn){keys=kn.keys; FOREIGN_DECOR=kn.decor;}}
+  FOREIGN=keys; sel=-1;
+  board.querySelectorAll(".key,#decor,defs").forEach(n=>n.remove());
+  if(!FOREIGN){
+    board.setAttribute("viewBox","-20 -30 1360 530");
+    board.setAttribute("aria-label","arareキーボードレイアウト");
+    document.getElementById("layoutsrc").textContent="PHYSICAL LAYOUT · 1:1 FROM PCB";
+  }else{
+    /* 回転後の四隅から外接矩形を出して viewBox にする */
+    let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+    for(const [,x,y,w,h,rot,rx,ry] of FOREIGN){
+      const a=(rot||0)*Math.PI/180, c=Math.cos(a), s=Math.sin(a);
+      for(const [px,py] of [[x,y],[x+w,y],[x,y+h],[x+w,y+h]]){
+        const qx=rot?rx+(px-rx)*c-(py-ry)*s:px, qy=rot?ry+(px-rx)*s+(py-ry)*c:py;
+        x0=Math.min(x0,qx);y0=Math.min(y0,qy);x1=Math.max(x1,qx);y1=Math.max(y1,qy);
+      }
+    }
+    board.setAttribute("viewBox",`${x0-20} ${y0-20} ${x1-x0+40} ${y1-y0+40}`);
+    board.setAttribute("aria-label",name+" キーボードレイアウト");
+    document.getElementById("layoutsrc").textContent="PHYSICAL LAYOUT · FROM "+name.toUpperCase();
+  }
+  document.body.classList.toggle("foreign",!!FOREIGN);
+  drawDecor(); drawKeys();
+}
 function drawDecor(){
+  if(FOREIGN){
+    /* 形を知っているキーボードだけ、トラックボールとエンコーダーの位置を描く */
+    if(!FOREIGN_DECOR)return;
+    const g=el("g",{id:"decor"}), D=FOREIGN_DECOR;
+    if(D.tb){
+      g.append(el("circle",{cx:D.tb.x,cy:D.tb.y,r:D.tb.r,class:"deco deco-accent","stroke-dasharray":"4 5"}));
+      const t=el("text",{x:D.tb.x,y:D.tb.y+4,class:"deco-label","text-anchor":"middle","font-size":9}); t.textContent="TRACKBALL"; g.append(t);
+    }
+    if(D.enc)g.append(el("circle",{cx:D.enc.x,cy:D.enc.y,r:D.enc.r,class:"deco"}));
+    board.append(g);
+    return;
+  }
   // トラックボール(右)・ジョイスティック(左)・エンコーダリング・照準
   const g=el("g",{});
   // トラックボール: 現行の3Dモデル正データ ~/arare/tools/colorsim/arare_data.json の
@@ -830,7 +916,7 @@ function drawKeys(){
     +'<linearGradient id="capsel" x1="0" y1="0" x2="0" y2="1">'
     +'<stop offset="0" stop-color="#8b7cf4"/><stop offset="1" stop-color="#5646d6"/></linearGradient>';
   board.append(defs);
-  KEYS.forEach((k,i)=>{
+  curKeys().forEach((k,i)=>{
     const [sw,x,y,w=100,h=100,rot=0,rx,ry]=k;
     const g=el("g",{class:"key","data-i":i,tabindex:0,role:"button"});
     if(rot)g.setAttribute("transform",`rotate(${rot} ${rx} ${ry})`);
@@ -856,7 +942,7 @@ function refreshKeys(){
     const t=g.querySelector("text");
     t.textContent=legend((curKm()[layer]||[])[i]||"&trans");
     const long=t.textContent.length;
-    t.setAttribute("font-size",(KEYS[i][3]||100)<80?11:(long>4?11:long>2?13:16));
+    t.setAttribute("font-size",(curKeys()[i][3]||100)<80?11:(long>4?11:long>2?13:16));
     g.classList.toggle("sel",i===sel);
     g.classList.toggle("combo-pick",!!(comboCapture&&comboCapture.keys.includes(i)));
     if(LIVE.on){ g.classList.toggle("edited",LIVE.dirty.has(layer+":"+i)); }
@@ -1019,9 +1105,9 @@ function applyKp(code){
 function renderInsp(){
   const box=document.getElementById("insp");
   if(sel<0){box.innerHTML='<div class="empty"><span class="big">arare</span>キーをクリックすると<br>ここで割当を編集できます</div>';return;}
-  const k=KEYS[sel];
+  const k=curKeys()[sel];
   box.innerHTML=`
-    <h2>KEY EDIT <span class="pos">${k[0]} · POS ${String(sel).padStart(2,"0")} · ${LIVE.on?(LIVE.names[layer]||layName(layer))+" ●LIVE":layName(layer)}</span></h2>
+    <h2>KEY EDIT <span class="pos">${k[0]} · POS ${String(sel).padStart(2,"0")} · ${LIVE.on?esc(LIVE.names[layer]||layName(layer))+" ●LIVE":layName(layer)}</span></h2>
     <div class="insp-cols">
     <div>
       <div class="bind-now" id="bindnow"></div>
@@ -1036,7 +1122,7 @@ function renderInsp(){
         <option value="LCTRL">⌃ ホールドでCtrl</option>
         <option value="LALT">⌥ ホールドでOption</option>
         <option value="LGUI">⌘ ホールドでCmd</option>
-        ${km.map((_,n)=>n?`<option value="lt${n}">ホールドで ${layName(n)} レイヤー</option>`:"").join("")}
+        ${curKm().map((_,n)=>n?`<option value="lt${n}">ホールドで ${layName(n)} レイヤー</option>`:"").join("")}
       </select>
       <div class="sec">押して設定</div>
       <button class="btn ghost mini" id="capbtn" style="width:100%">⌨ 押して設定</button>
@@ -1053,10 +1139,10 @@ function renderInsp(){
       <div class="kb-grid" id="kbgrid"></div>
     </div>
     <div>
-      ${sel>=43?`<div class="sec" style="margin-top:0">タクトSW おすすめ割当</div>
+      ${!FOREIGN&&sel>=43?`<div class="sec" style="margin-top:0">タクトSW おすすめ割当</div>
       <div class="kb-grid">${tactReco().map(([l,b])=>`<button class="kb-key" data-b="${b}" style="grid-column:span 2">${l}</button>`).join("")}</div>
       <div class="desc" style="margin:6px 0 0;font-size:10.5px;color:var(--mute);line-height:1.55">BT＝接続先の切替。アプリ起動は F13〜F15 を割当て、Mac側でそのキーにアプリを紐づけます。<b>UNLOCKは1つ残すのがおすすめ</b>。</div>`:""}
-      <div class="sec"${sel>=43?"":' style="margin-top:0"'}>特殊割当（そのままセット）</div>
+      <div class="sec"${!FOREIGN&&sel>=43?"":' style="margin-top:0"'}>特殊割当（そのままセット）</div>
       <div class="kb-grid">${[...deviceSpecials(),...SPECIAL,...layerSpecials()].map(([l,b])=>`<button class="kb-key" data-b="${b}" style="grid-column:span 2">${l}</button>`).join("")}</div>
     </div>
     </div>`;
@@ -1083,10 +1169,10 @@ function renderInsp(){
 function renderLayerbar(){
   const bar=document.getElementById("layerbar");
   if(LIVE.on){
-    bar.innerHTML=LIVE.layers.map((_,n)=>`<button class="chip${n===layer?" on":""}" data-l="${n}">${LIVE.names[n]||layName(n)}</button>`).join("")
+    bar.innerHTML=LIVE.layers.map((_,n)=>`<button class="chip${n===layer?" on":""}" data-l="${n}">${esc(LIVE.names[n]||layName(n))}</button>`).join("")
       +'<span class="livechip">● LIVE</span><span class="hint" id="edithint"></span>';
     bar.querySelectorAll(".chip[data-l]").forEach(c=>c.addEventListener("click",()=>{
-      layer=+c.dataset.l; renderLayerbar(); renderInsp(); refreshKeys();
+      layer=+c.dataset.l; renderLayerbar(); renderInsp(); refreshKeys(); renderLiveEnc();
     }));
     return;
   }
@@ -1417,7 +1503,7 @@ function renderDeck(){
   document.getElementById("dev-devices").innerHTML=`
     <h3>接続 <small>CONNECTIONS — 接続先の管理と切り替え</small></h3>
     <div class="conn-status">
-      <div class="cs-cell"><span>アクティブな接続</span><b>${LIVE.on?`${LIVE.device}（${LIVE.transport}）`:"未接続"}</b></div>
+      <div class="cs-cell"><span>アクティブな接続</span><b>${LIVE.on?`${esc(LIVE.device)}（${LIVE.transport}）`:"未接続"}</b></div>
       <div class="cs-cell"><span>現在の配列</span><b>${arr==="jis"?"JIS":"US"}</b></div>
       <div class="cs-cell"><span>出力優先度</span><b>USB &gt; BLE（ZMK標準）</b></div>
     </div>
@@ -1939,6 +2025,47 @@ document.getElementById("resetbtn").addEventListener("click",confirmReset);
 
 /* ================= LIVE接続バー ================= */
 const PAGES_URL="https://amearare54.github.io/arare/";
+/* ---- LIVE: エンコーダー設定（本体が cormoran_rsr を持つときだけ出る。書くと即キーボードに保存） ---- */
+let encSensor=0;
+function renderLiveEnc(){
+  const box=document.getElementById("liveenc");
+  const R=LIVE.on&&!LIVE.locked&&LIVE.rsr&&LIVE.rsr.sensors.length?LIVE.rsr:null;  /* センサーが無いファームでは出さない */
+  box.hidden=!R;
+  if(!R){box.innerHTML="";return;}
+  if(!R.sensors.some(s=>s.index===encSensor))encSensor=(R.sensors[0]||{index:0}).index;
+  const busy=!!LIVE.rsrBusy, dis=busy?" disabled":"";
+  const opts=[["default","ファームの既定に戻す"],["trans","なし（下のレイヤーと同じ）"],...ENC_OPTS];
+  if(R.ids&&R.ids.scroll!=null)opts.push(["scroll","マウスホイール"],["scroll-rev","マウスホイール（逆回し）"]);
+  const codes=ENC_OPTS.map(([v])=>window.liveEncCodes?window.liveEncCodes(v):null);
+  const rows=LIVE.names.map((nm,li)=>{
+    const lb=(R.bind[encSensor]||[]).find(x=>x.layer===LIVE.layerIds[li])||{};
+    const d=window.liveRsrDescribe(lb.cw,lb.ccw);
+    let cur="", extra="";
+    if(d.kind==="default")extra=`<option value="" selected disabled>未設定（ファームの既定）</option>`;
+    else if(d.kind==="trans")cur=d.kind;
+    else if(d.kind==="scroll")cur=d.rev?"scroll-rev":"scroll";
+    else if(d.kind==="kp"){
+      const i=codes.findIndex(c=>c&&c[0]===d.a&&c[1]===d.b);
+      const j=codes.findIndex(c=>c&&c[0]===d.b&&c[1]===d.a);
+      if(i>=0)cur=ENC_OPTS[i][0];
+      else if(j>=0){const m=ENC_OPTS[j][0].split(" "); cur=`${m[0]} ${m[2]} ${m[1]}`; extra=`<option value="${cur}" selected>${ENC_OPTS[j][1]}（逆回し）</option>`;}
+      else extra=`<option value="" selected disabled>キー: ${esc(d.text)}</option>`;
+    }else if(d.kind==="other")extra=`<option value="" selected disabled>その他: ${esc(d.text)}</option>`;
+    const sel=`<select data-encli="${li}"${dis}>${extra}${opts.map(([v,l])=>`<option value="${v}"${v===cur&&!extra?" selected":""}>${l}</option>`).join("")}</select>`;
+    const sw=(d.kind==="default"||d.kind==="none")?"":`<button class="swapbtn" data-encswap="${li}" title="右回しと左回しを入れ替える"${dis}>⇄</button>`;
+    return `<div class="row${li===layer?" cur":""}"><div class="lab">${esc(nm)}<small>レイヤー ${li}</small></div><div class="ctl">${sel}${sw}</div></div>`;
+  }).join("");
+  box.innerHTML=`<h3>ENCODER <span class="badge">LIVE</span> <small>${esc(LIVE.device)}</small></h3>
+    <div class="desc">回したときの動きをレイヤーごとに選べます。<b>変更はその場でキーボードに保存されます</b>（上の「キーボードに保存 / 破棄」の対象外）。向きが逆なら ⇄ で入れ替え。${busy?" <b>書き込み中…</b>":""}<br>
+      効くのは、ファームのキーマップでそのレイヤーのエンコーダーが runtime-sensor-rotate（&amp;rsr_*）になっているレイヤーだけです。</div>
+    ${R.sensors.length>1?`<div class="seg">${R.sensors.map(s=>`<button data-encsensor="${s.index}" class="${s.index===encSensor?"on":""}"${busy?" disabled":""}>${esc(s.name||"sensor "+s.index)}</button>`).join("")}</div>`:""}
+    <div class="encrows">${rows}</div>`;
+  box.querySelectorAll("[data-encsensor]").forEach(b=>b.addEventListener("click",()=>{encSensor=+b.dataset.encsensor;renderLiveEnc();}));
+  box.querySelectorAll("select[data-encli]").forEach(s=>s.addEventListener("change",()=>{
+    if(!s.value)return; window.liveRsrSet(encSensor,+s.dataset.encli,s.value);
+  }));
+  box.querySelectorAll("[data-encswap]").forEach(b=>b.addEventListener("click",()=>window.liveRsrSet(encSensor,+b.dataset.encswap,"swap")));
+}
 function renderLink(){
   const el=document.getElementById("linkbar");
   const hasAPI=!!(navigator.bluetooth||navigator.serial);
@@ -1952,8 +2079,10 @@ function renderLink(){
     if(u)u.addEventListener("click",()=>window.liveConnect&&window.liveConnect("serial"));
     if(b)b.addEventListener("click",()=>window.liveConnect&&window.liveConnect("ble"));
   }else{
-    el.innerHTML=`<span class="st"><span class="dot ${LIVE.locked?"lock":"live"}"></span>${LIVE.locked?"接続済み・ロック中":"LIVE"} — ${LIVE.device}（${LIVE.transport}）</span>
-      ${LIVE.locked?'<span class="note">キーボード側の <b>UNLOCK</b> キー（内側のタクトSW）を押すと編集できます</span>':""}
+    el.innerHTML=`<span class="st"><span class="dot ${LIVE.locked?"lock":"live"}"></span>${LIVE.locked?"接続済み・ロック中":"LIVE"} — ${esc(LIVE.device)}（${LIVE.transport}）</span>
+      ${LIVE.locked?(/arare/i.test(LIVE.device)
+        ?'<span class="note">キーボード側の <b>UNLOCK</b> キー（内側のタクトSW）を押すと編集できます</span>'
+        :'<span class="note">キーボード側の <b>&amp;studio_unlock</b> を割り当てたキーを押すと、配列を読み込んで編集できます</span>'):""}
       ${LIVE.unsaved?'<span class="unsaved">● 未保存の変更</span>':""}
       <span class="grow"></span>
       <button class="btn plain mini" id="rpctgl">RPCログ</button>
@@ -1967,7 +2096,7 @@ function renderLink(){
   }
 }
 window.__arare={
-  LIVE, renderLink, renderLayerbar, renderInsp, refreshKeys, renderDeck, toast,
+  LIVE, renderLink, renderLayerbar, renderInsp, refreshKeys, renderDeck, toast, setForeign, renderLiveEnc, KEY_COUNT:KEYS.length,
   get layer(){return layer}, set layer(v){layer=v},
   clearSel(){sel=-1;}
 };
@@ -2114,15 +2243,17 @@ hudProbe(true);
 
 <script type="module">
 /* ================= LIVE エンジン（ZMK Studio公式プロトコル） =================
- * @zmkfirmware/zmk-studio-ts-client を使用。BLE GATT / USBシリアル両対応。 */
+ * @zmkfirmware/zmk-studio-ts-client を使用。BLE GATT / USBシリアル両対応。
+ * 読み込むのは同梱の vendor/zmk-studio-client.js（公式 0.0.18 に cormoran の custom subsystem 対応を足したもの）。
+ * 公式と同じ通信に加えて、エンコーダー設定（cormoran_rsr）など拡張モジュールの RPC も呼べる。 */
 const A=window.__arare, LIVE=A.LIVE;
-const CDN="https://cdn.jsdelivr.net/npm/@zmkfirmware/zmk-studio-ts-client@0.0.18";
+const CLIENT="./vendor/zmk-studio-client.js";
 function log(...a){
   const el=document.getElementById("rpclog");
   const s=a.map(x=>typeof x==="string"?x:JSON.stringify(x)).join(" ");
   if(el){el.textContent+=s+"\n"; el.scrollTop=el.scrollHeight;}
 }
-function rerender(){A.renderLink();A.renderLayerbar();A.renderInsp();A.refreshKeys();A.renderDeck();}
+function rerender(){A.renderLink();A.renderLayerbar();A.renderInsp();A.refreshKeys();A.renderDeck();A.renderLiveEnc();}
 
 /* --- ZMKキーコードのエンコード/デコード --- */
 const KEYPAGE=0x07,CONSPAGE=0x0C;
@@ -2163,17 +2294,65 @@ const NAME_MATCH=[["&studio_unlock","studio unlock"],["&bootloader","bootloader"
 let B={},BID={}; // B["&kp"]=id / BID[id]={key,displayName}
 
 let call=null, transport=null, notifAbort=null;
-async function rpc(req){
-  const r=await call(req);
-  log("→ "+JSON.stringify(req).slice(0,120)+"  ← "+JSON.stringify(r).slice(0,160));
-  return r;
+const RPC_TIMEOUT_MS=5000;          /* 接続確立まで（無応答の相手を早く見切る） */
+const RPC_TIMEOUT_LIVE_MS=15000;    /* 確立後（mutex 待ちを含むので、BLE で hydrate 中に操作しても誤って切らない長さ） */
+let rpcTimeoutMs=RPC_TIMEOUT_MS;
+class RpcTimeout extends Error{}
+function withTimeout(p,ms,msg){
+  let t; const to=new Promise((_,rej)=>{t=setTimeout(()=>rej(new RpcTimeout(msg)),ms);});
+  return Promise.race([p,to]).finally(()=>clearTimeout(t));
+}
+async function rpc(req,opts){
+  /* call_rpc は応答を待ち続ける（タイムアウト無し）。応答が無いとライブラリ共通の mutex を握ったまま止まるので、
+   * こちらで打ち切る。打ち切った call は mutex を握ったまま残るため、接続ごと落として次回に備える */
+  try{
+    const r=await withTimeout(call(req),rpcTimeoutMs,"キーボードから応答がありません（"+(rpcTimeoutMs/1000)+"秒）。右手の arare_R に USB でつないでいるか、選んだポートが XIAO か確認してください");
+    if(!(opts&&opts.quiet))log("→ "+JSON.stringify(req).slice(0,120)+"  ← "+JSON.stringify(r).slice(0,160));
+    return r;
+  }catch(e){
+    if(e instanceof RpcTimeout&&transport){ const t=transport; transport=null; call=null; closeTransport(t).finally(()=>disconnected()); }
+    throw e;
+  }
+}
+/* USB(Web Serial) の transport は自前で持つ（2026-09-15）。
+ * ライブラリの transport/serial は port を外に出さず、abort 時の後始末が
+ * writable.close → readable.cancel → port.close の順で、ストリームが RPC 側のパイプに
+ * ロックされたままだと最初の close で例外になり port.close() まで届かない。
+ * その結果 port が開いたまま残り、次の接続で "The port is already open" になる（実機で発生）。 */
+async function serialConnect(){
+  const port=await navigator.serial.requestPort({});
+  try{ await port.open({baudRate:115200}); }
+  catch(t){ throw (t instanceof DOMException&&t.name==="NetworkError")?new Error("シリアルポートを開けません。他のアプリ（screen など）が使っていないか確認してください",{cause:t}):t; }
+  const info=port.getInfo();
+  return {label:(info.usbVendorId||"")+":"+(info.usbProductId||""),abortController:new AbortController(),readable:port.readable,writable:port.writable,port};
+}
+let teardown=Promise.resolve(), connecting=false;
+function closeTransport(t){ teardown=teardown.then(()=>_closeTransport(t)).catch(()=>{}); return teardown; }
+async function _closeTransport(t){
+  if(!t||t.closed)return; t.closed=true;
+  try{t.abortController.abort(new DOMException("closed by app","AbortError"));}catch(e){}
+  if(!t.port)return;
+  /* create_rpc_connection に渡した signal でパイプが外れ、reader/writer が解放されるのを待つ。
+   * 監視するのはライブラリへ渡した本物の t.readable / t.writable（port のゲッターではない） */
+  for(let i=0;i<100&&(t.readable.locked||t.writable.locked);i++)await new Promise(r=>setTimeout(r,50));
+  /* port.close() 自身が未ロックの readable を cancel / writable を abort してから閉じる。
+   * ここで t.port.readable / t.port.writable のゲッターを触ってはいけない:
+   * 新しいストリームが生成され、writable.close() は tcdrain で相手が読むまで待ち続ける（レビュー指摘 2026-09-16） */
+  try{ await t.port.close(); }
+  catch(e){ console.warn("port.close failed",e); A.toast("USB ポートを閉じられませんでした。ページを再読み込みしてください"); }
 }
 async function connect(kind){
+  if(connecting){A.toast("接続処理中です");return;} connecting=true;
+  let t=null;
   try{
-    const core=await import(CDN+"/+esm");
-    const tr=await import(CDN+"/transport/"+(kind==="ble"?"gatt":"serial")+"/+esm");
-    transport=await tr.connect();
-    const conn=core.create_rpc_connection(transport);
+    if(transport){ const prev=transport; transport=null; call=null; await closeTransport(prev); }
+    await teardown; /* 進行中の後始末（切断・抜線）を待ってから同じポートを開きに行く */
+    const core=await import(CLIENT); pbLib=core;
+    if(kind==="ble"){ t=await core.gattConnect(); }
+    else{ t=await serialConnect(); }
+    transport=t; rpcTimeoutMs=RPC_TIMEOUT_MS;
+    /* signal を渡さないと abort してもパイプが外れず、ストリームがロックされたまま残る */
+    const conn=core.create_rpc_connection(t,{signal:t.abortController.signal});
     call=(req)=>core.call_rpc(conn,req);
     LIVE.transport=kind==="ble"?"Bluetooth":"USB";
     const info=await rpc({core:{getDeviceInfo:true}});
@@ -2184,14 +2363,22 @@ async function connect(kind){
     if(!LIVE.locked)await hydrate();
     A.layer=0; A.clearSel(); rerender();
     A.toast(LIVE.locked?"接続しました。キーボードのUNLOCKキーを押してください":"接続しました — LIVE編集モード");
-    watchNotifications(conn);
+    rpcTimeoutMs=RPC_TIMEOUT_LIVE_MS;
+    watchNotifications(conn,t);
   }catch(e){
-    console.error(e); log("ERR "+(e&&e.message||e));
-    A.toast("接続できませんでした: "+(e&&e.message||e));
-    LIVE.on=false; rerender();
-  }
+    /* キャンセル: USB は NotFoundError、BLE はライブラリが UserCancelledError（cause が NotFoundError）に包んで投げる */
+    const cancelled=kind==="ble"?(e&&e.cause&&e.cause.name==="NotFoundError"):(e&&e.name==="NotFoundError");
+    if(cancelled){}
+    else if(transport!==t&&e&&e.name==="AbortError"){ /* 別の操作（切断・再接続）で意図的に落とした */ }
+    else if(kind==="ble"&&e&&e.name==="NotFoundError"){ A.toast("この機器は ZMK Studio に対応していません（右手側を選んでください）"); }
+    else{ console.error(e); log("ERR "+(e&&e.message||e)); A.toast("接続できませんでした: "+(e&&e.message||e)); }
+    /* 開いたポートは必ず閉じる。閉じないと次の接続が "The port is already open" で失敗する */
+    if(transport===t){ transport=null; call=null; }
+    await closeTransport(t);
+    resetLive(); rerender();
+  }finally{connecting=false;}
 }
-async function watchNotifications(conn){
+async function watchNotifications(conn,t){
   try{
     const reader=conn.notification_readable.getReader();
     for(;;){
@@ -2206,14 +2393,16 @@ async function watchNotifications(conn){
         A.toast(LIVE.locked?"ロックされました":"ロック解除 — LIVE編集モード");
       }
     }
-  }catch(e){ log("通知ストリーム終了 "+(e&&e.message||e)); disconnected(); }
+  }catch(e){ log("通知ストリーム終了 "+(e&&e.message||e)); }
+  if(transport!==t)return;            /* 他所で既に後始末済み（切断・再接続・抜線） */
+  transport=null; call=null; await closeTransport(t); disconnected();
 }
 async function hydrate(){
   B={};BID={};
   const lb=await rpc({behaviors:{listAllBehaviors:true}});
   const ids=lb.behaviors?.listAllBehaviors?.behaviors||[];
   for(const id of ids){
-    const d=await call({behaviors:{getBehaviorDetails:{behaviorId:id}}});
+    const d=await rpc({behaviors:{getBehaviorDetails:{behaviorId:id}}},{quiet:true});
     const dn=(d.behaviors?.getBehaviorDetails?.displayName||"").toLowerCase();
     for(const [key,pat] of NAME_MATCH){
       if(B[key]===undefined && dn.includes(pat)){B[key]=id; break;}
@@ -2227,8 +2416,181 @@ async function hydrate(){
   LIVE.names=layers.map((l,i)=>l.name||("L"+i));
   LIVE.layers=layers.map(l=>(l.bindings||[]).map(decodeBinding));
   LIVE.dirty.clear();
+  await loadLayout((LIVE.layers[0]||[]).length);
   const us=await rpc({keymap:{checkUnsavedChanges:true}});
   LIVE.unsaved=!!us.keymap?.checkUnsavedChanges;
+  await loadRsr();
+}
+
+/* ---- エンコーダー設定（cormoran/zmk-behavior-runtime-sensor-rotate の custom subsystem） ----
+ * 対応ファームだけが持つ。公式 ZMK は listCustomSubsystems に RPC_NOT_FOUND を返すので、その場合は何も出さない。
+ * payload は proto/cormoran/rsr/custom.proto を手で符号化する（Request: set_cw=1 / set_ccw=2 / get_all=3 / get_sensors=4）。
+ * 書き込みは本体側で即フラッシュに保存される（キーマップの「保存 / 破棄」の対象外）。 */
+let pbLib=null;
+function rsrEncode(r){
+  const w=pbLib.PbWriter.create();
+  const bind=(b)=>{ if(b.behaviorId)w.uint32(8).uint32(b.behaviorId); if(b.param1)w.uint32(16).uint32(b.param1>>>0);
+    if(b.param2)w.uint32(24).uint32(b.param2>>>0); if(b.tapMs)w.uint32(32).uint32(b.tapMs); };
+  if(r.getSensors){ w.uint32(34).fork().ldelim(); }
+  else if(r.getAll){ w.uint32(26).fork(); if(r.getAll.sensor)w.uint32(8).uint32(r.getAll.sensor); w.ldelim(); }
+  else{
+    const s=r.cw||r.ccw;
+    w.uint32(r.cw?10:18).fork();
+    if(s.sensor)w.uint32(8).uint32(s.sensor);
+    if(s.layer)w.uint32(16).uint32(s.layer);
+    w.uint32(26).fork(); bind(s.binding); w.ldelim();
+    w.ldelim();
+  }
+  return w.finish();
+}
+function pbDecode(buf,fields){ /* fields: {番号:[名前, "u"|"s"|"b"|関数|["rep",関数]]} */
+  const r=pbLib.PbReader.create(buf), o={};
+  while(r.pos<r.len){
+    const t=r.uint32(), f=fields[t>>>3];
+    if(!f){r.skipType(t&7);continue;}
+    const [n,k]=f;
+    if(k==="u")o[n]=r.uint32(); else if(k==="s")o[n]=r.string(); else if(k==="b")o[n]=r.bool();
+    else if(Array.isArray(k))(o[n]||=[]).push(k[1](r.bytes()));
+    else o[n]=k(r.bytes());
+  }
+  return o;
+}
+const rsrBind=(b)=>({behaviorId:0,param1:0,param2:0,tapMs:0,...pbDecode(b,{1:["behaviorId","u"],2:["param1","u"],3:["param2","u"],4:["tapMs","u"]})});
+const rsrDecode=(b)=>pbDecode(b,{
+  1:["error",x=>pbDecode(x,{1:["message","s"]})],
+  2:["setCw",x=>pbDecode(x,{1:["success","b"]})],
+  3:["setCcw",x=>pbDecode(x,{1:["success","b"]})],
+  4:["getAll",x=>pbDecode(x,{1:["bindings",["rep",y=>({layer:0,...pbDecode(y,{1:["layer","u"],2:["cw",rsrBind],3:["ccw",rsrBind]})})]]})],
+  5:["getSensors",x=>pbDecode(x,{1:["sensors",["rep",y=>({index:0,...pbDecode(y,{1:["index","u"],2:["name","s"]})})]]})],
+});
+/* R は loadRsr が作った状態オブジェクト。途中で LIVE.rsr が作り直されても、書き込み中の操作は同じ R を使い続ける */
+async function rsrCall(R,req){
+  const r=await rpc({custom:{call:{subsystemIndex:R.sub,payload:rsrEncode(req)}}},{quiet:true});
+  const d=rsrDecode(r.custom?.call?.payload||new Uint8Array());
+  if(d.error)throw new Error("エンコーダー設定のエラー: "+d.error.message);
+  return d;
+}
+async function rsrReadSensor(R,sensor){
+  return (await rsrCall(R,{getAll:{sensor}})).getAll?.bindings||[];
+}
+async function rsrReadAll(R){
+  const bind={};
+  for(const s of R.sensors)bind[s.index]=await rsrReadSensor(R,s.index);
+  R.bind=bind;
+}
+async function loadRsr(){
+  let subs=[];
+  try{ subs=(await rpc({custom:{listCustomSubsystems:{}}})).custom?.listCustomSubsystems?.subsystems||[]; }
+  catch(e){
+    if(e instanceof RpcTimeout)throw e;
+    /* 公式 ZMK は知らない要求に request_id=0 の RPC_NOT_FOUND を返し、クライアントは文字列 'Mismatch request IDs' を投げる。
+     * どの失敗でも「拡張なし」として続ける（MetaError だけに絞らないこと） */
+    log("拡張 RPC なし（公式ファーム）"); LIVE.rsr=null; return;
+  }
+  log("custom subsystems: "+JSON.stringify(subs.map(s=>[s.index,s.identifier])));
+  const sub=subs.find(s=>s.identifier==="cormoran_rsr");
+  if(!sub){LIVE.rsr=null;return;}
+  try{
+    const R={sub:sub.index,sensors:[],bind:{}};
+    R.sensors=(await rsrCall(R,{getSensors:true})).getSensors?.sensors||[];
+    await rsrReadAll(R);
+    /* 表示用: 回転の割当に使う behavior の id */
+    const byName=n=>{const e=Object.entries(BID).find(([,v])=>v===n); return e?+e[0]:undefined;};
+    R.ids={kp:B["&kp"],trans:B["&trans"],scroll:byName("mouse_scroll")};
+    LIVE.rsr=R;
+  }catch(e){ if(e instanceof RpcTimeout)throw e; log("エンコーダー設定の読み込み失敗 "+(e&&e.message||e)); LIVE.rsr=null; }
+}
+/* mouse_scroll の引数は ZMK の MOVE_X(上位16bit) / MOVE_Y(下位16bit)、どちらも 16bit の符号つき（0xff9c = −100） */
+const s16=v=>(((v&0xFFFF)<<16)>>16);
+const SCROLL_DN=0xFF9C, SCROLL_UP=100;   /* moNa2 の出荷時と同じ縦 ±100 */
+function scrollText(p){ const x=s16(p>>>16), y=s16(p); return (x?`横${x>0?"+":""}${x}`:"")+(y||!x?`縦${y>0?"+":""}${y}`:""); }
+/* 表示: 本体の割当をプリセット名に戻す。プリセットは "&inc_dec_kp 右回し 左回し" 形式（arare の ENC_OPTS と同じ） */
+window.liveRsrDescribe=(cw,ccw)=>{
+  const R=LIVE.rsr, ids=R&&R.ids||{};
+  if(!cw||!ccw)return {kind:"none"};
+  if(!cw.behaviorId&&!ccw.behaviorId)return {kind:"default"};
+  if(cw.behaviorId===ids.trans&&ccw.behaviorId===ids.trans)return {kind:"trans"};
+  if(ids.scroll!==undefined&&cw.behaviorId===ids.scroll&&ccw.behaviorId===ids.scroll){
+    const a=cw.param1>>>0, b=ccw.param1>>>0, plain=!(cw.param2|0)&&!(ccw.param2|0);
+    if(plain&&a===SCROLL_DN&&b===SCROLL_UP)return {kind:"scroll",rev:false};
+    if(plain&&a===SCROLL_UP&&b===SCROLL_DN)return {kind:"scroll",rev:true};
+    return {kind:"other",text:`スクロール ${scrollText(a)} / ${scrollText(b)}`};
+  }
+  if(cw.behaviorId===ids.kp&&ccw.behaviorId===ids.kp){
+    /* プリセットとの照合は文字列でなく数値で（LS(LG(Z)) と LG(LS(Z)) を同じものとして扱うため） */
+    return {kind:"kp",a:cw.param1>>>0,b:ccw.param1>>>0,text:`${decKey(cw.param1>>>0)||cw.param1} / ${decKey(ccw.param1>>>0)||ccw.param1}`};
+  }
+  return {kind:"other",text:`${BID[cw.behaviorId]||"#"+cw.behaviorId}(${cw.param1|0}) / ${BID[ccw.behaviorId]||"#"+ccw.behaviorId}(${ccw.param1|0})`};
+};
+window.liveEncCodes=(v)=>{const m=String(v).match(/^&inc_dec_kp (\S+) (\S+)$/); if(!m)return null; const a=encKey(m[1]),b=encKey(m[2]); return a==null||b==null?null:[a,b];};
+function rsrPair(R,v){
+  const ids=R.ids;
+  if(v==="default")return [{behaviorId:0},{behaviorId:0}];
+  if(v==="trans"){ if(ids.trans==null)throw new Error("本体に Transparent がありません"); const b={behaviorId:ids.trans,tapMs:5}; return [b,{...b}]; }
+  if(v==="scroll"||v==="scroll-rev"){
+    if(ids.scroll==null)throw new Error("本体に mouse_scroll がありません");
+    const d={behaviorId:ids.scroll,param1:SCROLL_DN,tapMs:16}, u={behaviorId:ids.scroll,param1:SCROLL_UP,tapMs:16};  /* tap 16ms も出荷時と同じ */
+    return v==="scroll"?[d,u]:[u,d];
+  }
+  const m=v.match(/^&inc_dec_kp (\S+) (\S+)$/);
+  if(!m||ids.kp==null)throw new Error("この割当はエンコーダーに使えません: "+v);
+  const a=encKey(m[1]), b=encKey(m[2]);
+  if(a==null||b==null)throw new Error("キーコードを変換できません: "+v);
+  return [{behaviorId:ids.kp,param1:a,tapMs:5},{behaviorId:ids.kp,param1:b,tapMs:5}];  /* tap 5ms は arare の &inc_dec_kp と同じ */
+}
+const rsrSame=(a,b)=>(a.behaviorId||0)===(b.behaviorId||0)&&((a.param1||0)>>>0)===((b.param1||0)>>>0)&&((a.param2||0)>>>0)===((b.param2||0)>>>0)&&((a.tapMs||0)===(b.tapMs||0)||!(a.behaviorId||0));
+/* sensor: センサー番号 / li: 層の並び順 / v: プリセット文字列 | "default" | "trans" | "scroll" | "scroll-rev" | "swap"
+ * 書き込みは一度に1つだけ（右回し→左回しの組の間に別の操作が割り込むと、片側だけ別の値で保存されるため） */
+window.liveRsrSet=async(sensor,li,v)=>{
+  const R=LIVE.rsr;
+  if(!R){A.toast("このキーボードはエンコーダー設定に対応していません");return;}
+  if(LIVE.locked){A.toast("ロック中です。キーボードのUNLOCKキーを押してください");return;}
+  if(LIVE.rsrBusy)return;
+  const slot=LIVE.layerIds[li], name=LIVE.names[li]; /* 回転の割当は層 id で持たれている */
+  LIVE.rsrBusy=true; A.renderLiveEnc();
+  try{
+    let cw,ccw;
+    if(v==="swap"){
+      /* 入れ替えは画面の値でなく、その場で本体から読み直した値で */
+      const cur=(await rsrReadSensor(R,sensor)).find(x=>x.layer===slot)||{};
+      [cw,ccw]=[cur.ccw||{behaviorId:0},cur.cw||{behaviorId:0}];
+    }else [cw,ccw]=rsrPair(R,v);
+    const r1=await rsrCall(R,{cw:{sensor,layer:slot,binding:cw}});
+    if(!r1.setCw?.success)throw new Error("右回しの設定を本体が拒否しました");
+    const r2=await rsrCall(R,{ccw:{sensor,layer:slot,binding:ccw}});
+    if(!r2.setCcw?.success)throw new Error("左回しの設定を本体が拒否しました");
+    await rsrReadAll(R);
+    const now=(R.bind[sensor]||[]).find(x=>x.layer===slot)||{};
+    if(v==="default"){
+      /* 本体は未設定の側をキーマップ側の既定値で埋めて返す（既定値のある層では 0 に戻らない）ので照合しない */
+      const d=window.liveRsrDescribe(now.cw,now.ccw);
+      A.toast(`${name} のエンコーダーをファームの既定に戻しました`+(d.kind==="default"?"":`（既定: ${d.text||"—"}）`));
+    }else{
+      const ok=now.cw&&now.ccw&&rsrSame(now.cw,cw)&&rsrSame(now.ccw,ccw);
+      A.toast(ok?`${name} のエンコーダーを変更しました（キーボードに保存済み）`:"送信しましたが、読み直した値が一致しません。RPCログを確認してください");
+    }
+  }catch(e){
+    const msg=e instanceof Error?e.message:String(e);
+    A.toast("エンコーダー設定エラー: "+msg);
+    if(!(e instanceof RpcTimeout)){ try{await rsrReadAll(R);}catch(_){} }
+  }finally{ LIVE.rsrBusy=false; A.renderLiveEnc(); }
+};
+/* 物理レイアウトを本体から読む。arare なら従来の図（装飾つき）、それ以外は本体の座標で描き直す */
+async function loadLayout(nKeys){
+  let keys=null;
+  try{
+    const pl=(await rpc({keymap:{getPhysicalLayouts:true}})).keymap?.getPhysicalLayouts;
+    const lay=pl?.layouts?.[pl.activeLayoutIndex||0];
+    if(lay&&lay.keys?.length)keys=lay.keys;
+  }catch(e){ if(e instanceof RpcTimeout)throw e; log("physical layout 取得失敗 "+(e&&e.message||e)); }
+  const isArare=/arare/i.test(LIVE.device)&&nKeys===A.KEY_COUNT;
+  if(isArare){A.setForeign(null);return;}
+  if(!keys||keys.length!==nKeys){
+    /* レイアウトが取れない・数が合わないときは 10 列の格子で並べる */
+    keys=Array.from({length:nKeys},(_,i)=>({x:(i%10)*100,y:Math.floor(i/10)*100,width:100,height:100,r:0,rx:0,ry:0}));
+  }
+  /* r は 1/100 度（ZMK の key_physical_attrs と同じ） */
+  A.setForeign(keys.map((k,i)=>["K"+String(i).padStart(2,"0"),k.x,k.y,k.width||100,k.height||100,(k.r||0)/100,k.rx||0,k.ry||0]),LIVE.device);
 }
 function decodeBinding(b){
   const key=Object.keys(B).find(k=>B[k]===b.behaviorId);
@@ -2314,14 +2676,26 @@ window.liveDiscard=async()=>{
   try{await rpc({keymap:{discardChanges:true}}); await hydrate(); rerender(); A.toast("変更を破棄しました");}
   catch(e){A.toast("破棄エラー: "+(e&&e.message||e));}
 };
-function disconnected(){
-  LIVE.on=false; LIVE.layers=[]; LIVE.names=[]; LIVE.dirty.clear(); LIVE.unsaved=false;
-  A.layer=0; A.clearSel(); rerender();
+/* 接続まわりの状態を未接続に戻す（切断・抜線・接続失敗で共通） */
+function resetLive(){
+  LIVE.on=false; LIVE.layers=[]; LIVE.names=[]; LIVE.layerIds=[]; LIVE.dirty.clear(); LIVE.unsaved=false; LIVE.rsr=null; LIVE.rsrBusy=false;
+  A.setForeign(null); A.layer=0; A.clearSel();
 }
-window.liveDisconnect=()=>{
-  try{transport&&transport.abortController.abort("user disconnect");}catch(e){}
+function disconnected(){
+  resetLive(); rerender();
+}
+window.liveDisconnect=async()=>{
+  const t=transport; transport=null; call=null;
+  await closeTransport(t);
   disconnected(); A.toast("切断しました");
 };
+/* USB を抜かれたら接続状態を落とす。イベントは許可済みの全ポート分届くので、自分のポートだけ扱う */
+if(navigator.serial)navigator.serial.addEventListener("disconnect",ev=>{
+  const t=transport;
+  if(!t||!t.port||ev.target!==t.port)return;
+  transport=null; call=null;
+  closeTransport(t).finally(()=>{ disconnected(); A.toast("USB が外れました"); });
+});
 </script>
 
 <a id="arare-sitelink" href="./manual.html" style="position:fixed;left:14px;bottom:14px;z-index:2147483000;display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border:1px solid rgba(128,128,140,.45);border-radius:2px;background:rgba(255,255,255,.92);color:#0E0E12;text-decoration:none;font:400 11px/1 'IBM Plex Mono',ui-monospace,monospace;letter-spacing:.14em;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)">← MANUAL</a>
