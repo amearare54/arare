@@ -24,7 +24,7 @@
 &mt LSHFT LANG2  &mt LALT LCTRL  &kp LGUI  &kp SPACE  &mo 1  &mo 3  &kp ENTER  &kp BSPC  &kp LANG1
 &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &studio_unlock
             >;
-            sensor-bindings = <&inc_dec_kp LG(EQUAL) LG(MINUS)>, <&inc_dec_kp PG_UP PG_DN>;
+            sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>, <&inc_dec_kp PG_UP PG_DN>;
         };
 
         layer_1 {
